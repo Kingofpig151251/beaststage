@@ -391,7 +391,7 @@ async function pullRemoteBank(){
 function updateSrc(){
   const el = $("#srcPill");
   if(!el) return;
-  el.textContent = REMOTE.ok ? "題庫來源：NAS（共用題庫）" : "題庫來源：本機";
+  el.textContent = REMOTE.ok ? "題庫來源：共用題庫" : "題庫來源：本機";
   el.className = "pill" + (REMOTE.ok ? " on" : "");
 }
 
