@@ -1,0 +1,117 @@
+# 大電視 · 破冰主持台
+
+一個遊戲：**大電視**。主持一部機控場，對錯由人手拍板——冇語音辨識、冇自動判定。
+
+玩法：一隊派一人背向屏幕，屏幕出題，全隊用講嘢／做動作提示（唔准講出題目上面任何一隻字），主持按「對／錯／跳過」，限時內猜得多就贏。
+
+兩種用法：
+
+| 模式 | 點用 | 題庫 | 排行榜 |
+|---|---|---|---|
+| **本機**（單檔） | 雙擊 `index.html` | 存喺瀏覽器 | 冇 |
+| **自架**（建議） | `python3 server.py` 或 Docker | 存 SQLite，多部機共用 | 有，累計＋場次紀錄 |
+
+---
+
+## 一、快速開始
+
+### 本機（唔使 server）
+雙擊 `index.html`。離線、零依賴、資料留喺 localStorage。
+缺點：換機要自己匯出／匯入 JSON；冇歷史排行榜。
+
+### 自架（有後台 + 排行榜）
+```bash
+BIGTV_PIN=2468 python3 server.py
+```
+- 主持台：`http://localhost:8080`
+- 後台：`http://localhost:8080/admin`（密碼 = `BIGTV_PIN`）
+
+或者 Docker：
+```bash
+docker compose up -d          # 預設 8080，資料喺 ./data
+```
+
+只用 Python 標準庫 + SQLite，**冇 pip install、冇 database server**。
+首次啟動自動載入 `samples/hk-icebreaker.json` 做預設題庫。
+
+環境變數：`BIGTV_PORT`（8080）、`BIGTV_PIN`（2468，正式一定要改）、`BIGTV_DB`（`./data/bigtv.db`）
+
+---
+
+## 二、設定
+
+- **組別／玩家**：1–8 個，可以打玩家名（唔一定要分隊）
+- **每回合時限**：預設 60 秒（0 = 不限時，主持自己按「結束本回合」）
+- **總回合數**：每隊輪流一次 = 1 回合
+- **跳過扣分**：可開關（開咗跳過 -1）
+- **題庫**：多選類別，即場組合；題目用晒會自動重新洗牌
+
+計分：對 +1、錯 0、跳過 0（或 -1）。
+
+## 三、主持快捷鍵
+
+`Space`／`Enter` = 對　`X` = 錯　`S` = 跳過　`Z` = 撤銷　`Esc`／`P` = 暫停
+
+配平板或者 notebook 用最順手；「全螢幕」可以將部機變純題目屏。
+
+## 四、後台（`/admin`）
+
+PIN 登入後：
+
+- **題庫**：左邊類別（新增／改名／刪除），右邊逐題改，改完自動儲存
+- **批量新增**：每行一題，重覆自動跳過
+- **匯入 JSON**：同名類別合併，唔會覆蓋
+- **匯出 JSON**：帶去另一部機或者做備份
+- **排行榜**：累計榜（總分／場次／最佳／對錯數）、最近場次、逐場刪除、清空成績
+
+主持台完場會自動上報成績（連到後端時）。**玩家名就係身份**，同名累計埋一齊。
+
+## 五、API
+
+```
+GET    /api/ping
+GET    /api/bank                    題庫（主持台同後台共用）
+PUT    /api/bank                    整份取代（要登入）
+POST   /api/login {pin} → {token}    token 放 X-Admin-Token header
+GET    /api/leaderboard?limit=10    累計榜 + 最近場次
+POST   /api/sessions                完場上報（免登入）
+GET    /api/sessions?limit=20
+DELETE /api/sessions/{id}           要登入
+POST   /api/decks {name}            要登入
+PATCH  /api/decks/{id} {name}
+DELETE /api/decks/{id}
+POST   /api/decks/{id}/items {items}  批量加題（自動去重）
+PATCH  /api/items/{id} {t}
+DELETE /api/items/{id}
+POST   /api/reset {what:"sessions"|"bank"}
+```
+
+## 六、題庫格式
+
+```json
+{ "name": "我嘅題庫",
+  "decks": [
+    { "id": "food", "name": "港式小食", "items": ["雞蛋仔", "菠蘿包"] }
+  ] }
+```
+`items` 亦接受 `{"t":"雞蛋仔"}` 格式；舊嘅 `ban` 欄位會被忽略（呢個 app 只做大電視，唔使禁字）。
+
+## 七、檔案
+
+```
+index.html                 主持台（單檔，可獨立用）
+admin.html                 後台
+server.py                  後端（Python 標準庫 + SQLite）
+Dockerfile / docker-compose.yml
+samples/hk-icebreaker.json 內建香港題庫（6 類共 62 題）
+data/bigtv.db              SQLite（首次啟動自動建立）
+```
+
+## 八、注意
+
+- 排行榜身份係**名字**：兩個唔同人打同一個名會累計埋。想分清楚就各自改花名。
+- 備份就備 `data/`（SQLite 單檔），其餘嘢無狀態。
+- 冇帳號系統，只有一條 PIN；只適合屋企／內網，唔好直接掛上公網。
+- 主持台連唔到後端會自動 fallback 本機模式，唔會玩唔到。
+- 後台編輯即時寫入 DB，冇 undo；誤刪就靠匯出嘅 JSON 備份。
+- 經典擺位：猜嗰個要**背向**屏幕（唔係閉眼），一隊 4–8 人最順。

@@ -1,0 +1,758 @@
+<!doctype html>
+<html lang="zh-Hant-HK">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<title>大電視 · 破冰主持台</title>
+<style>
+  :root{
+    --bg:#0b0e14; --panel:#141a24; --panel2:#1b2330; --line:#28313f;
+    --txt:#eef3fa; --dim:#8b98ab; --skip:#f2b53c; --accent:#5b8cff; --danger:#e8564a;
+    --r:16px;
+  }
+  *{box-sizing:border-box; -webkit-tap-highlight-color:transparent}
+  html,body{margin:0;height:100%}
+  body{
+    background:radial-gradient(1200px 700px at 70% -10%, #17233a 0%, var(--bg) 60%);
+    color:var(--txt); font-family:-apple-system,BlinkMacSystemFont,"PingFang HK","Noto Sans HK","Microsoft JhengHei",system-ui,sans-serif;
+    min-height:100%; overflow-x:hidden;
+  }
+  button{font-family:inherit; cursor:pointer; border:none; border-radius:12px; font-weight:700; color:var(--txt); background:var(--panel2)}
+  button:active{transform:translateY(1px)}
+  input,textarea{font-family:inherit; font-size:15px; color:var(--txt); background:var(--bg);
+    border:1px solid var(--line); border-radius:10px; padding:9px 12px; outline:none; width:100%}
+  input:focus,textarea:focus{border-color:var(--accent)}
+  .wrap{max-width:1080px; margin:0 auto; padding:16px 16px 90px}
+  .view{display:none}
+  .view.active{display:block}
+  h1{font-size:22px; margin:0 0 2px; letter-spacing:.5px}
+  h2{font-size:14px; color:var(--dim); font-weight:600; margin:0 0 10px; letter-spacing:1px}
+  .sub{color:var(--dim); font-size:13px; margin:0 0 18px}
+  .card{background:var(--panel); border:1px solid var(--line); border-radius:var(--r); padding:16px; margin-bottom:14px}
+  .row{display:flex; gap:10px; align-items:center; flex-wrap:wrap}
+  .row > label{font-size:13.5px; color:var(--dim); min-width:76px}
+  .kv{font-size:13px; color:var(--dim)}
+  .pill{font-size:12.5px;padding:5px 12px;border-radius:999px;border:1px solid var(--line);color:var(--dim);display:inline-block}
+  .pill.on{border-color:#256b45;color:#8ff0bd;background:#0f2a1c}
+
+  .names{display:grid; grid-template-columns:repeat(auto-fill,minmax(140px,1fr)); gap:8px; margin-top:10px}
+  .stepper{display:flex; align-items:center; gap:8px}
+  .stepper button{width:36px; height:36px; font-size:18px; background:var(--panel2)}
+  .stepper b{font-variant-numeric:tabular-nums; min-width:24px; text-align:center}
+
+  .chips{display:flex; flex-wrap:wrap; gap:8px}
+  .chip{background:var(--panel2); border:1px solid var(--line); border-radius:999px; padding:8px 14px; font-size:13.5px; font-weight:600; color:var(--dim)}
+  .chip.on{background:#1b2740; border-color:var(--accent); color:var(--txt)}
+
+  .btn-primary{width:100%; padding:18px; font-size:18px; background:linear-gradient(180deg,#3f74ff,#2c5ce0); border-radius:14px; margin-top:6px}
+  .btn-ghost{background:transparent; border:1px solid var(--line); color:var(--dim); padding:10px 14px; font-size:13.5px}
+
+  /* ===== 遊戲畫面 ===== */
+  .topline{display:flex; justify-content:space-between; align-items:center; gap:10px; margin-bottom:12px; flex-wrap:wrap}
+  .badge{background:var(--panel2); border:1px solid var(--line); border-radius:999px; padding:6px 13px; font-size:13px; font-weight:700}
+  .badge.turn{background:#1b2740; border-color:var(--accent)}
+  .clock{font-variant-numeric:tabular-nums; font-weight:800; font-size:26px; letter-spacing:1px}
+  .clock.warn{color:var(--skip)}
+  .clock.dead{color:var(--danger)}
+
+  .question{
+    background:var(--panel); border:1px solid var(--line); border-radius:22px;
+    padding:34px 26px; text-align:center; margin-bottom:12px; min-height:34vh;
+    display:flex; flex-direction:column; justify-content:center; gap:16px;
+  }
+  .qtext{font-size:clamp(38px,9.5vw,96px); font-weight:900; line-height:1.15; letter-spacing:2px; word-break:break-word}
+  .qhint{color:var(--dim); font-size:13.5px}
+  .qdeck{color:#4d5b70; font-size:12px; letter-spacing:1px}
+
+  .bar{height:8px; background:#1c2431; border-radius:99px; overflow:hidden; margin-bottom:14px}
+  .bar > i{display:block; height:100%; width:100%; background:linear-gradient(90deg,#3f74ff,#7aa2ff); transition:width .1s linear}
+  .bar.warn > i{background:var(--skip)}
+  .bar.dead > i{background:var(--danger)}
+
+  .judge{display:grid; grid-template-columns:1.4fr 1fr 1fr; gap:10px; margin-bottom:10px}
+  .judge button{padding:22px 8px; font-size:19px; border-radius:16px}
+  .j-ok{background:linear-gradient(180deg,#3ee38c,#1fa85e); color:#04220f}
+  .j-miss{background:#2b3443; color:#e8eef8}
+  .j-skip{background:linear-gradient(180deg,#f7c154,#d99b1e); color:#221a05}
+
+  .util{display:flex; gap:10px; flex-wrap:wrap}
+  .util button{flex:1; min-width:92px; padding:12px; font-size:13.5px; background:var(--panel2); color:var(--dim)}
+
+  .scores{display:flex; gap:8px; overflow-x:auto; padding:2px 0 0}
+  .sc{background:var(--panel); border:1px solid var(--line); border-radius:12px; padding:8px 14px; min-width:96px; text-align:center; flex:0 0 auto}
+  .sc.cur{border-color:var(--accent); background:#1b2740}
+  .sc b{display:block; font-size:22px; font-variant-numeric:tabular-nums; line-height:1.2}
+  .sc span{font-size:11.5px; color:var(--dim)}
+
+  /* ===== 結果 ===== */
+  .rank{display:flex; flex-direction:column; gap:10px; margin:16px 0}
+  .rk{display:flex; align-items:center; gap:14px; background:var(--panel); border:1px solid var(--line); border-radius:14px; padding:14px 18px}
+  .rk .no{font-size:22px; font-weight:900; color:var(--dim); width:34px}
+  .rk .nm{flex:1; font-size:19px; font-weight:800}
+  .rk .pt{font-size:28px; font-weight:900; font-variant-numeric:tabular-nums}
+  .rk .st{font-size:12px; color:var(--dim)}
+  .rk.first{border-color:#c9a227; background:#221d10}
+
+  /* ===== 排行榜 ===== */
+  .lbrow{display:flex; align-items:center; gap:12px; padding:10px 4px; border-bottom:1px solid #1c2431}
+  .lbrow .no{width:30px; font-weight:900; color:var(--dim); font-variant-numeric:tabular-nums}
+  .lbrow .nm{flex:1; font-weight:700}
+  .lbrow .nm .st{font-size:12px; color:var(--dim); font-weight:400; margin-top:2px}
+  .lbrow .pt{font-weight:900; font-size:20px; font-variant-numeric:tabular-nums}
+
+  /* ===== 題庫管理 ===== */
+  .bankgrid{display:grid; grid-template-columns:220px 1fr; gap:14px}
+  @media (max-width:720px){ .bankgrid{grid-template-columns:1fr} }
+  .decklist{display:flex; flex-direction:column; gap:6px}
+  .decklist button{text-align:left; padding:11px 13px; background:var(--panel2); font-size:13.5px; display:flex; justify-content:space-between; gap:8px}
+  .decklist button.on{background:#1b2740; border:1px solid var(--accent)}
+  .decklist button i{color:var(--dim); font-style:normal; font-size:12px}
+  .items{max-height:54vh; overflow:auto; display:flex; flex-direction:column; gap:6px}
+  .it{display:grid; grid-template-columns:1fr 36px; gap:6px; align-items:center}
+  .it input{padding:7px 10px; font-size:14px}
+  .it button{background:transparent; color:#7d8797; font-size:16px; padding:0}
+  .it button:hover{color:var(--danger)}
+
+  .toast{position:fixed; left:50%; bottom:24px; transform:translateX(-50%); background:#20304a; border:1px solid var(--accent);
+    color:var(--txt); padding:11px 20px; border-radius:999px; font-size:14px; opacity:0; pointer-events:none; transition:opacity .2s; z-index:99}
+  .toast.on{opacity:1}
+  .kbd{background:var(--panel2); border:1px solid var(--line); border-radius:6px; padding:2px 7px; font-size:11.5px; color:var(--dim); font-family:ui-monospace,monospace}
+</style>
+</head>
+<body>
+<div class="wrap">
+
+  <!-- ========== 主頁 ========== -->
+  <section class="view active" id="v-home">
+    <h1>大電視 · 破冰主持台</h1>
+    <p class="sub">一人背向屏幕猜，全隊描述／做動作。主持一部機控場，對錯由人手拍板。</p>
+    <div class="row" style="margin-bottom:14px"><span class="pill" id="srcPill">題庫來源：本機</span></div>
+
+    <div class="card">
+      <h2>組別／玩家</h2>
+      <div class="row">
+        <label>數量</label>
+        <div class="stepper">
+          <button id="teamMinus">−</button><b id="teamCount">2</b><button id="teamPlus">＋</button>
+        </div>
+        <span class="kv">改名可以打玩家名，例如「阿明」</span>
+      </div>
+      <div class="names" id="nameList"></div>
+    </div>
+
+    <div class="card">
+      <h2>回合設定</h2>
+      <div class="row" style="margin-bottom:10px">
+        <label>每回合</label>
+        <input id="secInput" type="number" min="0" max="600" step="5" style="width:100px">
+        <span class="kv">秒（0 = 不限時，主持自己按結束）</span>
+      </div>
+      <div class="row" style="margin-bottom:10px">
+        <label>總回合</label>
+        <input id="roundInput" type="number" min="1" max="20" style="width:100px">
+        <span class="kv">每個組別輪流一次 = 1 回合</span>
+      </div>
+      <div class="row">
+        <label>選項</label>
+        <label class="kv"><input type="checkbox" id="penaltyChk" style="width:auto; margin-right:6px">跳過扣 1 分</label>
+        <label class="kv" style="margin-left:14px"><input type="checkbox" id="soundChk" style="width:auto; margin-right:6px">提示音</label>
+      </div>
+    </div>
+
+    <div class="card">
+      <h2>題庫</h2>
+      <div class="chips" id="deckChips"></div>
+      <div class="row" style="margin-top:12px">
+        <span class="kv" id="deckCount"></span>
+        <button class="btn-ghost" id="btnAll">全選</button>
+        <button class="btn-ghost" id="btnNone">全不選</button>
+      </div>
+    </div>
+
+    <button class="btn-primary" id="btnStart">開始遊戲</button>
+    <div class="row" style="margin-top:12px; justify-content:center">
+      <button class="btn-ghost" id="btnBankHome">管理題庫</button>
+      <button class="btn-ghost" id="btnLb">排行榜</button>
+      <button class="btn-ghost" id="btnFull">全螢幕</button>
+      <button class="btn-ghost" id="btnResetBank">還原內建題庫</button>
+    </div>
+  </section>
+
+  <!-- ========== 遊戲 ========== -->
+  <section class="view" id="v-play">
+    <div class="topline">
+      <div style="display:flex; gap:8px; align-items:center; flex-wrap:wrap">
+        <span class="badge" id="pRound">第 1 / 1 回合</span>
+        <span class="badge turn" id="pTurn">輪到 A 隊</span>
+        <span class="badge" id="pLeft"></span>
+      </div>
+      <div style="display:flex; align-items:center; gap:14px">
+        <span class="clock" id="pClock">60</span>
+        <button class="btn-ghost" id="btnPause">暫停</button>
+      </div>
+    </div>
+
+    <div class="question">
+      <div class="qdeck" id="pDeck"></div>
+      <div class="qtext" id="pText">—</div>
+      <div class="qhint" id="pHint"></div>
+    </div>
+
+    <div class="bar" id="pBar"><i></i></div>
+
+    <div class="judge">
+      <button class="j-ok" data-judge="ok">✓ 對</button>
+      <button class="j-miss" data-judge="miss">✗ 錯</button>
+      <button class="j-skip" data-judge="skip">跳過 ›</button>
+    </div>
+
+    <div class="util" style="margin-bottom:12px">
+      <button id="btnUndo">↩ 撤銷</button>
+      <button id="btnEndTurn">結束本回合</button>
+      <button id="btnQuit">結束遊戲</button>
+    </div>
+
+    <div class="scores" id="pScores"></div>
+    <p class="qhint" style="margin-top:12px">
+      鍵盤：<span class="kbd">Space</span> 對　<span class="kbd">X</span> 錯　<span class="kbd">S</span> 跳過　<span class="kbd">Z</span> 撤銷　<span class="kbd">Esc</span> 暫停
+    </p>
+  </section>
+
+  <!-- ========== 排行榜 ========== -->
+  <section class="view" id="v-lb">
+    <h1>排行榜</h1>
+    <p class="sub" id="lbSub">全部場次累計</p>
+    <div class="card">
+      <h2>累計榜</h2>
+      <div id="lbPlayers"></div>
+    </div>
+    <div class="card">
+      <h2>最近場次</h2>
+      <div id="lbRecent"></div>
+    </div>
+    <div class="row" style="justify-content:center;margin-top:8px">
+      <button class="btn-ghost" id="btnLbBack">← 返主頁</button>
+    </div>
+  </section>
+
+  <!-- ========== 結果 ========== -->
+  <section class="view" id="v-result">
+    <h1>結果</h1>
+    <p class="sub" id="rSub"></p>
+    <div class="rank" id="rankList"></div>
+    <button class="btn-primary" id="btnAgain">再玩一次</button>
+    <div class="row" style="margin-top:12px; justify-content:center">
+      <button class="btn-ghost" id="btnBackHome">返主頁</button>
+    </div>
+  </section>
+
+  <!-- ========== 題庫管理（離線用） ========== -->
+  <section class="view" id="v-bank">
+    <h1>題庫管理</h1>
+    <p class="sub">存喺你呢部機（localStorage）。連到後端時會改用後台，呢頁只係離線備用。</p>
+    <div class="bankgrid">
+      <div>
+        <div class="decklist" id="bankDecks"></div>
+        <div class="row" style="margin-top:10px">
+          <input id="newDeckName" placeholder="新類別名稱">
+          <button class="btn-ghost" id="btnAddDeck" style="flex:0 0 auto">＋ 新增</button>
+        </div>
+      </div>
+      <div class="card" style="margin:0">
+        <div class="row" style="justify-content:space-between; margin-bottom:10px">
+          <h2 style="margin:0" id="bankDeckTitle">類別</h2>
+          <div class="row" style="gap:8px">
+            <button class="btn-ghost" id="btnImport">匯入 JSON</button>
+            <button class="btn-ghost" id="btnExport">匯出 JSON</button>
+            <button class="btn-ghost" id="btnDelDeck">刪除類別</button>
+          </div>
+        </div>
+        <div class="items" id="bankItems"></div>
+        <div style="margin-top:14px">
+          <h2>批量新增（每行一題）</h2>
+          <textarea id="bulkInput" rows="4" placeholder="雞蛋仔&#10;菠蘿包&#10;開會"></textarea>
+          <div class="row" style="margin-top:8px">
+            <button class="btn-ghost" id="btnBulkAdd" style="flex:1">加入題目</button>
+          </div>
+        </div>
+      </div>
+    </div>
+    <div class="row" style="margin-top:16px; justify-content:center">
+      <button class="btn-ghost" id="btnBankBack">← 返主頁</button>
+    </div>
+  </section>
+</div>
+<input type="file" id="fileInput" accept=".json,application/json" style="display:none">
+<div class="toast" id="toast"></div>
+
+<script>
+"use strict";
+
+/* ================= 內建題庫 ================= */
+const DEFAULT_BANK = {
+  name: "香港破冰題庫",
+  decks: [
+    { id:"food", name:"港式小食", items:[
+      "雞蛋仔","菠蘿包","絲襪奶茶","咖喱魚蛋","燒賣","蛋撻",
+      "西多士","腸粉","砵仔糕","煎釀三寶","車仔麵","魚蛋燒賣"
+    ]},
+    { id:"place", name:"香港地標", items:[
+      "山頂纜車","天星小輪","廟街夜市","黃大仙祠","青馬大橋",
+      "迪士尼樂園","海洋公園","旺角花墟","赤柱","中環摩天輪"
+    ]},
+    { id:"action", name:"日常動作", items:[
+      "搭地鐵逼車","打邊爐","飲珍珠奶茶","搶演唱會飛","排隊買口罩","追巴士",
+      "黐住部冷氣","食月餅","搬屋","影証件相","開會打瞌睡","換燈泡"
+    ]},
+    { id:"song", name:"廣東歌／歌手", items:[
+      "陳奕迅","MIRROR","鄭秀文","喜帖街","海闊天空",
+      "富士山下","紅日","譚詠麟","梅艷芳","羅文"
+    ]},
+    { id:"tv", name:"劇集／角色", items:[
+      "大時代","獎門人","歡樂今宵","包青天","家有喜事","無間道","功夫","衝上雲霄"
+    ]},
+    { id:"work", name:"職場／校園", items:[
+      "OT 到凌晨","交報告","開會","Presentation","打咭",
+      "小息","考試","班會","舊生聚會","Team building"
+    ]}
+  ]
+};
+
+const HINT = "由 {who} 派一個人背向屏幕。隊友描述或做動作，唔准講出題目上面任何一隻字。";
+
+/* ================= 狀態 ================= */
+const K_BANK="bigtv.bank.v3", K_CFG="bigtv.cfg.v3";
+const store = {
+  get(k,d){ try{ const v=localStorage.getItem(k); return v?JSON.parse(v):d; }catch(e){ return d; } },
+  set(k,v){ try{ localStorage.setItem(k,JSON.stringify(v)); }catch(e){} }
+};
+
+let bank = normalizeBank(store.get(K_BANK, null) || clone(DEFAULT_BANK));
+let cfg  = Object.assign({
+  teams:2, names:["A 隊","B 隊","C 隊","D 隊","E 隊","F 隊","G 隊","H 隊"],
+  sec:60, rounds:1, decks: bank.decks.map(d=>d.id), skipPenalty:false, sound:true
+}, store.get(K_CFG, {}));
+
+let G = null;
+let bankDeck = bank.decks[0] ? bank.decks[0].id : null;
+let REMOTE = { ok:false };
+
+const $ = s => document.querySelector(s);
+const $$ = s => Array.from(document.querySelectorAll(s));
+
+function clone(o){ return JSON.parse(JSON.stringify(o)); }
+function esc(s){ return String(s).replace(/[&<>"']/g, c=>({"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;","'":"&#39;"}[c])); }
+
+/* 題目一律以 {t:"..."} 存；舊格式（字串 / {t,ban}）都食得住 */
+function normalizeBank(b){
+  if(!b || !Array.isArray(b.decks)) return clone(DEFAULT_BANK);
+  return {
+    name: b.name || "題庫",
+    decks: b.decks.map((d,i)=>({
+      id: d.id || ("d"+i),
+      name: d.name || ("類別 "+(i+1)),
+      items: (d.items||[])
+        .map(it => (typeof it === "string" ? it : String((it && it.t) || "")))
+        .map(t => t.trim()).filter(Boolean)
+        .map(t => ({ t }))
+    })).filter(d=>d.items.length)
+  };
+}
+function saveBank(){ store.set(K_BANK, bank); }
+function saveCfg(){ store.set(K_CFG, cfg); }
+
+function showView(id){
+  $$(".view").forEach(v=>v.classList.toggle("active", v.id===id));
+  window.scrollTo(0,0);
+}
+let toastT=null;
+function toast(msg){
+  const el=$("#toast"); el.textContent=msg; el.classList.add("on");
+  clearTimeout(toastT); toastT=setTimeout(()=>el.classList.remove("on"), 1800);
+}
+function shuffle(a){ for(let i=a.length-1;i>0;i--){ const j=Math.floor(Math.random()*(i+1)); [a[i],a[j]]=[a[j],a[i]]; } return a; }
+
+/* ================= 後端（有就用，冇就本機） ================= */
+async function pullRemoteBank(){
+  try{
+    const r = await fetch("/api/bank", {cache:"no-store"});
+    if(!r.ok) throw new Error("bad status");
+    const b = await r.json();
+    if(!b.decks || !b.decks.length) throw new Error("empty");
+    bank = normalizeBank(b);
+    saveBank();
+    cfg.decks = cfg.decks.filter(id=>bank.decks.some(d=>d.id===id));
+    if(!cfg.decks.length) cfg.decks = bank.decks.map(d=>d.id);
+    saveCfg();
+    REMOTE.ok = true;
+    renderHome(); updateSrc();
+  }catch(e){ REMOTE.ok = false; updateSrc(); }
+}
+function updateSrc(){
+  const el = $("#srcPill");
+  if(!el) return;
+  el.textContent = REMOTE.ok ? "題庫來源：NAS（共用題庫）" : "題庫來源：本機";
+  el.className = "pill" + (REMOTE.ok ? " on" : "");
+}
+
+/* ================= 音效 ================= */
+let actx=null;
+function beep(freq=880, dur=0.08, vol=0.15){
+  if(!cfg.sound) return;
+  try{
+    actx = actx || new (window.AudioContext||window.webkitAudioContext)();
+    const o=actx.createOscillator(), g=actx.createGain();
+    o.frequency.value=freq; o.type="sine"; g.gain.value=vol;
+    o.connect(g); g.connect(actx.destination); o.start();
+    g.gain.exponentialRampToValueAtTime(0.001, actx.currentTime+dur);
+    o.stop(actx.currentTime+dur+0.02);
+  }catch(e){}
+}
+
+/* ================= 主頁 ================= */
+function renderHome(){
+  $("#teamCount").textContent = cfg.teams;
+  $("#nameList").innerHTML = Array.from({length:cfg.teams},(_,i)=>`
+    <input data-name="${i}" value="${esc(cfg.names[i]||("隊 "+(i+1)))}" maxlength="12">`).join("");
+  $$("#nameList input").forEach(inp=>inp.onchange=()=>{
+    cfg.names[+inp.dataset.name] = inp.value.trim() || ("隊 "+(+inp.dataset.name+1));
+    inp.value = cfg.names[+inp.dataset.name]; saveCfg();
+  });
+
+  $("#secInput").value = cfg.sec;
+  $("#roundInput").value = cfg.rounds;
+  $("#penaltyChk").checked = !!cfg.skipPenalty;
+  $("#soundChk").checked = !!cfg.sound;
+
+  $("#deckChips").innerHTML = bank.decks.map(d=>`
+    <button class="chip ${cfg.decks.includes(d.id)?"on":""}" data-deck="${esc(d.id)}">
+      ${esc(d.name)} <i style="opacity:.55;font-style:normal">${d.items.length}</i>
+    </button>`).join("");
+  $$("#deckChips .chip").forEach(b=>b.onclick=()=>{
+    const id=b.dataset.deck;
+    cfg.decks = cfg.decks.includes(id) ? cfg.decks.filter(x=>x!==id) : cfg.decks.concat(id);
+    saveCfg(); renderHome();
+  });
+  const total = bank.decks.filter(d=>cfg.decks.includes(d.id)).reduce((s,d)=>s+d.items.length,0);
+  $("#deckCount").textContent = `已選 ${cfg.decks.length} 個類別 · 共 ${total} 題`;
+}
+
+/* ================= 題庫管理（離線用） ================= */
+function renderBank(){
+  if(!bank.decks.some(d=>d.id===bankDeck)) bankDeck = bank.decks[0] ? bank.decks[0].id : null;
+  $("#bankDecks").innerHTML = bank.decks.map(d=>`
+    <button class="${d.id===bankDeck?"on":""}" data-bd="${esc(d.id)}">
+      <span>${esc(d.name)}</span><i>${d.items.length}</i>
+    </button>`).join("") || `<p class="sub" style="margin:0">未有類別，新增一個先。</p>`;
+  $$("#bankDecks button").forEach(b=>b.onclick=()=>{ bankDeck=b.dataset.bd; renderBank(); });
+
+  const deck = bank.decks.find(d=>d.id===bankDeck);
+  $("#bankDeckTitle").textContent = deck ? deck.name : "類別";
+  $("#bankItems").innerHTML = deck ? deck.items.map((it,i)=>`
+    <div class="it">
+      <input data-t="${i}" value="${esc(it.t)}" placeholder="題目">
+      <button data-del="${i}" title="刪除">✕</button>
+    </div>`).join("") : "";
+  if(deck){
+    $$("#bankItems input[data-t]").forEach(inp=>inp.onchange=()=>{
+      const i=+inp.dataset.t, v=inp.value.trim();
+      if(v) deck.items[i].t = v; else inp.value = deck.items[i].t;
+      saveBank(); renderHome();
+    });
+    $$("#bankItems button[data-del]").forEach(b=>b.onclick=()=>{
+      deck.items.splice(+b.dataset.del,1); saveBank(); renderBank(); renderHome();
+      toast("已刪除");
+    });
+  }
+}
+
+/* ================= 遊戲流程 ================= */
+function startGame(){
+  const names = Array.from({length:cfg.teams},(_,i)=> cfg.names[i] || ("隊 "+(i+1)));
+  const pool = [];
+  bank.decks.filter(d=>cfg.decks.includes(d.id)).forEach(d=>{
+    d.items.forEach(it=> pool.push({t:it.t, deck:d.name}));
+  });
+  if(!pool.length){ toast("請先揀最少一個有題目嘅類別"); return; }
+
+  G = {
+    sec: Number(cfg.sec)||0, rounds: Number(cfg.rounds)||1,
+    teams: names.map(n=>({name:n, score:0, ok:0, skip:0, miss:0})),
+    turn:0, round:1,
+    pool: shuffle(pool.slice()), used: [], cur:null,
+    log: [], paused:false, remaining:0, timerId:null, lastBeep:-1
+  };
+  showView("v-play");
+  beginTurn();
+}
+
+function beginTurn(){
+  G.paused = false;
+  G.cur = drawItem();
+  G.remaining = G.sec;
+  $("#btnPause").textContent = "暫停";
+  startTimer();
+  renderPlay();
+  beep(660, 0.05, 0.08);
+}
+
+function drawItem(){
+  if(!G.pool.length){ G.pool = shuffle(G.used.slice()); G.used = []; toast("題目用晒，重新洗牌"); }
+  const it = G.pool.pop();
+  G.used.push(it);
+  return it;
+}
+
+function startTimer(){
+  clearInterval(G.timerId);
+  if(!G.sec){ renderTimer(); return; }
+  G.lastBeep = Math.ceil(G.remaining);
+  G.timerId = setInterval(()=>{
+    if(G.paused) return;
+    G.remaining = Math.max(0, G.remaining - 0.1);
+    renderTimer();
+    const sec = Math.ceil(G.remaining);
+    if(sec<=3 && sec>0 && sec!==G.lastBeep){ G.lastBeep=sec; beep(720,0.06,0.12); }
+    if(G.remaining<=0){ clearInterval(G.timerId); beep(320,0.35,0.18); endTurn(); }
+  },100);
+}
+
+function renderTimer(){
+  const el=$("#pClock"), bar=$("#pBar");
+  if(!G.sec){
+    el.textContent="∞"; el.className="clock"; bar.className="bar"; $("#pBar > i").style.width="100%";
+    return;
+  }
+  el.textContent = Math.ceil(G.remaining);
+  el.className = "clock" + (G.remaining<=5 ? " dead" : G.remaining<=15 ? " warn" : "");
+  const pct = Math.max(0, Math.min(1, G.remaining / G.sec));
+  $("#pBar > i").style.width = (pct*100).toFixed(1)+"%";
+  bar.className = "bar" + (G.remaining<=5 ? " dead" : G.remaining<=15 ? " warn" : "");
+}
+
+function renderPlay(){
+  $("#pRound").textContent = `第 ${G.round} / ${G.rounds} 回合`;
+  $("#pTurn").textContent = "輪到 " + G.teams[G.turn].name;
+  $("#pLeft").textContent = `池剩 ${G.pool.length}`;
+
+  const it = G.cur || {t:"—", deck:""};
+  $("#pText").textContent = it.t;
+  $("#pDeck").textContent = it.deck || "";
+  $("#pHint").textContent = HINT.replace("{who}", G.teams[G.turn].name);
+
+  $("#pScores").innerHTML = G.teams.map((t,i)=>`
+    <div class="sc ${i===G.turn?"cur":""}">
+      <b>${t.score}</b><span>${esc(t.name)}</span>
+    </div>`).join("");
+
+  renderTimer();
+}
+
+function judge(kind){
+  if(!G || !G.cur) return;
+  const t = G.teams[G.turn];
+  const delta = kind==="ok" ? 1 : (kind==="skip" && cfg.skipPenalty ? -1 : 0);
+  G.log.push({item:G.cur, kind, team:G.turn, delta});
+  t.score += delta;
+  if(kind==="ok") t.ok++; else if(kind==="skip") t.skip++; else t.miss++;
+  if(kind==="ok") beep(980,0.07,0.14); else if(kind==="miss") beep(240,0.09,0.1);
+  G.cur = drawItem();
+  renderPlay();
+}
+
+function undo(){
+  if(!G || !G.log.length) return;
+  const last = G.log.pop();
+  const t = G.teams[last.team];
+  t.score -= last.delta;
+  if(last.kind==="ok") t.ok--; else if(last.kind==="skip") t.skip--; else t.miss--;
+  G.cur = last.item;
+  renderPlay();
+  toast("已撤銷");
+}
+
+function endTurn(){
+  if(!G) return;
+  clearInterval(G.timerId);
+  G.turn++;
+  if(G.turn >= G.teams.length){
+    G.turn = 0;
+    G.round++;
+    if(G.round > G.rounds){ endGame(); return; }
+    toast("新一回合開始");
+  } else {
+    toast("輪到 "+G.teams[G.turn].name);
+  }
+  beginTurn();
+}
+
+function endGame(){
+  if(!G) return;
+  clearInterval(G.timerId);
+  const sorted = G.teams.map((t,i)=>({...t,i})).sort((a,b)=> b.score-a.score || b.ok-a.ok);
+  const total = G.teams.reduce((s,t)=>s+t.score,0);
+  const okTotal = G.teams.reduce((s,t)=>s+t.ok,0);
+  $("#rSub").textContent = `${G.rounds} 回合 · 全場答對 ${okTotal} 題`;
+  $("#rankList").innerHTML = sorted.map((t,idx)=>`
+    <div class="rk ${idx===0 && t.score>0 ? "first":""}">
+      <div class="no">${idx+1}</div>
+      <div class="nm">${esc(t.name)}
+        <div class="st">對 ${t.ok} · 跳 ${t.skip} · 錯 ${t.miss}</div>
+      </div>
+      <div class="pt">${t.score}</div>
+    </div>`).join("") + `<p class="sub" style="text-align:center;margin-top:6px">總分 ${total}</p>`;
+  showView("v-result");
+  beep(880,0.12,0.15); setTimeout(()=>beep(1180,0.18,0.15),140);
+  if(REMOTE.ok){
+    fetch("/api/sessions", {method:"POST", headers:{"Content-Type":"application/json"},
+      body: JSON.stringify({
+        mode:"大電視", rounds:G.rounds, questions:G.log.length,
+        teams: G.teams.map(t=>({name:t.name, score:t.score, ok:t.ok, skip:t.skip, miss:t.miss}))
+      })
+    }).catch(()=>{ toast("成績上傳失敗（server 斷線？）"); });
+  }
+}
+
+/* ================= 排行榜 ================= */
+async function openLb(){
+  showView("v-lb");
+  $("#lbPlayers").innerHTML = `<p class="sub">載入中…</p>`;
+  $("#lbRecent").innerHTML = "";
+  try{
+    const r = await fetch("/api/leaderboard?limit=20", {cache:"no-store"});
+    if(!r.ok) throw new Error("bad status");
+    const d = await r.json();
+    $("#lbSub").textContent = `共 ${d.sessions_total} 場 · 全部場次累計`;
+    $("#lbPlayers").innerHTML = (d.players||[]).map((pl,i)=>`
+      <div class="lbrow">
+        <div class="no">${i+1}</div>
+        <div class="nm">${esc(pl.name)}<div class="st">${pl.games} 場 · 最佳 ${pl.best} · 對 ${pl.ok}／跳 ${pl.skips}／錯 ${pl.miss}</div></div>
+        <div class="pt">${pl.total}</div>
+      </div>`).join("") || `<p class="sub">未有紀錄</p>`;
+    $("#lbRecent").innerHTML = (d.recent||[]).map(s=>`
+      <div class="lbrow">
+        <div class="nm">${esc((s.finished_at||"").replace("T"," ").slice(0,16))}
+          <span class="st"> · ${s.players} 人</span>
+          <div class="st">冠軍 ${esc(s.winner||"—")}（${s.winner_score??0} 分）</div>
+        </div>
+      </div>`).join("") || `<p class="sub">未有場次</p>`;
+  }catch(e){
+    $("#lbSub").textContent = "未連線";
+    $("#lbPlayers").innerHTML = `<p class="sub">未有 server 連線，排行榜只喺連後端時可用。<br>用 <code>python3 server.py</code> 開後端，或者部署去 NAS。</p>`;
+  }
+}
+
+/* ================= 事件 ================= */
+$("#teamMinus").onclick = ()=>{ cfg.teams=Math.max(1,cfg.teams-1); saveCfg(); renderHome(); };
+$("#teamPlus").onclick  = ()=>{ cfg.teams=Math.min(8,cfg.teams+1); saveCfg(); renderHome(); };
+$("#secInput").onchange  = e=>{ cfg.sec=Math.max(0,Math.min(600,+e.target.value||0)); saveCfg(); };
+$("#roundInput").onchange= e=>{ cfg.rounds=Math.max(1,Math.min(20,+e.target.value||1)); saveCfg(); };
+$("#penaltyChk").onchange= e=>{ cfg.skipPenalty=e.target.checked; saveCfg(); };
+$("#soundChk").onchange  = e=>{ cfg.sound=e.target.checked; saveCfg(); };
+$("#btnAll").onclick  = ()=>{ cfg.decks=bank.decks.map(d=>d.id); saveCfg(); renderHome(); };
+$("#btnNone").onclick = ()=>{ cfg.decks=[]; saveCfg(); renderHome(); };
+$("#btnStart").onclick = startGame;
+$("#btnFull").onclick = ()=>{ if(!document.fullscreenElement){ document.documentElement.requestFullscreen&&document.documentElement.requestFullscreen(); } else { document.exitFullscreen(); } };
+$("#btnResetBank").onclick = ()=>{ if(confirm("還原成內建香港題庫？你改過嘅題目會冇咗。")){ bank=normalizeBank(clone(DEFAULT_BANK)); saveBank(); cfg.decks=bank.decks.map(d=>d.id); saveCfg(); renderHome(); toast("已還原"); } };
+
+$$(".judge button").forEach(b=>b.onclick=()=>judge(b.dataset.judge));
+$("#btnUndo").onclick = undo;
+$("#btnEndTurn").onclick = ()=>endTurn();
+$("#btnQuit").onclick = ()=>{ if(confirm("結束今次遊戲並睇結果？")) endGame(); };
+$("#btnPause").onclick = ()=>{ if(!G) return; G.paused=!G.paused; $("#btnPause").textContent = G.paused?"繼續":"暫停"; };
+
+$("#btnAgain").onclick = startGame;
+$("#btnBackHome").onclick = ()=>{ showView("v-home"); renderHome(); };
+
+$("#btnBankHome").onclick = ()=>{
+  if(REMOTE.ok){ window.open("/admin.html", "_blank"); return; }   // 有後端就開後台
+  showView("v-bank"); renderBank();
+};
+$("#btnLb").onclick = openLb;
+$("#btnLbBack").onclick = ()=>{ showView("v-home"); renderHome(); };
+$("#btnBankBack").onclick = ()=>{ showView("v-home"); renderHome(); };
+
+$("#btnAddDeck").onclick = ()=>{
+  const n = $("#newDeckName").value.trim(); if(!n) return;
+  const id = "u"+Date.now().toString(36);
+  bank.decks.push({id, name:n, items:[]});
+  bankDeck = id; cfg.decks.push(id);
+  $("#newDeckName").value=""; saveBank(); saveCfg(); renderBank(); renderHome(); toast("已新增類別");
+};
+$("#btnDelDeck").onclick = ()=>{
+  const deck = bank.decks.find(d=>d.id===bankDeck); if(!deck) return;
+  if(!confirm(`刪除類別「${deck.name}」同裡面 ${deck.items.length} 題？`)) return;
+  bank.decks = bank.decks.filter(d=>d.id!==bankDeck);
+  cfg.decks = cfg.decks.filter(id=>id!==bankDeck);
+  saveBank(); saveCfg(); renderBank(); renderHome(); toast("已刪除類別");
+};
+$("#btnBulkAdd").onclick = ()=>{
+  const deck = bank.decks.find(d=>d.id===bankDeck); if(!deck){ toast("先揀或新增一個類別"); return; }
+  const lines = $("#bulkInput").value.split("\n").map(s=>s.trim()).filter(Boolean);
+  let n=0;
+  lines.forEach(line=>{
+    const title = line.split("|")[0].trim();     // 舊格式「題目|禁字」都食得住
+    if(!title || deck.items.some(x=>x.t===title)) return;
+    deck.items.push({t:title}); n++;
+  });
+  $("#bulkInput").value="";
+  saveBank(); renderBank(); renderHome();
+  toast(n? `已加入 ${n} 題` : "冇新題目加入");
+};
+$("#btnExport").onclick = ()=>{
+  const plain = { name: bank.name, decks: bank.decks.map(d=>({
+    id:d.id, name:d.name, items:d.items.map(i=>i.t)
+  }))};
+  const blob = new Blob([JSON.stringify(plain,null,2)], {type:"application/json"});
+  const a = document.createElement("a");
+  a.href = URL.createObjectURL(blob);
+  a.download = `bigtv-bank-${new Date().toISOString().slice(0,10)}.json`;
+  a.click(); URL.revokeObjectURL(a.href);
+  toast("已匯出");
+};
+$("#btnImport").onclick = ()=> $("#fileInput").click();
+$("#fileInput").onchange = e=>{
+  const f = e.target.files[0]; if(!f) return;
+  const rd = new FileReader();
+  rd.onload = ()=>{
+    try{
+      const incoming = normalizeBank(JSON.parse(rd.result));
+      incoming.decks.forEach(nd=>{
+        const ex = bank.decks.find(d=>d.name===nd.name);
+        if(ex){
+          nd.items.forEach(it=>{ if(!ex.items.some(x=>x.t===it.t)) ex.items.push(it); });
+        } else {
+          nd.id = "i"+Date.now().toString(36)+Math.floor(Math.random()*999);
+          bank.decks.push(nd);
+          cfg.decks.push(nd.id);
+        }
+      });
+      saveBank(); saveCfg(); renderBank(); renderHome();
+      toast("已合併匯入：" + incoming.decks.length + " 個類別");
+    }catch(err){ toast("JSON 格式有問題"); }
+  };
+  rd.readAsText(f);
+  e.target.value="";
+};
+
+/* 鍵盤控場 */
+document.addEventListener("keydown", e=>{
+  if(!$("#v-play").classList.contains("active")) return;
+  if(["INPUT","TEXTAREA"].includes(document.activeElement.tagName)) return;
+  const k = e.key.toLowerCase();
+  if(e.code==="Space" || k==="enter"){ e.preventDefault(); judge("ok"); }
+  else if(k==="x"){ judge("miss"); }
+  else if(k==="s" || k==="arrowdown"){ e.preventDefault(); judge("skip"); }
+  else if(k==="z"){ undo(); }
+  else if(k==="escape" || k==="p"){ e.preventDefault(); $("#btnPause").click(); }
+});
+
+/* ================= 啟動 ================= */
+renderHome();
+updateSrc();
+pullRemoteBank();
+window.__bigtv = { get G(){return G}, get bank(){return bank}, get cfg(){return cfg},
+  startGame, judge, undo, endTurn, endGame, renderHome, renderPlay, renderBank, showView };
+</script>
+</body>
+</html>

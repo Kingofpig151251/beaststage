@@ -1,0 +1,16 @@
+# 本機資料（SQLite DB、pg 暫存）
+data/
+*.db
+*.db-journal
+
+# Python
+__pycache__/
+*.pyc
+.venv/
+venv/
+
+# Vercel / Node
+.vercel/
+node_modules/
+.env
+.env.local
