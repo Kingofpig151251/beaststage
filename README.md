@@ -96,12 +96,30 @@ POST   /api/reset {what:"sessions"|"bank"}
 ```
 `items` 亦接受 `{"t":"雞蛋仔"}` 格式；舊嘅 `ban` 欄位會被忽略（呢個 app 只做大電視，唔使禁字）。
 
-## 七、檔案
+## 七、雲端部署（Vercel）
+
+雲端版用 `api/`（FastAPI + Postgres），因為 serverless 冇持久磁碟，SQLite 用唔到。
+
+1. GitHub repo：`Kingofpig151251/bigtv`（private）
+2. Vercel 專案 `bigtv` 已連 GitHub：**push 上 main 就自動部署去 production**
+3. 環境變數（Vercel → Settings → Environment Variables）
+   - `DATABASE_URL`：Neon Postgres（由 Vercel Marketplace 的 Neon integration 自動注入）
+   - `BIGTV_PIN`：後台密碼
+   - `BIGTV_SECRET`：簽登入 token 用（serverless 冇共享記憶體，改用 HMAC 簽名）
+4. 本地開發：`vercel dev`（會用 `.env.local`），或者照用 `python3 server.py`
+
+兩套後端共用同一份前端同同一套 `/api/*` 介面，揀邊個跑睇部署環境。
+
+## 八、檔案
 
 ```
 index.html                 主持台（單檔，可獨立用）
 admin.html                 後台
-server.py                  後端（Python 標準庫 + SQLite）
+server.py                  自架版後端（Python 標準庫 + SQLite）
+api/_app.py                Vercel 版後端（FastAPI + Postgres）
+api/[...path].py           Vercel catch-all 入口
+vercel.json / requirements.txt
+tests/test_api_local.py    API smoke test（sqlite shim）
 Dockerfile / docker-compose.yml
 samples/hk-icebreaker.json 內建香港題庫（6 類共 62 題）
 data/bigtv.db              SQLite（首次啟動自動建立）
