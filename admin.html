@@ -317,7 +317,7 @@ async function loadLb(){
   $("#lbPlayers").innerHTML = LB.players.map((p,i)=>`
     <div class="lbrow">
       <div class="no">${i+1}</div>
-      <div class="nm">${esc(p.name)}<div class="sub">${p.games} 場 · 最佳 ${p.best} · 對 ${p.ok}／跳 ${p.skips}／錯 ${p.miss}</div></div>
+      <div class="nm">${esc(p.name)}<div class="sub">${p.games} 場 · 最佳 ${p.best} · 對 ${p.ok}／跳 ${p.skips}</div></div>
       <div class="pts">${p.total}</div>
     </div>`).join("") || `<p class="sub" style="padding:12px">未有紀錄</p>`;
   $("#lbSessions").innerHTML = LB.recent.map(s=>`

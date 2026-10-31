@@ -17,6 +17,8 @@ class Cur:
     def __init__(self, cur):
         self.cur = cur
     def execute(self, sql, params=()):
+        if "DROP COLUMN" in sql.upper():      # sqlite 唔支援，當 no-op
+            return self
         sql = re.sub(r"SERIAL PRIMARY KEY", "INTEGER PRIMARY KEY AUTOINCREMENT", sql, flags=re.I)
         sql = sql.replace("%s", "?")
         self.cur.execute(sql, params)
@@ -97,16 +99,16 @@ check("deck gone", not any(x["id"] == did for x in d["decks"]))
 
 # --- 成績 / 排行榜 ---
 r = cl.post("/api/sessions", json={"mode": "大電視", "rounds": 1, "questions": 3, "teams": [
-    {"name": "阿明", "score": 4, "ok": 4, "skip": 0, "miss": 1},
-    {"name": "阿珍", "score": 2, "ok": 2, "skip": 1, "miss": 2}]})
+    {"name": "阿明", "score": 4, "ok": 4, "skip": 0},
+    {"name": "阿珍", "score": 2, "ok": 2, "skip": 1}]})
 check("session add", r.status_code == 200 and r.json().get("id"))
 cl.post("/api/sessions", json={"mode": "大電視", "rounds": 1, "questions": 2, "teams": [
-    {"name": "阿明", "score": 1, "ok": 1, "skip": 0, "miss": 0}]})
+    {"name": "阿明", "score": 1, "ok": 1, "skip": 0}]})
 check("session empty teams rejected", cl.post("/api/sessions", json={"teams": []}).status_code == 400)
 
 lb = cl.get("/api/leaderboard").json()
 check("leaderboard totals", lb["players"][0] == {"name": "阿明", "total": 5, "best": 4, "games": 2,
-                                                 "ok": 5, "skips": 0, "miss": 1}, lb["players"][:1])
+                                                 "ok": 5, "skips": 0}, lb["players"][:1])
 check("sessions_total = 2", lb["sessions_total"] == 2, lb["sessions_total"])
 check("recent shape", lb["recent"][0]["winner"] in ("阿明", "阿珍"), lb["recent"][:1])
 

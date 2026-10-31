@@ -74,13 +74,15 @@ def ensure_schema():
             id SERIAL PRIMARY KEY,
             session_id INTEGER NOT NULL REFERENCES sessions(id) ON DELETE CASCADE,
             player TEXT NOT NULL, score INTEGER DEFAULT 0,
-            ok INTEGER DEFAULT 0, skip INTEGER DEFAULT 0, miss INTEGER DEFAULT 0)""",
+            ok INTEGER DEFAULT 0, skip INTEGER DEFAULT 0)""",
         "CREATE INDEX IF NOT EXISTS idx_results_session ON results(session_id)",
         "CREATE TABLE IF NOT EXISTS meta (key TEXT PRIMARY KEY, value TEXT)",
     ]
     with conn() as c, c.cursor() as cur:
         for sql in statements:
             cur.execute(sql)
+        # 舊 DB 仲有 miss 欄（已無用途）
+        cur.execute("ALTER TABLE results DROP COLUMN IF EXISTS miss")
         cur.execute("SELECT COUNT(*) AS c FROM decks")
         if cur.fetchone()["c"] == 0 and os.path.exists(SEED):
             with open(SEED, encoding="utf-8") as f:
@@ -201,7 +203,7 @@ def leaderboard(limit: int = 10):
     with conn() as c, c.cursor() as cur:
         cur.execute("""
             SELECT r.player AS name, SUM(r.score) AS total, MAX(r.score) AS best,
-                   COUNT(*) AS games, SUM(r.ok) AS ok, SUM(r.skip) AS skips, SUM(r.miss) AS miss
+                   COUNT(*) AS games, SUM(r.ok) AS ok, SUM(r.skip) AS skips
             FROM results r GROUP BY r.player
             ORDER BY total DESC, best DESC, games DESC LIMIT %s""", (limit,))
         players = cur.fetchall()
@@ -230,9 +232,9 @@ async def session_add(request: Request):
                      int(body.get("questions") or 0)))
         sid = cur.fetchone()["id"]
         for t in teams[:16]:
-            cur.execute("INSERT INTO results(session_id,player,score,ok,skip,miss) VALUES(%s,%s,%s,%s,%s,%s)",
+            cur.execute("INSERT INTO results(session_id,player,score,ok,skip) VALUES(%s,%s,%s,%s,%s)",
                         (sid, str(t.get("name", "?"))[:40] or "?", int(t.get("score") or 0),
-                         int(t.get("ok") or 0), int(t.get("skip") or 0), int(t.get("miss") or 0)))
+                         int(t.get("ok") or 0), int(t.get("skip") or 0)))
     return {"id": sid, "ok": True}
 
 
@@ -244,7 +246,7 @@ def sessions_list(limit: int = 20):
         cur.execute("SELECT id, finished_at, mode, rounds, questions FROM sessions ORDER BY id DESC LIMIT %s", (limit,))
         rows = cur.fetchall()
         for r in rows:
-            cur.execute("SELECT player,score,ok,skip,miss FROM results WHERE session_id=%s ORDER BY score DESC", (r["id"],))
+            cur.execute("SELECT player,score,ok,skip FROM results WHERE session_id=%s ORDER BY score DESC", (r["id"],))
             r["results"] = cur.fetchall()
     return {"sessions": rows}
 

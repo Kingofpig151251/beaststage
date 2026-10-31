@@ -69,10 +69,9 @@
   .bar.warn > i{background:var(--skip)}
   .bar.dead > i{background:var(--danger)}
 
-  .judge{display:grid; grid-template-columns:1.4fr 1fr 1fr; gap:10px; margin-bottom:10px}
+  .judge{display:grid; grid-template-columns:1.5fr 1fr; gap:10px; margin-bottom:10px}
   .judge button{padding:22px 8px; font-size:19px; border-radius:16px}
   .j-ok{background:linear-gradient(180deg,#3ee38c,#1fa85e); color:#04220f}
-  .j-miss{background:#2b3443; color:#e8eef8}
   .j-skip{background:linear-gradient(180deg,#f7c154,#d99b1e); color:#221a05}
 
   .util{display:flex; gap:10px; flex-wrap:wrap}
@@ -154,8 +153,7 @@
       </div>
       <div class="row">
         <label>選項</label>
-        <label class="kv"><input type="checkbox" id="penaltyChk" style="width:auto; margin-right:6px">跳過扣 1 分</label>
-        <label class="kv" style="margin-left:14px"><input type="checkbox" id="soundChk" style="width:auto; margin-right:6px">提示音</label>
+        <label class="kv"><input type="checkbox" id="soundChk" style="width:auto; margin-right:6px">提示音</label>
       </div>
     </div>
 
@@ -174,7 +172,6 @@
       <button class="btn-ghost" id="btnBankHome">管理題庫</button>
       <button class="btn-ghost" id="btnLb">排行榜</button>
       <button class="btn-ghost" id="btnFull">全螢幕</button>
-      <button class="btn-ghost" id="btnResetBank">還原內建題庫</button>
     </div>
   </section>
 
@@ -202,7 +199,6 @@
 
     <div class="judge">
       <button class="j-ok" data-judge="ok">✓ 對</button>
-      <button class="j-miss" data-judge="miss">✗ 錯</button>
       <button class="j-skip" data-judge="skip">跳過 ›</button>
     </div>
 
@@ -214,7 +210,7 @@
 
     <div class="scores" id="pScores"></div>
     <p class="qhint" style="margin-top:12px">
-      鍵盤：<span class="kbd">Space</span> 對　<span class="kbd">X</span> 錯　<span class="kbd">S</span> 跳過　<span class="kbd">Z</span> 撤銷　<span class="kbd">Esc</span> 暫停
+      鍵盤：<span class="kbd">Space</span> 對　<span class="kbd">S</span> 跳過　<span class="kbd">Z</span> 撤銷　<span class="kbd">Esc</span> 暫停
     </p>
   </section>
 
@@ -330,7 +326,7 @@ const store = {
 let bank = normalizeBank(store.get(K_BANK, null) || clone(DEFAULT_BANK));
 let cfg  = Object.assign({
   teams:2, names:["A 隊","B 隊","C 隊","D 隊","E 隊","F 隊","G 隊","H 隊"],
-  sec:60, rounds:1, decks: bank.decks.map(d=>d.id), skipPenalty:false, sound:true
+  sec:60, rounds:1, decks: bank.decks.map(d=>d.id), sound:true
 }, store.get(K_CFG, {}));
 
 let G = null;
@@ -421,7 +417,6 @@ function renderHome(){
 
   $("#secInput").value = cfg.sec;
   $("#roundInput").value = cfg.rounds;
-  $("#penaltyChk").checked = !!cfg.skipPenalty;
   $("#soundChk").checked = !!cfg.sound;
 
   $("#deckChips").innerHTML = bank.decks.map(d=>`
@@ -477,7 +472,7 @@ function startGame(){
 
   G = {
     sec: Number(cfg.sec)||0, rounds: Number(cfg.rounds)||1,
-    teams: names.map(n=>({name:n, score:0, ok:0, skip:0, miss:0})),
+    teams: names.map(n=>({name:n, score:0, ok:0, skip:0})),
     turn:0, round:1,
     pool: shuffle(pool.slice()), used: [], cur:null,
     log: [], paused:false, remaining:0, timerId:null, lastBeep:-1
@@ -551,11 +546,10 @@ function renderPlay(){
 function judge(kind){
   if(!G || !G.cur) return;
   const t = G.teams[G.turn];
-  const delta = kind==="ok" ? 1 : (kind==="skip" && cfg.skipPenalty ? -1 : 0);
+  const delta = kind==="ok" ? 1 : 0;
   G.log.push({item:G.cur, kind, team:G.turn, delta});
   t.score += delta;
-  if(kind==="ok") t.ok++; else if(kind==="skip") t.skip++; else t.miss++;
-  if(kind==="ok") beep(980,0.07,0.14); else if(kind==="miss") beep(240,0.09,0.1);
+  if(kind==="ok"){ t.ok++; beep(980,0.07,0.14); } else { t.skip++; }
   G.cur = drawItem();
   renderPlay();
 }
@@ -565,7 +559,7 @@ function undo(){
   const last = G.log.pop();
   const t = G.teams[last.team];
   t.score -= last.delta;
-  if(last.kind==="ok") t.ok--; else if(last.kind==="skip") t.skip--; else t.miss--;
+  if(last.kind==="ok") t.ok--; else t.skip--;
   G.cur = last.item;
   renderPlay();
   toast("已撤銷");
@@ -597,7 +591,7 @@ function endGame(){
     <div class="rk ${idx===0 && t.score>0 ? "first":""}">
       <div class="no">${idx+1}</div>
       <div class="nm">${esc(t.name)}
-        <div class="st">對 ${t.ok} · 跳 ${t.skip} · 錯 ${t.miss}</div>
+        <div class="st">對 ${t.ok} · 跳 ${t.skip}</div>
       </div>
       <div class="pt">${t.score}</div>
     </div>`).join("") + `<p class="sub" style="text-align:center;margin-top:6px">總分 ${total}</p>`;
@@ -607,7 +601,7 @@ function endGame(){
     fetch("/api/sessions", {method:"POST", headers:{"Content-Type":"application/json"},
       body: JSON.stringify({
         mode:"大電視", rounds:G.rounds, questions:G.log.length,
-        teams: G.teams.map(t=>({name:t.name, score:t.score, ok:t.ok, skip:t.skip, miss:t.miss}))
+        teams: G.teams.map(t=>({name:t.name, score:t.score, ok:t.ok, skip:t.skip}))
       })
     }).catch(()=>{ toast("成績上傳失敗（server 斷線？）"); });
   }
@@ -626,7 +620,7 @@ async function openLb(){
     $("#lbPlayers").innerHTML = (d.players||[]).map((pl,i)=>`
       <div class="lbrow">
         <div class="no">${i+1}</div>
-        <div class="nm">${esc(pl.name)}<div class="st">${pl.games} 場 · 最佳 ${pl.best} · 對 ${pl.ok}／跳 ${pl.skips}／錯 ${pl.miss}</div></div>
+        <div class="nm">${esc(pl.name)}<div class="st">${pl.games} 場 · 最佳 ${pl.best} · 對 ${pl.ok}／跳 ${pl.skips}</div></div>
         <div class="pt">${pl.total}</div>
       </div>`).join("") || `<p class="sub">未有紀錄</p>`;
     $("#lbRecent").innerHTML = (d.recent||[]).map(s=>`
@@ -647,13 +641,11 @@ $("#teamMinus").onclick = ()=>{ cfg.teams=Math.max(1,cfg.teams-1); saveCfg(); re
 $("#teamPlus").onclick  = ()=>{ cfg.teams=Math.min(8,cfg.teams+1); saveCfg(); renderHome(); };
 $("#secInput").onchange  = e=>{ cfg.sec=Math.max(0,Math.min(600,+e.target.value||0)); saveCfg(); };
 $("#roundInput").onchange= e=>{ cfg.rounds=Math.max(1,Math.min(20,+e.target.value||1)); saveCfg(); };
-$("#penaltyChk").onchange= e=>{ cfg.skipPenalty=e.target.checked; saveCfg(); };
 $("#soundChk").onchange  = e=>{ cfg.sound=e.target.checked; saveCfg(); };
 $("#btnAll").onclick  = ()=>{ cfg.decks=bank.decks.map(d=>d.id); saveCfg(); renderHome(); };
 $("#btnNone").onclick = ()=>{ cfg.decks=[]; saveCfg(); renderHome(); };
 $("#btnStart").onclick = startGame;
 $("#btnFull").onclick = ()=>{ if(!document.fullscreenElement){ document.documentElement.requestFullscreen&&document.documentElement.requestFullscreen(); } else { document.exitFullscreen(); } };
-$("#btnResetBank").onclick = ()=>{ if(confirm("還原成內建香港題庫？你改過嘅題目會冇咗。")){ bank=normalizeBank(clone(DEFAULT_BANK)); saveBank(); cfg.decks=bank.decks.map(d=>d.id); saveCfg(); renderHome(); toast("已還原"); } };
 
 $$(".judge button").forEach(b=>b.onclick=()=>judge(b.dataset.judge));
 $("#btnUndo").onclick = undo;
@@ -741,7 +733,6 @@ document.addEventListener("keydown", e=>{
   if(["INPUT","TEXTAREA"].includes(document.activeElement.tagName)) return;
   const k = e.key.toLowerCase();
   if(e.code==="Space" || k==="enter"){ e.preventDefault(); judge("ok"); }
-  else if(k==="x"){ judge("miss"); }
   else if(k==="s" || k==="arrowdown"){ e.preventDefault(); judge("skip"); }
   else if(k==="z"){ undo(); }
   else if(k==="escape" || k==="p"){ e.preventDefault(); $("#btnPause").click(); }

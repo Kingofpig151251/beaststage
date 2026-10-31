@@ -92,7 +92,7 @@ def init_db():
             id INTEGER PRIMARY KEY AUTOINCREMENT,
             session_id INTEGER NOT NULL REFERENCES sessions(id) ON DELETE CASCADE,
             player TEXT NOT NULL, score INTEGER DEFAULT 0,
-            ok INTEGER DEFAULT 0, skip INTEGER DEFAULT 0, miss INTEGER DEFAULT 0
+            ok INTEGER DEFAULT 0, skip INTEGER DEFAULT 0
         );
         CREATE INDEX IF NOT EXISTS idx_results_session ON results(session_id);
         CREATE INDEX IF NOT EXISTS idx_results_player ON results(player);
@@ -325,7 +325,7 @@ class Handler(BaseHTTPRequestHandler):
                        SUM(r.score) AS total,
                        MAX(r.score) AS best,
                        COUNT(*) AS games,
-                       SUM(r.ok) AS ok, SUM(r.skip) AS skips, SUM(r.miss) AS miss
+                       SUM(r.ok) AS ok, SUM(r.skip) AS skips
                 FROM results r
                 GROUP BY r.player
                 ORDER BY total DESC, best DESC, games DESC
@@ -347,7 +347,7 @@ class Handler(BaseHTTPRequestHandler):
                 FROM sessions ORDER BY id DESC LIMIT ?""", (limit,))]
             for r in rows:
                 r["results"] = [dict(x) for x in conn.execute(
-                    "SELECT player,score,ok,skip,miss FROM results WHERE session_id=? ORDER BY score DESC", (r["id"],))]
+                    "SELECT player,score,ok,skip FROM results WHERE session_id=? ORDER BY score DESC", (r["id"],))]
         return {"sessions": rows}
 
     def _add_session(self, body):
@@ -365,9 +365,9 @@ class Handler(BaseHTTPRequestHandler):
             for t in teams[:16]:
                 player = str(t.get("name", "?"))[:40] or "?"
                 conn.execute(
-                    "INSERT INTO results(session_id,player,score,ok,skip,miss) VALUES(?,?,?,?,?,?)",
+                    "INSERT INTO results(session_id,player,score,ok,skip) VALUES(?,?,?,?,?)",
                     (sid, player, int(t.get("score") or 0), int(t.get("ok") or 0),
-                     int(t.get("skip") or 0), int(t.get("miss") or 0)))
+                     int(t.get("skip") or 0)))
         return {"id": sid, "ok": True}
 
     def _add_deck(self, body):
