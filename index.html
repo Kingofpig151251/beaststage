@@ -238,8 +238,8 @@
   .view.active#v-play{display:flex; flex-direction:column; height:100%}
   #v-play{position:relative}
 
-  .flash-top{display:flex; align-items:center; justify-content:space-between; gap:10px;
-    padding:6px 14px; border-bottom:1px solid var(--rule); flex:0 0 auto; flex-wrap:wrap}
+  .flash-top{display:flex; align-items:center; justify-content:flex-end; gap:8px;
+    padding:6px 14px; border-bottom:1px solid var(--rule); flex:0 0 auto}
   .flash-tools{display:flex; gap:6px; align-items:center}
   .tool-sep{width:1px; height:20px; background:var(--rule); margin:0 4px}
   .flash-tools button{padding:8px 12px; font-size:13px}
@@ -247,6 +247,7 @@
   .icon-btn{width:42px; height:42px; padding:0; display:grid; place-items:center; flex:0 0 auto;
     border:1px solid var(--rule); border-radius:50%; background:transparent; color:var(--ink-2)}
   .icon-btn svg{width:17px; height:17px; fill:currentColor}
+  .icon-btn.stroke svg{fill:none; stroke:currentColor; stroke-width:1.9; stroke-linecap:round; stroke-linejoin:round}
   .icon-btn:hover{color:var(--ink); border-color:var(--ink-2)}
   .ring{position:relative; width:56px; height:56px; display:grid; place-items:center; flex:0 0 auto}
   .ring svg{position:absolute; inset:0; width:100%; height:100%; transform:rotate(-90deg)}
@@ -267,7 +268,7 @@
     text-align:center; text-wrap:balance; word-break:break-word; max-width:100%;
     font-size:clamp(48px,22vh,240px); flex:0 1 auto}
 
-  .flash-hud{flex:0 0 auto; display:grid; grid-template-columns:minmax(0,1fr) auto minmax(0,1fr); gap:12px;
+  .flash-hud{flex:0 0 auto; display:grid; grid-template-columns:1fr 1fr; gap:12px;
     align-items:center; border-top:1px solid var(--rule);
     padding:12px calc(16px + env(safe-area-inset-right)) calc(12px + env(safe-area-inset-bottom)) calc(16px + env(safe-area-inset-left))}
   .flash-hud .undo{justify-self:center; padding:12px 18px; font-size:13.5px}
@@ -278,7 +279,7 @@
     color:var(--ink-2)}
   .flash-hud .j-ok{background:var(--accent); color:var(--accent-ink); box-shadow:var(--shadow); border-color:var(--accent)}
   .flash-hud .j-skip{background:var(--paper-2); color:var(--ink); border-color:var(--rule)}
-  .flash-hud{flex:0 0 auto; display:grid; grid-template-columns:minmax(0,1fr) auto minmax(0,1fr); gap:12px;
+  .flash-hud{flex:0 0 auto; display:grid; grid-template-columns:1fr 1fr; gap:12px;
     align-items:center; border-top:1px solid var(--rule);
     padding:12px calc(16px + env(safe-area-inset-right)) calc(12px + env(safe-area-inset-bottom)) calc(16px + env(safe-area-inset-left))}
   .flash-hud .undo{justify-self:center; padding:12px 18px; font-size:13.5px}
@@ -487,11 +488,10 @@
   <!-- ========== 遊戲 ========== -->
   <section class="view" id="v-play">
     <div class="flash-top">
-      <div class="row" style="gap:8px; min-width:0">
-        <span class="card-deck" id="pDeck"></span>
-        <span class="kv" id="pLeft"></span>
-      </div>
       <div class="flash-tools">
+        <button class="icon-btn stroke" id="btnExit" aria-label="退出遊戲" title="退出遊戲">
+          <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M15 4h3.2A1.8 1.8 0 0 1 20 5.8v12.4A1.8 1.8 0 0 1 18.2 20H15"/><path d="M10.5 8.2 6.7 12l3.8 3.8"/><path d="M6.9 12h8.3"/></svg>
+        </button>
         <button class="icon-btn" id="btnPause" aria-label="暫停" title="暫停（Esc）">
           <svg viewBox="0 0 24 24" aria-hidden="true"><rect x="7" y="5" width="3.6" height="14" rx="1.2"/><rect x="13.4" y="5" width="3.6" height="14" rx="1.2"/></svg>
         </button>
@@ -511,7 +511,6 @@
 
     <div class="flash-hud">
       <button class="j-skip" data-judge="skip">跳過</button>
-      <button class="btn-quiet undo" id="btnUndo">撤銷</button>
       <button class="j-ok" data-judge="ok">對</button>
     </div>
 
@@ -1025,10 +1024,8 @@ function fitWord(text){
 addEventListener("resize", ()=>{ if(G && G.phase==="running") fitWord($("#pText").textContent); });
 
 function renderPlay(){
-  $("#pLeft").textContent = `剩 ${G.pool.length} 題`;
   const it = G.cur || {t:"", deck:""};   // ready 階段未有題目
   $("#pText").textContent = it.t;
-  $("#pDeck").textContent = it.deck || "";
   fitWord(it.t);
 
   renderTimer();
@@ -1160,7 +1157,18 @@ $("#btnFull").onclick = ()=>{ if(!document.fullscreenElement){ document.document
 
 $$("[data-judge]").forEach(b=>b.onclick=()=>judge(b.dataset.judge));
 $("#btnReady").onclick = startRound;
-$("#btnUndo").onclick = undo;
+$("#btnExit").onclick = ()=>{
+  if(!G) { showView("v-home"); renderHome(); return; }
+  if(!confirm("退出遊戲？今場唔會計成績。")) return;
+  clearInterval(G.timerId);
+  G.timerToken++;
+  G = null;
+  document.querySelector("#readyOverlay").style.display = "none";
+  document.body.classList.remove("is-ready");
+  showView("v-home");
+  renderHome();
+};
+
 function setPauseIcon(p){
   const b = $("#btnPause"); if(!b) return;
   b.innerHTML = p
@@ -1244,7 +1252,7 @@ document.addEventListener("keydown", e=>{
     return;
   }
   else if(k==="s" || k==="arrowdown"){ e.preventDefault(); judge("skip"); }
-  else if(k==="z"){ undo(); }
+  else if(k==="z"){ /* 撤銷已移除 */ }
   else if(k==="escape" || k==="p"){ e.preventDefault(); $("#btnPause").click(); }
 });
 
