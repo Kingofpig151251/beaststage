@@ -249,11 +249,17 @@
   .icon-btn svg{width:17px; height:17px; fill:currentColor}
   .icon-btn.stroke svg{fill:none; stroke:currentColor; stroke-width:1.9; stroke-linecap:round; stroke-linejoin:round}
   .icon-btn:hover{color:var(--ink); border-color:var(--ink-2)}
-  .ring{position:relative; width:56px; height:56px; display:grid; place-items:center; flex:0 0 auto;
-    padding:0; border:0; background:transparent; color:inherit; cursor:pointer; border-radius:50%}
+  /* 實心碟＝按鈕（空心環只係讀數），配 app 嘅按壓物理 */
+  .ring{position:relative; width:58px; height:58px; display:grid; place-items:center; flex:0 0 auto;
+    padding:0; color:inherit; cursor:pointer; border-radius:50%;
+    background:var(--paper-3); border:1px solid var(--rule); box-shadow:0 2px 0 var(--shade);
+    transition:background .12s, border-color .12s, transform .06s, box-shadow .06s}
+  .ring:hover{background:var(--paper-2); border-color:var(--ink-2)}
+  .ring:active{transform:translateY(2px); box-shadow:none}
   .ring:focus-visible{outline:2px solid var(--focus); outline-offset:2px}
+  .ring.paused{background:var(--paper-2); border-color:var(--ink-2)}
   .ring svg{position:absolute; inset:0; width:100%; height:100%; transform:rotate(-90deg)}
-  .ring-track{fill:none; stroke:var(--paper-3); stroke-width:3}
+  .ring-track{fill:none; stroke:color-mix(in oklab, var(--rule) 70%, var(--paper-3)); stroke-width:3}
   .ring-prog{fill:none; stroke:var(--accent-2); stroke-width:3; stroke-linecap:round;
     stroke-dasharray:119.4; stroke-dashoffset:0; transition:stroke-dashoffset .25s linear, stroke .3s}
   .ring b{font-family:var(--font-mono); font-size:19px; line-height:1; font-variant-numeric:tabular-nums}
