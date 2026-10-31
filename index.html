@@ -757,12 +757,18 @@ function renderBank(){
       <input data-t="${i}" value="${esc(it.t)}" placeholder="題目">
       <button data-del="${i}" title="刪除">✕</button>
     </div>`).join("") : "";
+  // 未設寫入碼＝只讀：所有編輯控制停用
+  const ro = !cfg.syncKey;
+  ["#newDeckName","#btnAddDeck","#btnDelDeck","#btnBulkAdd","#bulkInput"].forEach(sel=>{
+    const el = $(sel); if(el) el.disabled = ro;
+  });
   if(deck){
     $$("#bankItems input[data-t]").forEach(inp=>inp.onchange=()=>{
       const i=+inp.dataset.t, v=inp.value.trim();
       if(v) deck.items[i].t = v; else inp.value = deck.items[i].t;
       saveBank(); renderHome(); pushBank();
     });
+    $$("#bankItems input[data-t], #bankItems button[data-del]").forEach(el=>el.disabled = ro);
     $$("#bankItems button[data-del]").forEach(b=>b.onclick=()=>{
       deck.items.splice(+b.dataset.del,1); saveBank(); renderBank(); renderHome(); pushBank();
       toast("已刪除");
@@ -1063,10 +1069,7 @@ $("#btnAgain").onclick = startGame;
 $("#btnBackHome").onclick = ()=>{ showView("v-home"); renderHome(); };
 $("#btnLbFromResult").onclick = openLb;
 
-$("#btnBankHome").onclick = ()=>{
-  if(REMOTE.ok){ window.open("/admin.html", "_blank"); return; }   // 有後端就開後台
-  showView("v-bank"); renderBank();
-};
+$("#btnBankHome").onclick = ()=>{ showView("v-bank"); renderBank(); };
 $("#btnLb").onclick = openLb;
 $("#btnLbBack").onclick = ()=>{ showView("v-home"); renderHome(); };
 $("#btnBankBack").onclick = ()=>{ showView("v-home"); renderHome(); };
