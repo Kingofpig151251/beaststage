@@ -47,6 +47,15 @@ docker compose up -d          # 預設 8080，資料喺 ./data
 - 準備畫面：ember 卡，3、2、1 倒數每格 1.15 秒
 - 字型用系統字（唔載 webfont），因為要單檔離線用得
 
+**iPad 適配**：已按 iPad 實際 CSS 尺寸調過（mini 744×1133、Air 820×1180、Pro 11" 834×1194、Pro 13" 1024×1366，橫度對調）
+
+- 1024 闊以上兩欄設定，iPad 直度單欄；所有 iPad 尺寸遊戲畫面唔使捲
+- 觸控目標：判定鍵 69–87px、加減掣 44×44、分類 chip 46px 高、輸入框 16px 字（iOS 唔會自動放大）
+- 支援 `viewport-fit=cover` + `safe-area-inset`，圓角／Home Indicator 唔會蓋住內容
+- hover 效果只在有滑鼠嘅裝置生效，iPad 唔會「黏住」上一個 hover
+- 加咗 `apple-mobile-web-app-capable`：iPad Safari「加到主畫面」後以全屏 App 方式開，冇瀏覽器工具列（推薦主持用）
+- `color-mix` / `dvh` 有 fallback，舊 iPadOS 唔會爛色或爆高度
+
 ## 三、設定
 
 - **組別／玩家**：1–8 個，可以打玩家名（唔一定要分隊）

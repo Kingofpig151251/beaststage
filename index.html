@@ -3,6 +3,10 @@
 <head>
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<meta name="theme-color" content="#1b1224">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-title" content="大電視">
+<meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
 <meta name="description" content="大電視破冰主持台：一部機控場，一人背向屏幕猜，全隊描述，主持按對或跳過，題庫同排行榜可以自訂。">
 <title>大電視 · 破冰主持台</title>
 <style>
@@ -35,7 +39,8 @@
   h1{font-family:var(--font-display); font-weight:900; letter-spacing:-.02em; line-height:1.05; font-size:clamp(22px,2.6vw,30px); text-wrap:balance}
   h2{font-size:13px; font-weight:700; color:var(--muted); margin-bottom:10px}
   p{margin:0}
-  .wrap{max-width:1080px; margin:0 auto; padding:18px 16px 28px}
+  .wrap{max-width:1080px; margin:0 auto;
+    padding:18px max(16px, env(safe-area-inset-left)) 28px max(16px, env(safe-area-inset-right))}
   .view{display:none}
   .view.active{display:block}
   :focus-visible{outline:3px solid var(--focus); outline-offset:2px}
@@ -45,19 +50,17 @@
   .rule{height:var(--bar); background:var(--rule); border:0; margin:16px 0}
 
   /* ---- controls: the press surface ---- */
-  button{font-family:inherit; font-size:15px; font-weight:700; color:var(--ink); background:transparent;
+  button{touch-action:manipulation; font-family:inherit; font-size:15px; font-weight:700; color:var(--ink); background:transparent;
     border:var(--bar) solid var(--ink); border-radius:var(--radius); padding:10px 16px; cursor:pointer;
     transition:translate var(--dur) var(--ease), box-shadow var(--dur) var(--ease), background-color var(--dur) steps(1)}
   button:active{translate:3px 3px; box-shadow:2px 2px 0 var(--accent-2)}
   button:disabled{opacity:.4; cursor:not-allowed; box-shadow:none}
   button:disabled:active{translate:0}
   .btn-primary{background:var(--accent); color:var(--accent-ink); box-shadow:var(--shadow)}
-  .btn-primary:hover{background:color-mix(in oklab, var(--accent) 88%, white)}
   .btn-quiet{border-color:var(--rule); color:var(--ink-2)}
-  .btn-quiet:hover{border-color:var(--ink); color:var(--ink)}
   .btn-big{display:block; width:100%; max-width:420px; margin:0 auto; padding:18px; font-size:18px; letter-spacing:.01em}
 
-  input,textarea{font-family:inherit; font-size:15px; color:var(--ink); background:var(--paper);
+  input,textarea{touch-action:manipulation; font-family:inherit; font-size:15px; color:var(--ink); background:var(--paper);
     border:var(--bar) solid var(--muted); border-radius:var(--radius); padding:9px 12px; width:100%}
   input:focus-visible,textarea:focus-visible{outline:3px solid var(--focus); outline-offset:2px}
   input[type="checkbox"]{width:auto; accent-color:var(--accent)}
@@ -69,9 +72,41 @@
   .pill::before{content:""; width:7px; height:7px; background:var(--muted); border-radius:1px}
   .pill.on{color:var(--accent-2)}
   .pill.on::before{background:var(--accent-2)}
-  .setup{display:grid; grid-template-columns:repeat(2,minmax(0,1fr)); gap:12px; align-items:stretch}
+  .setup{display:grid; grid-template-columns:minmax(0,1fr); gap:12px; align-items:stretch}
   .setup .span2{grid-column:1 / -1}
-  @media (max-width:760px){ .setup{grid-template-columns:minmax(0,1fr)} }
+  @media (min-width:1024px){ .setup{grid-template-columns:repeat(2,minmax(0,1fr))} }
+
+  /* ---- surfaces ---- */
+  .well{background:var(--paper-2); border:var(--bar) solid var(--rule); border-radius:var(--radius); padding:16px}
+  .rule{height:var(--bar); background:var(--rule); border:0; margin:16px 0}
+
+  /* ---- controls: the press surface ---- */
+  button{touch-action:manipulation; font-family:inherit; font-size:15px; font-weight:700; color:var(--ink); background:transparent;
+    border:var(--bar) solid var(--ink); border-radius:var(--radius); padding:10px 16px; cursor:pointer;
+    transition:translate var(--dur) var(--ease), box-shadow var(--dur) var(--ease), background-color var(--dur) steps(1)}
+  button:active{translate:3px 3px; box-shadow:2px 2px 0 var(--accent-2)}
+  button:disabled{opacity:.4; cursor:not-allowed; box-shadow:none}
+  button:disabled:active{translate:0}
+  .btn-primary{background:var(--accent); color:var(--accent-ink); box-shadow:var(--shadow)}
+  .btn-quiet{border-color:var(--rule); color:var(--ink-2)}
+  .btn-big{display:block; width:100%; max-width:420px; margin:0 auto; padding:18px; font-size:18px; letter-spacing:.01em}
+
+  input,textarea{touch-action:manipulation; font-family:inherit; font-size:15px; color:var(--ink); background:var(--paper);
+    border:var(--bar) solid var(--muted); border-radius:var(--radius); padding:9px 12px; width:100%}
+  input:focus-visible,textarea:focus-visible{outline:3px solid var(--focus); outline-offset:2px}
+  input[type="checkbox"]{width:auto; accent-color:var(--accent)}
+
+  /* ---- home ---- */
+  .top{display:flex; justify-content:space-between; align-items:baseline; gap:12px; flex-wrap:wrap; margin-bottom:18px}
+  .top .sub{color:var(--muted); font-size:13.5px; margin-top:6px}
+  .pill{font-size:12.5px; font-weight:700; color:var(--muted); white-space:nowrap; display:inline-flex; align-items:center; gap:7px}
+  .pill::before{content:""; width:7px; height:7px; background:var(--muted); border-radius:1px}
+  .pill.on{color:var(--accent-2)}
+  .pill.on::before{background:var(--accent-2)}
+  .setup{display:grid; grid-template-columns:minmax(0,1fr); gap:12px; align-items:stretch}
+  .setup .span2{grid-column:1 / -1}
+  @media (min-width:1024px){ .setup{grid-template-columns:repeat(2,minmax(0,1fr))} }
+
   .row{display:flex; gap:10px; align-items:center; flex-wrap:wrap}
   .row > label{font-size:13.5px; color:var(--muted); min-width:64px}
   .kv{font-size:13px; color:var(--muted)}
@@ -87,13 +122,13 @@
   .chip.on{border-color:var(--accent); color:var(--accent); box-shadow:inset 0 -3px 0 var(--accent)}
   .chip.on::before{content:"✓"; font-size:11px; line-height:1}
   .chip.on i{opacity:.85}
-  .chip:hover{border-color:var(--ink-2); color:var(--ink)}
 
   .startbar{display:none; position:fixed; left:0; right:0; bottom:0; background:var(--paper);
     border-top:var(--bar) solid var(--rule); z-index:20}
   body[data-view="home"] .startbar{display:block}
   body[data-view="home"] .wrap{padding-bottom:132px}
-  .startbar > div{max-width:1080px; margin:0 auto; padding:12px 16px calc(12px + env(safe-area-inset-bottom));
+  .startbar > div{max-width:1080px; margin:0 auto;
+    padding:12px max(16px, env(safe-area-inset-right)) calc(12px + env(safe-area-inset-bottom)) max(16px, env(safe-area-inset-left));
     display:flex; gap:10px; align-items:center; flex-wrap:wrap}
   .startbar button{height:48px; display:inline-flex; align-items:center; justify-content:center}
   .startbar .rail{display:flex; gap:8px; flex-wrap:wrap; margin-left:auto}
@@ -111,10 +146,13 @@
   .clock.dead{color:var(--accent); animation:fxPulse 1s ease-in-out infinite}
 
   .stage{position:relative; isolation:isolate; background:var(--paper-2); border:var(--bar) solid var(--rule);
-    border-radius:var(--radius); padding:clamp(24px,6vw,56px) 20px; min-height:32vh; display:flex;
+    border-radius:var(--radius); padding:clamp(24px,6vw,56px) 20px; min-height:32vh; min-height:32dvh; display:flex;
     flex-direction:column; justify-content:center; align-items:center; gap:14px; text-align:center; overflow:hidden}
   .stage::after{content:""; position:absolute; inset:0; pointer-events:none; z-index:-1;
     background-image:repeating-linear-gradient(to bottom, transparent 0 2px, color-mix(in oklab, var(--shade) 22%, transparent) 2px 3px)}
+  @supports not (background: color-mix(in oklab, white 50%, black)){
+    .stage::after{background-image:repeating-linear-gradient(to bottom, transparent 0 2px, rgba(0,0,0,.22) 2px 3px)}
+  }
   .stage-deck{font-size:12px; font-weight:700; color:var(--muted)}
   .stage-q{font-family:var(--font-display); font-weight:900; font-size:clamp(40px,9vw,92px); line-height:1.08;
     letter-spacing:.01em; word-break:break-word; text-wrap:balance; min-height:1.1em}
@@ -139,7 +177,10 @@
     background:var(--paper-2); border:var(--bar) solid var(--rule); border-radius:var(--radius); padding:8px 14px}
   .sc b{font-family:var(--font-mono); font-size:32px; line-height:1; font-variant-numeric:tabular-nums; color:var(--muted)}
   .sc span{font-size:13px; color:var(--muted); order:-1}
-  .sc.cur{border-color:var(--accent); background:color-mix(in oklab, var(--accent) 12%, var(--paper-2)); box-shadow:4px 4px 0 var(--accent)}
+  .sc.cur{border-color:var(--accent); background:var(--paper-3); box-shadow:4px 4px 0 var(--accent)}
+  @supports (background: color-mix(in oklab, white 50%, black)){
+    .sc.cur{background:color-mix(in oklab, var(--accent) 12%, var(--paper-2))}
+  }
   .sc.cur b{color:var(--accent)}
   .sc.cur span{color:var(--ink)}
 
@@ -148,12 +189,9 @@
     padding:20px 12px; border-radius:var(--radius); border:var(--bar) solid var(--ink); letter-spacing:.02em}
   .judge .j-ok{background:var(--accent); color:var(--accent-ink); box-shadow:var(--shadow)}
   .judge .j-skip{background:transparent; color:var(--ink-2); border-color:var(--rule)}
-  .judge .j-skip:hover{color:var(--accent-2); border-color:var(--accent-2)}
-  .judge .j-skip:hover{background:color-mix(in oklab, var(--accent-2) 14%, transparent)}
 
   .util{display:flex; gap:8px; flex-wrap:wrap; margin-bottom:10px}
   .util button{flex:1; min-width:96px; padding:11px; font-size:13.5px; border-color:var(--rule); color:var(--ink-2)}
-  .util button:hover{border-color:var(--ink); color:var(--ink)}
   .kbd{font-family:var(--font-mono); font-size:11.5px; border:1px solid var(--rule); border-radius:3px; padding:1px 6px; color:var(--muted)}
 
   /* ---- ready ---- */
@@ -205,12 +243,37 @@
   .it{display:grid; grid-template-columns:minmax(0,1fr) 36px; gap:6px; align-items:center}
   .it input{padding:8px 10px; font-size:14px}
   .it button{padding:0; height:34px; border-color:transparent; color:var(--muted)}
-  .it button:hover{color:var(--accent); border-color:var(--rule)}
 
   .toast{position:fixed; left:50%; bottom:86px; translate:-50% 0; background:var(--accent); color:var(--accent-ink);
     font-weight:700; font-size:14px; padding:10px 18px; border:var(--bar) solid var(--accent-ink);
     border-radius:var(--radius); box-shadow:4px 4px 0 var(--accent-2); opacity:0; pointer-events:none; transition:opacity .2s; z-index:99}
   .toast.on{opacity:1}
+
+  /* iPad 直度（744 / 820 / 834 闊）：加大觸控目標，題目留大位 */
+  @media (min-width:700px) and (max-width:1023px){
+    .stepper button{width:44px; height:44px}
+    .judge button{padding:26px 12px}
+    .chip{min-height:46px; padding:11px 14px}
+    .decklist button{min-height:46px; padding:13px 14px}
+    .it button{height:44px}
+    input,textarea{font-size:16px}          /* iOS 唔會自動放大 */
+  }
+  /* 橫度或矮屏：收緊垂直節奏，確保唔使捲 */
+  @media (max-height:900px){
+    .stage{min-height:26vh; min-height:26dvh}
+    .judge button{padding:18px 12px}
+    .judge{margin:12px 0 8px}
+    h1{font-size:24px}
+    .wrap{padding-top:14px}
+  }
+  @media (hover:hover) and (pointer:fine){
+    .btn-primary:hover{background:color-mix(in oklab, var(--accent) 88%, white)}
+    .btn-quiet:hover{border-color:var(--ink); color:var(--ink)}
+    .chip:hover{border-color:var(--ink-2); color:var(--ink)}
+    .judge .j-skip:hover{color:var(--accent-2); border-color:var(--accent-2)}
+    .util button:hover{border-color:var(--ink); color:var(--ink)}
+    .it button:hover{color:var(--accent); border-color:var(--rule)}
+  }
 
   @media (prefers-reduced-motion: reduce){
     *,*::before,*::after{animation-duration:.001ms !important; animation-iteration-count:1 !important;
@@ -906,7 +969,8 @@ $("#vfxChk").onchange = e=>{
 $("#btnAll").onclick  = ()=>{ cfg.decks=bank.decks.map(d=>d.id); saveCfg(); renderHome(); };
 $("#btnNone").onclick = ()=>{ cfg.decks=[]; saveCfg(); renderHome(); };
 $("#btnStart").onclick = startGame;
-$("#btnFull").onclick = ()=>{ if(!document.fullscreenElement){ document.documentElement.requestFullscreen&&document.documentElement.requestFullscreen(); } else { document.exitFullscreen(); } };
+if(!document.documentElement.requestFullscreen){ $("#btnFull").style.display = "none"; }
+$("#btnFull").onclick = ()=>{ if(!document.fullscreenElement){ document.documentElement.requestFullscreen&&document.documentElement.requestFullscreen(); } else { document.exitFullscreen&&document.exitFullscreen(); } };
 
 $$(".judge button").forEach(b=>b.onclick=()=>judge(b.dataset.judge));
 $("#btnReady").onclick = startRound;
