@@ -238,7 +238,7 @@
   .view.active#v-play{display:flex; flex-direction:column; height:100%}
   #v-play{position:relative}
 
-  .flash-top{display:flex; align-items:center; justify-content:flex-end; gap:8px;
+  .flash-top{display:flex; align-items:center; justify-content:space-between; gap:8px;
     padding:6px 14px; border-bottom:1px solid var(--rule); flex:0 0 auto}
   .flash-tools{display:flex; gap:6px; align-items:center}
   .tool-sep{width:1px; height:20px; background:var(--rule); margin:0 4px}
@@ -249,7 +249,9 @@
   .icon-btn svg{width:17px; height:17px; fill:currentColor}
   .icon-btn.stroke svg{fill:none; stroke:currentColor; stroke-width:1.9; stroke-linecap:round; stroke-linejoin:round}
   .icon-btn:hover{color:var(--ink); border-color:var(--ink-2)}
-  .ring{position:relative; width:56px; height:56px; display:grid; place-items:center; flex:0 0 auto}
+  .ring{position:relative; width:56px; height:56px; display:grid; place-items:center; flex:0 0 auto;
+    padding:0; border:0; background:transparent; color:inherit; cursor:pointer; border-radius:50%}
+  .ring:focus-visible{outline:2px solid var(--focus); outline-offset:2px}
   .ring svg{position:absolute; inset:0; width:100%; height:100%; transform:rotate(-90deg)}
   .ring-track{fill:none; stroke:var(--paper-3); stroke-width:3}
   .ring-prog{fill:none; stroke:var(--accent-2); stroke-width:3; stroke-linecap:round;
@@ -488,21 +490,16 @@
   <!-- ========== 遊戲 ========== -->
   <section class="view" id="v-play">
     <div class="flash-top">
-      <div class="flash-tools">
-        <button class="icon-btn stroke" id="btnExit" aria-label="退出遊戲" title="退出遊戲">
-          <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M15 4h3.2A1.8 1.8 0 0 1 20 5.8v12.4A1.8 1.8 0 0 1 18.2 20H15"/><path d="M10.5 8.2 6.7 12l3.8 3.8"/><path d="M6.9 12h8.3"/></svg>
-        </button>
-        <button class="icon-btn" id="btnPause" aria-label="暫停" title="暫停（Esc）">
-          <svg viewBox="0 0 24 24" aria-hidden="true"><rect x="7" y="5" width="3.6" height="14" rx="1.2"/><rect x="13.4" y="5" width="3.6" height="14" rx="1.2"/></svg>
-        </button>
-        <div class="ring" id="ring" aria-label="剩餘時間">
-          <svg viewBox="0 0 44 44" aria-hidden="true">
-            <circle class="ring-track" cx="22" cy="22" r="19"/>
-            <circle class="ring-prog" id="ringProg" cx="22" cy="22" r="19"/>
-          </svg>
-          <b class="clock" id="pClock">60</b>
-        </div>
-      </div>
+      <button class="icon-btn stroke" id="btnExit" aria-label="退出遊戲" title="退出遊戲">
+        <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M15 4h3.2A1.8 1.8 0 0 1 20 5.8v12.4A1.8 1.8 0 0 1 18.2 20H15"/><path d="M10.5 8.2 6.7 12l3.8 3.8"/><path d="M6.9 12h8.3"/></svg>
+      </button>
+      <button class="ring" id="btnPause" aria-label="暫停" title="暫停（Esc）">
+        <svg viewBox="0 0 44 44" aria-hidden="true">
+          <circle class="ring-track" cx="22" cy="22" r="19"/>
+          <circle class="ring-prog" id="ringProg" cx="22" cy="22" r="19"/>
+        </svg>
+        <b class="clock" id="pClock">60</b>
+      </button>
     </div>
 
     <main class="card question" id="stage">
@@ -990,9 +987,9 @@ function startTimer(){
 
 const RING_LEN = 2 * Math.PI * 19;   // r=19
 function renderTimer(){
-  const el=$("#pClock"), ring=$("#ring"), prog=$("#ringProg");
+  const el=$("#pClock"), ring=$("#btnPause"), prog=$("#ringProg");
   if(!ring) return;
-  el.textContent = Math.ceil(G.remaining);
+  el.textContent = G.paused ? "▶" : Math.ceil(G.remaining);
   const pct = Math.max(0, Math.min(1, G.remaining / G.sec));
   prog.style.strokeDashoffset = (RING_LEN * (1 - pct)).toFixed(1);
   ring.classList.toggle("warn", G.remaining <= 10 && G.remaining > 3);
@@ -1171,11 +1168,12 @@ $("#btnExit").onclick = ()=>{
 
 function setPauseIcon(p){
   const b = $("#btnPause"); if(!b) return;
-  b.innerHTML = p
-    ? '<svg viewBox="0 0 24 24" aria-hidden="true"><path d="M8 5.2v13.6L19 12z"/></svg>'
-    : '<svg viewBox="0 0 24 24" aria-hidden="true"><rect x="7" y="5" width="3.6" height="14" rx="1.2"/><rect x="13.4" y="5" width="3.6" height="14" rx="1.2"/></svg>';
   b.setAttribute("aria-label", p ? "繼續" : "暫停");
-  b.classList.toggle("on", !!p);
+  b.setAttribute("title", p ? "繼續（Esc）" : "暫停（Esc）");
+  b.classList.toggle("paused", !!p);
+  const el = $("#pClock");
+  if(p){ el.textContent = "▶"; }
+  else if(G) renderTimer();
 }
 $("#btnPause").onclick = ()=>{
   if(!G || G.phase!=="running") return;
