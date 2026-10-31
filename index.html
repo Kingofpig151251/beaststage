@@ -313,10 +313,6 @@
   .rk.first .pt{color:var(--accent)}
 
   /* ---- leaderboard ---- */
-  .syncbar{display:flex; align-items:center; gap:10px; flex-wrap:wrap; margin:6px 0 18px;
-    padding:10px 12px; border:1px solid var(--rule); border-radius:var(--radius); background:var(--paper-2)}
-  .syncbar .kv{flex:0 0 auto}
-  .syncbar .kv.ok{color:var(--accent-2)}
   .lbrow{display:flex; align-items:center; gap:12px; padding:12px 4px; border-bottom:1px solid var(--rule)}
   .lbrow:last-child{border-bottom:0}
   .lbrow .no{width:28px; font-family:var(--font-mono); color:var(--muted); font-size:13px}
@@ -326,23 +322,69 @@
   .lbrow:first-child .pt{color:var(--accent)}
   .lbrow:first-child .nm{font-weight:900}
 
-  /* ---- question bank ---- */
-  .bankgrid{display:grid; grid-template-columns:240px minmax(0,1fr); gap:12px}
-  @media (max-width:760px){ .bankgrid{grid-template-columns:minmax(0,1fr)} }
-  .decklist{display:flex; flex-direction:column; gap:6px}
-  .decklist button{display:flex; justify-content:space-between; gap:8px; text-align:left; padding:10px 12px;
-    border-color:var(--rule); color:var(--ink-2); font-size:13.5px}
-  .decklist button i{font-family:var(--font-mono); font-style:normal; font-size:12px; color:var(--muted)}
-  .decklist button.on{background:var(--accent); border-color:var(--accent); color:var(--accent-ink); box-shadow:3px 3px 0 var(--accent-2)}
-  .decklist button.on i{color:var(--accent-ink); opacity:.8}
-  .items{max-height:52vh; overflow:auto; display:flex; flex-direction:column; gap:6px}
-  .it{display:grid; grid-template-columns:minmax(0,1fr) 36px; gap:6px; align-items:center}
-  .it input{padding:8px 10px; font-size:14px}
-  .it button{padding:0; height:34px; border-color:transparent; color:var(--muted)}
+  /* ---- 題庫：密集兩欄 ---- */
+  .bank-head{display:flex; align-items:center; gap:10px; flex-wrap:wrap; margin-bottom:12px}
+  .bank-head h1{margin:0; font-size:clamp(22px,3vw,30px); line-height:1}
+  .bank-head .back{padding:7px 10px; font-size:13px}
+  .bank-head #btnSyncNow{padding:7px 12px; font-size:13px; margin-left:auto}
+  .sync-dot{display:inline-flex; align-items:center; gap:6px; font-size:12.5px; color:var(--ink-2)}
+  .sync-dot::before{content:""; width:7px; height:7px; border-radius:50%; background:var(--muted)}
+  .sync-dot.ok{color:var(--accent-2)}
+  .sync-dot.ok::before{background:var(--accent-2)}
+  .sync-dot.bad{color:var(--accent)}
+  .sync-dot.bad::before{background:var(--accent)}
 
-  .toast{position:fixed; left:50%; bottom:86px; translate:-50% 0; background:var(--accent); color:var(--accent-ink);
-    font-weight:700; font-size:14px; padding:10px 18px; border:var(--bar) solid var(--accent-ink);
-    border-radius:var(--radius); box-shadow:4px 4px 0 var(--accent-2); opacity:0; pointer-events:none; transition:opacity .2s; z-index:99}
+  .bankgrid{display:grid; grid-template-columns:minmax(0,220px) minmax(0,1fr); gap:12px;
+    height:calc(100dvh - 160px); min-height:420px}
+  .deckrail{display:flex; flex-direction:column; gap:8px; min-width:0; min-height:0;
+    border:1px solid var(--rule); border-radius:var(--radius); background:var(--paper-2); padding:10px}
+  .decklist{display:flex; flex-direction:column; gap:3px; flex:1 1 auto; min-height:0; overflow-y:auto}
+  .decklist button{display:flex; justify-content:space-between; gap:8px; text-align:left;
+    padding:8px 10px; font-size:13.5px; border-color:transparent; background:transparent; color:var(--ink-2);
+    border-radius:3px}
+  .decklist button i{font-family:var(--font-mono); font-style:normal; font-size:12px; color:var(--muted)}
+  .decklist button.on{background:var(--accent); color:var(--accent-ink)}
+  .decklist button.on i{color:var(--accent-ink); opacity:.85}
+  .deckadd{display:grid; grid-template-columns:minmax(0,1fr) 40px; gap:6px}
+  .deckadd input{padding:8px 10px; font-size:14px}
+  .deckadd button{padding:0; height:38px; font-size:17px; line-height:1}
+
+  .itempane{min-width:0; min-height:0; display:flex; flex-direction:column; gap:10px;
+    border:1px solid var(--rule); border-radius:var(--radius); background:var(--paper-2); padding:12px}
+  .itemhead{display:flex; align-items:baseline; gap:10px}
+  .itemhead h2{margin:0; font-size:clamp(18px,2.2vw,22px)}
+  .itemhead .danger{padding:4px 9px; font-size:12px; color:var(--muted)}
+  .itemhead .danger:hover{color:var(--accent); border-color:var(--accent)}
+
+  .items{display:grid; grid-template-columns:repeat(auto-fill,minmax(186px,1fr)); gap:5px;
+    align-content:start; flex:1 1 auto; min-height:0; overflow-y:auto}
+  .it{display:grid; grid-template-columns:24px minmax(0,1fr) 26px; align-items:center;
+    border:1px solid var(--rule); border-radius:3px; background:var(--paper-3)}
+  .it .n{font-family:var(--font-mono); font-size:10.5px; color:var(--muted); text-align:right}
+  .it input{border:0; background:transparent; padding:8px 6px; font-size:14px; min-width:0; color:var(--ink)}
+  .it input:focus{outline:2px solid var(--focus); outline-offset:-2px}
+  .it button{padding:0; height:100%; min-height:34px; border:0; background:transparent; color:var(--ink-2); font-size:13px}
+  .it button:hover{color:var(--accent)}
+
+  .bulk{margin-top:auto; border-top:1px solid var(--rule); padding-top:6px}
+  .bulk summary{cursor:pointer; font-size:13px; color:var(--muted); padding:6px 2px; list-style:none}
+  .bulk summary::before{content:"＋ "; font-family:var(--font-mono)}
+  .bulk[open] summary::before{content:"− "}
+  .bulk textarea{width:100%; margin:6px 0 8px; font-size:14px}
+  .bulk button{padding:9px 16px; font-size:13.5px}
+
+  @media (max-width:860px){
+    .bankgrid{grid-template-columns:minmax(0,1fr); height:auto; min-height:0}
+    .deckrail{max-height:none}
+    .itempane{min-height:auto}
+    .decklist{flex-direction:row; overflow-x:auto; max-height:none; padding-bottom:2px}
+    .decklist button{flex:0 0 auto; white-space:nowrap; border-color:var(--rule)}
+    .items{grid-template-columns:repeat(auto-fill,minmax(160px,1fr))}
+  }
+
+  .toast{position:fixed; right:16px; bottom:16px; background:var(--paper-3); color:var(--ink);
+    font-weight:600; font-size:13px; padding:8px 14px; border:1px solid var(--rule);
+    border-radius:999px; opacity:0; pointer-events:none; transition:opacity .2s; z-index:99}
   .toast.on{opacity:1}
 
   /* 觸控裝置（iPad 直度同橫度都算）：加大觸控目標 */
@@ -350,8 +392,8 @@
     .stepper button{width:44px; height:44px}
     .judge button{padding:26px 12px}
     .chip{min-height:46px; padding:11px 14px}
-    .decklist button{min-height:46px; padding:13px 14px}
-    .it button{height:44px}
+    .decklist button{min-height:42px; padding:10px 12px}
+    .it button{min-height:42px}
     .util button{padding:14px 12px}
     input,textarea{font-size:16px}          /* iOS 焦點時唔會自動放大 */
   }
@@ -507,44 +549,72 @@
     </div>
   </section>
 
-  <!-- ========== 題庫管理（離線用） ========== -->
+  <!-- ========== 題庫（雲端共用） ========== -->
   <section class="view" id="v-bank">
-    <h1>題庫</h1>
-    <p class="kv" style="margin:2px 0 10px">題庫存喺雲端，所有機共用同一份；冇連線就讀唔到。</p>
-    <div class="syncbar">
+    <div class="bank-head">
+      <button class="btn-quiet back" id="btnBankBack">← 主頁</button>
+      <h1>題庫</h1>
+      <span class="kv" id="bankMeta"></span>
+      <span class="sync-dot" id="syncState">已同步</span>
       <button class="btn-quiet" id="btnSyncNow">重新載入</button>
-      <span class="kv" id="syncState">載入中…</span>
     </div>
+
     <div class="bankgrid">
-      <div class="well">
-        <h2>類別</h2>
+      <aside class="deckrail">
         <div class="decklist" id="bankDecks"></div>
-        <div class="row" style="margin-top:12px">
-          <input id="newDeckName" placeholder="新類別">
-          <button class="btn-quiet" id="btnAddDeck">新增</button>
+        <div class="deckadd">
+          <input id="newDeckName" placeholder="新類別名" maxlength="20">
+          <button class="btn-quiet" id="btnAddDeck">＋</button>
         </div>
-      </div>
-      <div class="well">
-        <div class="row" style="justify-content:space-between;margin-bottom:12px">
-          <h2 style="margin:0" id="bankDeckTitle">類別</h2>
-          <div class="row" style="gap:8px">
-            <button class="btn-quiet" id="btnDelDeck">刪除類別</button>
-          </div>
+      </aside>
+
+      <div class="itempane">
+        <div class="itemhead">
+          <h2 id="bankDeckTitle">類別</h2>
+          <span class="kv" id="bankDeckCount"></span>
+          <button class="btn-quiet danger" id="btnDelDeck">刪除類別</button>
         </div>
         <div class="items" id="bankItems"></div>
-        <div style="margin-top:16px">
-          <h2>批量新增，每行一題</h2>
+        <details class="bulk">
+          <summary>批量新增（每行一題）</summary>
           <textarea id="bulkInput" rows="4" placeholder="雞蛋仔&#10;菠蘿包&#10;開會"></textarea>
-          <div class="row" style="margin-top:8px">
-            <button class="btn-quiet" id="btnBulkAdd" style="flex:1">加入題目</button>
-          </div>
-        </div>
+          <button class="btn-quiet" id="btnBulkAdd">加入題目</button>
+        </details>
       </div>
     </div>
+  </section>
+
+  <!-- ========== 排行榜 ========== -->
+  <section class="view" id="v-lb">
+    <h1>排行榜</h1>
+    <p class="kv" id="lbSub" style="margin:6px 0 18px">全部場次累計</p>
+    <div class="well" style="margin-bottom:12px">
+      <h2>累計</h2>
+      <div id="lbPlayers"></div>
+    </div>
+    <div class="well">
+      <h2>最近場次</h2>
+      <div id="lbRecent"></div>
+    </div>
     <div class="row" style="justify-content:center;margin-top:18px">
-      <button class="btn-quiet" id="btnBankBack">返主頁</button>
+      <button class="btn-quiet" id="btnLbBack">返主頁</button>
     </div>
   </section>
+
+  <!-- ========== 結果 ========== -->
+  <section class="view" id="v-result">
+    <h1>結果</h1>
+    <p class="kv" id="rSub" style="margin:6px 0 0"></p>
+    <div id="champBox"></div>
+    <div class="rank" id="rankList"></div>
+    <div class="result-actions">
+      <button class="btn-primary btn-big" id="btnAgain">再玩一次</button>
+      <button class="btn-quiet" id="btnLbFromResult">排行榜</button>
+      <button class="btn-quiet" id="btnBackHome">返主頁</button>
+    </div>
+  </section>
+
+
 </div>
 
 <div class="startbar">
@@ -607,10 +677,10 @@ function saveBank(){ /* 題庫只存雲端，本機唔留副本 */ }
 /* ---- 題庫同步：題庫只存雲端，開放寫入（冇寫入碼） ---- */
 function setSyncState(kind){
   const el = $("#syncState"); if(!el) return;
-  const map = {syncing:["", "同步中…"], ok:["ok", "已同步"], error:["", "寫入失敗（檢查連線）"],
-    offline:["", "未連線"]};
+  const map = {syncing:["", "同步中…"], ok:["ok", "已同步"], error:["bad", "寫入失敗"],
+    offline:["bad", "未連線"]};
   const [cls, text] = map[kind] || ["", ""];
-  el.className = "kv" + (cls ? " " + cls : "");
+  el.className = "sync-dot" + (cls ? " " + cls : "");
   el.textContent = text;
 }
 let pushTimer = null;
@@ -722,21 +792,26 @@ function renderHome(){
 /* ================= 題庫管理（離線用） ================= */
 function renderBank(){
   setSyncState(REMOTE.ok ? "ok" : "offline");
+  const totalAll = bank.decks.reduce((n,d)=>n+d.items.length, 0);
+  $("#bankMeta").textContent = bank.decks.length ? `${bank.decks.length} 類 · ${totalAll} 題` : "未有題庫";
+
   if(!bank.decks.some(d=>d.id===bankDeck)) bankDeck = bank.decks[0] ? bank.decks[0].id : null;
   $("#bankDecks").innerHTML = bank.decks.map(d=>`
     <button class="${d.id===bankDeck?"on":""}" data-bd="${esc(d.id)}">
       <span>${esc(d.name)}</span><i>${d.items.length}</i>
-    </button>`).join("") || `<p class="sub" style="margin:0">未有類別，新增一個先。</p>`;
+    </button>`).join("") || `<p class="sub" style="margin:0">未有類別</p>`;
   $$("#bankDecks button").forEach(b=>b.onclick=()=>{ bankDeck=b.dataset.bd; renderBank(); });
 
   const deck = bank.decks.find(d=>d.id===bankDeck);
   $("#bankDeckTitle").textContent = deck ? deck.name : "類別";
+  $("#bankDeckCount").textContent = deck ? `${deck.items.length} 題` : "";
   $("#bankItems").innerHTML = deck ? deck.items.map((it,i)=>`
     <div class="it">
+      <span class="n">${i+1}</span>
       <input data-t="${i}" value="${esc(it.t)}" placeholder="題目">
-      <button data-del="${i}" title="刪除">✕</button>
+      <button data-del="${i}" title="刪除" aria-label="刪除第 ${i+1} 題">✕</button>
     </div>`).join("") : "";
-  // 開放寫入：編輯控制一律可用（連唔到線先會寫入失敗）
+
   ["#newDeckName","#btnAddDeck","#btnDelDeck","#btnBulkAdd","#bulkInput"].forEach(sel=>{
     const el = $(sel); if(el) el.disabled = false;
   });
