@@ -112,6 +112,21 @@
   .it button{background:transparent; color:#7d8797; font-size:16px; padding:0}
   .it button:hover{color:var(--danger)}
 
+  /* ===== 準備畫面 / 倒數 ===== */
+  .ready{position:fixed; inset:0; background:rgba(6,9,14,.92); backdrop-filter:blur(6px);
+    display:flex; align-items:center; justify-content:center; z-index:60; padding:24px}
+  .readyCard{text-align:center; max-width:640px; width:100%}
+  .readyRound{color:#9dabbf; font-size:16px; letter-spacing:2px; margin-bottom:10px}
+  .readyTeam{font-size:clamp(40px,8vw,76px); font-weight:900; letter-spacing:2px; margin-bottom:8px}
+  .readyHint{color:var(--dim); font-size:15px; line-height:1.7; margin-bottom:26px}
+  .readyBtn{font-size:22px; padding:20px 64px; border-radius:16px;
+    background:linear-gradient(180deg,#3f74ff,#2c5ce0); box-shadow:0 8px 30px rgba(63,116,255,.35)}
+  .readyBtn:active{transform:translateY(2px)}
+  .readyKbd{color:#7b8798; font-size:13.5px; margin-top:16px}
+  .readyCount{font-size:clamp(72px,18vw,160px); font-weight:900; color:var(--txt); line-height:1;
+    display:none; margin-top:10px; text-shadow:0 0 40px rgba(91,140,255,.5)}
+  .readyCount.on{display:block}
+
   .toast{position:fixed; left:50%; bottom:24px; transform:translateX(-50%); background:#20304a; border:1px solid var(--accent);
     color:var(--txt); padding:11px 20px; border-radius:999px; font-size:14px; opacity:0; pointer-events:none; transition:opacity .2s; z-index:99}
   .toast.on{opacity:1}
@@ -210,8 +225,21 @@
 
     <div class="scores" id="pScores"></div>
     <p class="qhint" style="margin-top:12px">
-      鍵盤：<span class="kbd">Space</span> 對　<span class="kbd">S</span> 跳過　<span class="kbd">Z</span> 撤銷　<span class="kbd">Esc</span> 暫停
+      鍵盤：<span class="kbd">Space</span> 對／開始　<span class="kbd">S</span> 跳過　<span class="kbd">Z</span> 撤銷　<span class="kbd">Esc</span> 暫停
     </p>
+
+    <div class="ready" id="readyOverlay" style="display:none">
+      <div class="readyCard">
+        <div class="readyRound" id="rdRound"></div>
+        <div class="readyTeam" id="rdTeam"></div>
+        <div class="readyHint" id="rdHint">
+          派一個人背向屏幕<br>隊友準備好就撳「開始」
+        </div>
+        <button class="readyBtn" id="btnReady">開始</button>
+        <div class="readyKbd">或者撳 <span class="kbd">Space</span></div>
+        <div class="readyCount" id="rdCount"></div>
+      </div>
+    </div>
   </section>
 
   <!-- ========== 排行榜 ========== -->
@@ -463,6 +491,7 @@ function renderBank(){
 
 /* ================= 遊戲流程 ================= */
 function startGame(){
+  if(G){ clearInterval(G.timerId); G.timerToken++; }   // 清走上一局殘留嘅倒數
   const names = Array.from({length:cfg.teams},(_,i)=> cfg.names[i] || ("隊 "+(i+1)));
   const pool = [];
   bank.decks.filter(d=>cfg.decks.includes(d.id)).forEach(d=>{
@@ -475,20 +504,62 @@ function startGame(){
     teams: names.map(n=>({name:n, score:0, ok:0, skip:0})),
     turn:0, round:1,
     pool: shuffle(pool.slice()), used: [], cur:null,
-    log: [], paused:false, remaining:0, timerId:null, lastBeep:-1
+    log: [], paused:false, remaining:0, timerId:null, lastBeep:-1, timerToken:0,
+    phase:"ready"
   };
   showView("v-play");
-  beginTurn();
+  enterReady();
 }
 
-function beginTurn(){
+/* 每隊出場前停一停：唔計時、唔出題，等佢哋準備 */
+function enterReady(){
+  clearInterval(G.timerId);
+  G.timerToken++;
+  G.phase = "ready";
+  G.cur = null;
+  G.remaining = G.sec;
   G.paused = false;
+  $("#btnPause").textContent = "暫停";
+  $("#rdRound").textContent = `第 ${G.round} / ${G.rounds} 回合`;
+  $("#rdTeam").textContent = G.teams[G.turn].name;
+  $("#rdCount").textContent = "";
+  $("#rdCount").classList.remove("on");
+  $("#btnReady").style.display = "";
+  $("#readyOverlay").style.display = "flex";
+  renderPlay();
+}
+
+function hideReady(){ $("#readyOverlay").style.display = "none"; }
+
+/* 撳「開始」→ 3、2、1 → 真正出題計時 */
+function startRound(){
+  if(!G || G.phase !== "ready") return;
+  G.phase = "countdown";
+  $("#btnReady").style.display = "none";
+  const el = $("#rdCount");
+  el.classList.add("on");
+  let n = 3;
+  el.textContent = n;
+  beep(660, 0.08, 0.12);
+  const tick = setInterval(()=>{
+    n--;
+    if(n > 0){ el.textContent = n; beep(660, 0.08, 0.12); }
+    else if(n === 0){ el.textContent = "開始！"; beep(990, 0.16, 0.16); }
+    else {
+      clearInterval(tick);
+      el.classList.remove("on");
+      hideReady();
+      beginRunning();
+    }
+  }, 700);
+}
+
+function beginRunning(){
+  G.phase = "running";
   G.cur = drawItem();
   G.remaining = G.sec;
-  $("#btnPause").textContent = "暫停";
   startTimer();
   renderPlay();
-  beep(660, 0.05, 0.08);
 }
 
 function drawItem(){
@@ -502,14 +573,17 @@ function startTimer(){
   clearInterval(G.timerId);
   if(!G.sec){ renderTimer(); return; }
   G.lastBeep = Math.ceil(G.remaining);
-  G.timerId = setInterval(()=>{
+  const token = ++G.timerToken;
+  const id = setInterval(()=>{
+    if(token !== G.timerToken){ clearInterval(id); return; }   // 舊局嘅表，唔准再影響新局
     if(G.paused) return;
     G.remaining = Math.max(0, G.remaining - 0.1);
     renderTimer();
     const sec = Math.ceil(G.remaining);
     if(sec<=3 && sec>0 && sec!==G.lastBeep){ G.lastBeep=sec; beep(720,0.06,0.12); }
-    if(G.remaining<=0){ clearInterval(G.timerId); beep(320,0.35,0.18); endTurn(); }
+    if(G.remaining<=0){ clearInterval(id); beep(320,0.35,0.18); endTurn(); }
   },100);
+  G.timerId = id;
 }
 
 function renderTimer(){
@@ -530,7 +604,7 @@ function renderPlay(){
   $("#pTurn").textContent = "輪到 " + G.teams[G.turn].name;
   $("#pLeft").textContent = `池剩 ${G.pool.length}`;
 
-  const it = G.cur || {t:"—", deck:""};
+  const it = G.cur || {t:"—", deck:""};   // ready 階段未有題目
   $("#pText").textContent = it.t;
   $("#pDeck").textContent = it.deck || "";
   $("#pHint").textContent = HINT.replace("{who}", G.teams[G.turn].name);
@@ -544,7 +618,7 @@ function renderPlay(){
 }
 
 function judge(kind){
-  if(!G || !G.cur) return;
+  if(!G || G.phase !== "running" || !G.cur) return;
   const t = G.teams[G.turn];
   const delta = kind==="ok" ? 1 : 0;
   G.log.push({item:G.cur, kind, team:G.turn, delta});
@@ -567,22 +641,25 @@ function undo(){
 
 function endTurn(){
   if(!G) return;
+  if(G.phase === "ready"){ enterReady(); return; }   // 未開始就撳，當重整
   clearInterval(G.timerId);
+  G.timerToken++;
+  G.phase = "ready";
   G.turn++;
   if(G.turn >= G.teams.length){
     G.turn = 0;
     G.round++;
     if(G.round > G.rounds){ endGame(); return; }
-    toast("新一回合開始");
-  } else {
-    toast("輪到 "+G.teams[G.turn].name);
   }
-  beginTurn();
+  enterReady();
 }
 
 function endGame(){
   if(!G) return;
   clearInterval(G.timerId);
+  G.timerToken++;
+  G.phase = "done";
+  hideReady();
   const sorted = G.teams.map((t,i)=>({...t,i})).sort((a,b)=> b.score-a.score || b.ok-a.ok);
   const total = G.teams.reduce((s,t)=>s+t.score,0);
   const okTotal = G.teams.reduce((s,t)=>s+t.ok,0);
@@ -648,10 +725,11 @@ $("#btnStart").onclick = startGame;
 $("#btnFull").onclick = ()=>{ if(!document.fullscreenElement){ document.documentElement.requestFullscreen&&document.documentElement.requestFullscreen(); } else { document.exitFullscreen(); } };
 
 $$(".judge button").forEach(b=>b.onclick=()=>judge(b.dataset.judge));
+$("#btnReady").onclick = startRound;
 $("#btnUndo").onclick = undo;
 $("#btnEndTurn").onclick = ()=>endTurn();
 $("#btnQuit").onclick = ()=>{ if(confirm("結束今次遊戲並睇結果？")) endGame(); };
-$("#btnPause").onclick = ()=>{ if(!G) return; G.paused=!G.paused; $("#btnPause").textContent = G.paused?"繼續":"暫停"; };
+$("#btnPause").onclick = ()=>{ if(!G || G.phase!=="running") return; G.paused=!G.paused; $("#btnPause").textContent = G.paused?"繼續":"暫停"; };
 
 $("#btnAgain").onclick = startGame;
 $("#btnBackHome").onclick = ()=>{ showView("v-home"); renderHome(); };
@@ -732,7 +810,13 @@ document.addEventListener("keydown", e=>{
   if(!$("#v-play").classList.contains("active")) return;
   if(["INPUT","TEXTAREA"].includes(document.activeElement.tagName)) return;
   const k = e.key.toLowerCase();
-  if(e.code==="Space" || k==="enter"){ e.preventDefault(); judge("ok"); }
+  if(e.code==="Space" || k==="enter"){
+    e.preventDefault();
+    if(!G) return;
+    if(G.phase === "ready") startRound();
+    else if(G.phase === "running") judge("ok");
+    return;
+  }
   else if(k==="s" || k==="arrowdown"){ e.preventDefault(); judge("skip"); }
   else if(k==="z"){ undo(); }
   else if(k==="escape" || k==="p"){ e.preventDefault(); $("#btnPause").click(); }
@@ -743,7 +827,7 @@ renderHome();
 updateSrc();
 pullRemoteBank();
 window.__bigtv = { get G(){return G}, get bank(){return bank}, get cfg(){return cfg},
-  startGame, judge, undo, endTurn, endGame, renderHome, renderPlay, renderBank, showView };
+  startGame, startRound, enterReady, judge, undo, endTurn, endGame, renderHome, renderPlay, renderBank, showView };
 </script>
 </body>
 </html>
