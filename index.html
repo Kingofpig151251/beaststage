@@ -6,178 +6,217 @@
 <meta name="description" content="大電視破冰主持台：一部機控場，一人背向屏幕猜，全隊描述，主持按對或跳過，題庫同排行榜可以自訂。">
 <title>大電視 · 破冰主持台</title>
 <style>
-  /* Hallmark · floor-only pass, no theme deal (2026-10-31)
-     critique · it is a host console, not a landing page: kept the dark system, tokenised colour, fixed motion, focus and contrast tells
-     waive 24b · spacing runs a 2px rhythm (8/10/12/14/16/18/20/22/24) for optical balance on a 1080p projection; not a 4px grid */
+  /* Hallmark · redesign: app screen · genre: playful · theme: Arcade (ember / grille) · scope: app · v2.0.0
+     critique · it is a host console hammered in a dark room: ember carries the live action, acid answers it, press physics on the one control the host hits
+     waive type · Bungee / Chivo / Silkscreen are not loaded: the tool has to run offline from one file, so system faces carry the weights and mono carries figures */
   :root{
-    /* surface */
-    --bg:#0b0e14; --bg-top:#17233a; --field:#0b0e14;
-    --panel:#141a24; --panel2:#1b2330; --panel3:#1b2740;
-    --line:#28313f; --line-soft:#1c2431;
+    /* ground */
+    --paper:oklch(14% 0.04 312); --paper-2:oklch(18.5% 0.042 312); --paper-3:oklch(23% 0.045 312);
     /* ink */
-    --txt:#eef3fa; --dim:#8b98ab; --dim-2:#9dabbf; --dim-3:#7b8798; --dim-4:#7d8797; --dim-5:#4d5b70;
-    /* accent */
-    --accent:#5b8cff; --accent-2:#3f74ff; --accent-3:#2c5ce0; --accent-soft:#7aa2ff;
-    --accent-glow:rgba(63,116,255,.35); --accent-glow-2:rgba(91,140,255,.5);
-    /* judge */
-    --ok:#3ee38c; --ok-2:#1fa85e; --ok-ink:#04220f;
-    --ok-line:#256b45; --ok-soft:#8ff0bd; --ok-bg:#0f2a1c;
-    --skip:#f7c154; --skip-2:#d99b1e; --skip-ink:#221a05;
-    --gold:#c9a227; --gold-bg:#221d10;
-    --danger:#e8564a;
-    /* misc */
-    --ready-bg:rgba(6,9,14,.92); --toast-bg:#20304a;
-    --font:-apple-system,BlinkMacSystemFont,"PingFang HK","Noto Sans HK","Microsoft JhengHei",system-ui,sans-serif;
-    --r:16px;
+    --ink:oklch(95% 0.014 315); --ink-2:oklch(87% 0.018 315); --muted:oklch(71% 0.024 315);
+    --rule:oklch(34% 0.05 312); --shade:oklch(8% 0.02 315);
+    /* the two players */
+    --accent:oklch(66% 0.215 40); --accent-2:oklch(88% 0.195 115); --accent-ink:oklch(14% 0.04 312);
+    --focus:oklch(88% 0.195 115);
+    /* type */
+    --font-display:ui-sans-serif,system-ui,"PingFang HK","Noto Sans HK","Microsoft JhengHei",sans-serif;
+    --font-body:ui-sans-serif,system-ui,"PingFang HK","Noto Sans HK","Microsoft JhengHei",sans-serif;
+    --font-mono:ui-monospace,"SF Mono",Menlo,Consolas,monospace;
+    /* geometry */
+    --radius:4px; --hair:1px; --bar:2px;
+    --shadow:6px 6px 0 var(--accent-2);
+    --dur:90ms; --ease:cubic-bezier(.2,.8,.2,1);
   }
   *{box-sizing:border-box; -webkit-tap-highlight-color:transparent}
-  html,body{margin:0;height:100%; overflow-x:clip}
-  body{
-    background:radial-gradient(1200px 700px at 70% -10%, var(--bg-top) 0%, var(--bg) 60%);
-    color:var(--txt); font-family:var(--font);
-    min-height:100%;
-  }
-  button{font-family:inherit; cursor:pointer; border:none; border-radius:12px; font-weight:700; color:var(--txt); background:var(--panel2)}
-  button:active{transform:translateY(1px)}
-  input,textarea{font-family:inherit; font-size:15px; color:var(--txt); background:var(--bg);
-    border:1px solid var(--line); border-radius:10px; padding:9px 12px; outline:none; width:100%}
-  :focus-visible{outline:2px solid var(--accent); outline-offset:2px; border-radius:8px}
-  input:focus-visible,textarea:focus-visible,button:focus-visible{outline:2px solid var(--accent); outline-offset:2px}
-  .wrap{max-width:1080px; margin:0 auto; padding:16px 16px 90px}
+  html,body{margin:0;min-height:100%; overflow-x:clip}
+  body{background:var(--paper); color:var(--ink); font-family:var(--font-body); font-size:16px; line-height:1.5;
+    -webkit-font-smoothing:antialiased}
+  h1,h2,h3{margin:0}
+  h1{font-family:var(--font-display); font-weight:900; letter-spacing:-.02em; line-height:1.05; font-size:clamp(22px,2.6vw,30px); text-wrap:balance}
+  h2{font-size:13px; font-weight:700; color:var(--muted); margin-bottom:10px}
+  p{margin:0}
+  .wrap{max-width:1080px; margin:0 auto; padding:18px 16px 28px}
   .view{display:none}
   .view.active{display:block}
-  h1{font-size:22px; margin:0 0 2px; letter-spacing:.5px; text-wrap:balance}
-  h2{font-size:14px; color:var(--dim); font-weight:600; margin:0 0 10px; letter-spacing:1px}
-  .sub{color:var(--dim); font-size:13px; margin:0 0 18px}
-  .card{background:var(--panel); color:var(--txt); border:1px solid var(--line); border-radius:var(--r); padding:16px; margin-bottom:14px}
-  .row{display:flex; gap:10px; align-items:center; flex-wrap:wrap}
-  .row > label{font-size:13.5px; color:var(--dim); min-width:76px}
-  .kv{font-size:13px; color:var(--dim)}
-  .pill{font-size:12.5px;padding:5px 12px;border-radius:999px;border:1px solid var(--line);color:var(--dim);display:inline-block}
-  .pill.on{border-color:var(--ok-line);color:var(--ok-soft);background:var(--ok-bg)}
+  :focus-visible{outline:3px solid var(--focus); outline-offset:2px}
 
-  .names{display:grid; grid-template-columns:repeat(auto-fill,minmax(140px,1fr)); gap:8px; margin-top:10px}
+  /* ---- surfaces ---- */
+  .well{background:var(--paper-2); border:var(--bar) solid var(--rule); border-radius:var(--radius); padding:16px}
+  .rule{height:var(--bar); background:var(--rule); border:0; margin:16px 0}
+
+  /* ---- controls: the press surface ---- */
+  button{font-family:inherit; font-size:15px; font-weight:700; color:var(--ink); background:transparent;
+    border:var(--bar) solid var(--ink); border-radius:var(--radius); padding:10px 16px; cursor:pointer;
+    transition:translate var(--dur) var(--ease), box-shadow var(--dur) var(--ease), background-color var(--dur) steps(1)}
+  button:active{translate:3px 3px; box-shadow:2px 2px 0 var(--accent-2)}
+  button:disabled{opacity:.4; cursor:not-allowed; box-shadow:none}
+  button:disabled:active{translate:0}
+  .btn-primary{background:var(--accent); color:var(--accent-ink); box-shadow:var(--shadow)}
+  .btn-primary:hover{background:color-mix(in oklab, var(--accent) 88%, white)}
+  .btn-quiet{border-color:var(--rule); color:var(--ink-2)}
+  .btn-quiet:hover{border-color:var(--ink); color:var(--ink)}
+  .btn-big{display:block; width:100%; max-width:420px; margin:0 auto; padding:18px; font-size:18px; letter-spacing:.01em}
+
+  input,textarea{font-family:inherit; font-size:15px; color:var(--ink); background:var(--paper);
+    border:var(--bar) solid var(--muted); border-radius:var(--radius); padding:9px 12px; width:100%}
+  input:focus-visible,textarea:focus-visible{outline:3px solid var(--focus); outline-offset:2px}
+  input[type="checkbox"]{width:auto; accent-color:var(--accent)}
+
+  /* ---- home ---- */
+  .top{display:flex; justify-content:space-between; align-items:baseline; gap:12px; flex-wrap:wrap; margin-bottom:18px}
+  .top .sub{color:var(--muted); font-size:13.5px; margin-top:6px}
+  .pill{font-size:12.5px; font-weight:700; color:var(--muted); white-space:nowrap; display:inline-flex; align-items:center; gap:7px}
+  .pill::before{content:""; width:7px; height:7px; background:var(--muted); border-radius:1px}
+  .pill.on{color:var(--accent-2)}
+  .pill.on::before{background:var(--accent-2)}
+  .setup{display:grid; grid-template-columns:repeat(2,minmax(0,1fr)); gap:12px; align-items:stretch}
+  .setup .span2{grid-column:1 / -1}
+  @media (max-width:760px){ .setup{grid-template-columns:minmax(0,1fr)} }
+  .row{display:flex; gap:10px; align-items:center; flex-wrap:wrap}
+  .row > label{font-size:13.5px; color:var(--muted); min-width:64px}
+  .kv{font-size:13px; color:var(--muted)}
+  .names{display:grid; grid-template-columns:repeat(auto-fit,minmax(120px,1fr)); gap:8px; margin-top:12px}
   .stepper{display:flex; align-items:center; gap:8px}
-  .stepper button{width:36px; height:36px; font-size:18px; background:var(--panel2)}
-  .stepper b{font-variant-numeric:tabular-nums; min-width:24px; text-align:center}
+  .stepper button{width:36px; height:36px; padding:0; font-size:18px; border-color:var(--rule); color:var(--ink)}
+  .stepper b{font-family:var(--font-mono); font-variant-numeric:tabular-nums; min-width:20px; text-align:center; font-size:17px}
 
   .chips{display:flex; flex-wrap:wrap; gap:8px}
-  .chip{background:var(--panel2); border:1px solid var(--line); border-radius:999px; padding:8px 14px; font-size:13.5px; font-weight:600; color:var(--dim)}
-  .chip.on{background:var(--panel3); border-color:var(--accent); color:var(--txt)}
+  .chip{background:transparent; border:var(--bar) solid var(--rule); border-radius:var(--radius);
+    color:var(--muted); padding:8px 12px; font-size:13.5px; font-weight:700; display:flex; gap:8px; align-items:center}
+  .chip i{font-family:var(--font-mono); font-style:normal; font-size:12px; opacity:.7}
+  .chip.on{border-color:var(--accent); color:var(--accent); box-shadow:inset 0 -3px 0 var(--accent)}
+  .chip.on::before{content:"✓"; font-size:11px; line-height:1}
+  .chip.on i{opacity:.85}
+  .chip:hover{border-color:var(--ink-2); color:var(--ink)}
 
-  .btn-primary{width:100%; padding:18px; font-size:18px; background:linear-gradient(180deg,var(--accent-2),var(--accent-3)); border-radius:14px; margin-top:6px}
-  .btn-ghost{background:transparent; border:1px solid var(--line); color:var(--dim); padding:10px 14px; font-size:13.5px}
+  .startbar{display:none; position:fixed; left:0; right:0; bottom:0; background:var(--paper);
+    border-top:var(--bar) solid var(--rule); z-index:20}
+  body[data-view="home"] .startbar{display:block}
+  body[data-view="home"] .wrap{padding-bottom:132px}
+  .startbar > div{max-width:1080px; margin:0 auto; padding:12px 16px calc(12px + env(safe-area-inset-bottom));
+    display:flex; gap:10px; align-items:center; flex-wrap:wrap}
+  .startbar button{height:48px; display:inline-flex; align-items:center; justify-content:center}
+  .startbar .rail{display:flex; gap:8px; flex-wrap:wrap; margin-left:auto}
+  #btnStart{flex:1 1 240px; max-width:420px}
+  @media (max-width:640px){ .startbar .rail{width:100%; margin-left:0} .startbar .rail button{flex:1} #btnStart{max-width:none} }
 
-  /* ===== 遊戲畫面 ===== */
-  .topline{display:flex; justify-content:space-between; align-items:center; gap:10px; margin-bottom:12px; flex-wrap:wrap}
-  .badge{background:var(--panel2); border:1px solid var(--line); border-radius:999px; padding:6px 13px; font-size:13px; font-weight:700}
-  .badge.turn{background:var(--panel3); border-color:var(--accent)}
-  .clock{font-variant-numeric:tabular-nums; font-weight:800; font-size:26px; letter-spacing:1px}
-  .clock.warn{color:var(--skip)}
-  .clock.dead{color:var(--danger)}
+  /* ---- play ---- */
+  .play-top{display:flex; justify-content:space-between; align-items:center; gap:10px; flex-wrap:wrap; margin-bottom:12px}
+  .tag{font-size:12.5px; font-weight:700; color:var(--muted); border:var(--bar) solid var(--rule);
+    border-radius:var(--radius); padding:5px 10px}
+  .tag.turn{color:var(--accent-ink); background:var(--accent); border-color:var(--accent)}
+  .clock{font-family:var(--font-mono); font-weight:700; font-variant-numeric:tabular-nums;
+    font-size:clamp(28px,4vw,40px); line-height:1; color:var(--accent-2)}
+  .clock.warn{color:var(--accent)}
+  .clock.dead{color:var(--accent); animation:fxPulse 1s ease-in-out infinite}
 
-  .question{
-    background:var(--panel); border:1px solid var(--line); border-radius:22px;
-    padding:34px 26px; text-align:center; margin-bottom:12px; min-height:34vh;
-    display:flex; flex-direction:column; justify-content:center; gap:16px;
-    position:relative; overflow:hidden;
-  }
-  /* VFX（由設定嘅 VFX 開關控制，冇開就冇 class，等於冇動效） */
-  .question.fx-ok{animation:fxOk .5s ease-out}
-  @keyframes fxOk{
-    0%{box-shadow:inset 0 0 0 2px var(--ok), inset 0 0 80px -10px var(--ok)}
-    100%{box-shadow:inset 0 0 0 2px transparent, inset 0 0 0 -10px transparent}
-  }
-  .question.fx-skip{animation:fxShake .34s ease-in-out}
-  @keyframes fxShake{0%,100%{transform:translateX(0)}25%{transform:translateX(-8px)}70%{transform:translateX(8px)}}
-  .fx-plus{position:absolute; top:18%; right:14%; font-size:clamp(28px,5vw,52px); font-weight:900;
-    color:var(--ok); pointer-events:none; opacity:0; animation:fxPlus .8s ease-out forwards}
-  @keyframes fxPlus{0%{opacity:0; transform:translateY(10px) scale(.8)}
-    25%{opacity:1; transform:translateY(0) scale(1)}
-    100%{opacity:0; transform:translateY(-46px) scale(1.05)}}
-  .readyCount.pop{animation:fxPop .5s ease-out}
-  @keyframes fxPop{0%{transform:scale(.55); opacity:0} 45%{transform:scale(1.1); opacity:1} 100%{transform:scale(1)}}
-  .clock.dead{animation:fxPulse 1s ease-in-out infinite}
-  @keyframes fxPulse{0%,100%{opacity:1} 50%{opacity:.45}}
-  .qtext{font-size:clamp(38px,9.5vw,96px); font-weight:900; line-height:1.15; letter-spacing:2px;
-    word-break:break-word; text-wrap:balance}
-  .qhint{color:var(--dim); font-size:13.5px}
-  .qdeck{color:var(--dim-5); font-size:12px}
+  .stage{position:relative; isolation:isolate; background:var(--paper-2); border:var(--bar) solid var(--rule);
+    border-radius:var(--radius); padding:clamp(24px,6vw,56px) 20px; min-height:32vh; display:flex;
+    flex-direction:column; justify-content:center; align-items:center; gap:14px; text-align:center; overflow:hidden}
+  .stage::after{content:""; position:absolute; inset:0; pointer-events:none; z-index:-1;
+    background-image:repeating-linear-gradient(to bottom, transparent 0 2px, color-mix(in oklab, var(--shade) 22%, transparent) 2px 3px)}
+  .stage-deck{font-size:12px; font-weight:700; color:var(--muted)}
+  .stage-q{font-family:var(--font-display); font-weight:900; font-size:clamp(40px,9vw,92px); line-height:1.08;
+    letter-spacing:.01em; word-break:break-word; text-wrap:balance; min-height:1.1em}
+  .stage-hint{font-size:13.5px; color:var(--muted); max-width:44ch}
+  .stage.fx-ok{animation:fxOk .5s var(--ease)}
+  .stage.fx-skip{animation:fxShake .34s ease-in-out}
+  @keyframes fxOk{0%{box-shadow:inset 0 0 0 3px var(--accent-2)} 100%{box-shadow:inset 0 0 0 3px transparent}}
+  @keyframes fxShake{0%,100%{translate:0} 25%{translate:-8px} 70%{translate:8px}}
+  @keyframes fxPulse{0%,100%{opacity:1} 50%{opacity:.4}}
+  .fx-plus{position:absolute; top:16%; right:12%; font-family:var(--font-mono); font-weight:700;
+    font-size:clamp(26px,4vw,44px); color:var(--accent-2); pointer-events:none; animation:fxPlus .8s var(--ease) forwards}
+  @keyframes fxPlus{0%{opacity:0; translate:0 10px} 25%{opacity:1; translate:0 0} 100%{opacity:0; translate:0 -44px}}
 
-  .bar{height:8px; background:var(--line-soft); border-radius:99px; overflow:hidden; margin-bottom:14px}
-  .bar > i{display:block; height:100%; width:100%; transform-origin:left center; transform:scaleX(1);
-    background:linear-gradient(90deg,var(--accent-2),var(--accent-soft)); transition:transform .1s linear}
-  .bar.warn > i{background:var(--skip)}
-  .bar.dead > i{background:var(--danger)}
+  .bar{height:6px; background:var(--paper-3); border-radius:0; overflow:hidden; margin:14px 0}
+  .bar > i{display:block; height:100%; width:100%; transform-origin:left center; background:var(--accent-2);
+    transition:transform .1s linear}
+  .bar.warn > i{background:var(--accent)}
+  .bar.dead > i{background:var(--accent); animation:fxPulse 1s ease-in-out infinite}
 
-  .judge{display:grid; grid-template-columns:1.5fr 1fr; gap:10px; margin-bottom:10px}
-  .judge button{padding:22px 8px; font-size:19px; border-radius:16px}
-  .j-ok{background:linear-gradient(180deg,var(--ok),var(--ok-2)); color:var(--ok-ink)}
-  .j-skip{background:linear-gradient(180deg,var(--skip),var(--skip-2)); color:var(--skip-ink)}
+  .score-strip{display:grid; grid-auto-flow:column; grid-auto-columns:minmax(120px,1fr); gap:10px; overflow-x:auto; padding-bottom:2px}
+  .sc{display:flex; align-items:center; justify-content:space-between; gap:10px;
+    background:var(--paper-2); border:var(--bar) solid var(--rule); border-radius:var(--radius); padding:8px 14px}
+  .sc b{font-family:var(--font-mono); font-size:32px; line-height:1; font-variant-numeric:tabular-nums; color:var(--muted)}
+  .sc span{font-size:13px; color:var(--muted); order:-1}
+  .sc.cur{border-color:var(--accent); background:color-mix(in oklab, var(--accent) 12%, var(--paper-2)); box-shadow:4px 4px 0 var(--accent)}
+  .sc.cur b{color:var(--accent)}
+  .sc.cur span{color:var(--ink)}
 
-  .util{display:flex; gap:10px; flex-wrap:wrap}
-  .util button{flex:1; min-width:92px; padding:12px; font-size:13.5px; background:var(--panel2); color:var(--dim)}
+  .judge{display:grid; grid-template-columns:1.6fr 1fr; gap:12px; margin:14px 0 8px}
+  .judge button{font-family:var(--font-display); font-size:clamp(20px,2.6vw,26px); font-weight:900;
+    padding:20px 12px; border-radius:var(--radius); border:var(--bar) solid var(--ink); letter-spacing:.02em}
+  .judge .j-ok{background:var(--accent); color:var(--accent-ink); box-shadow:var(--shadow)}
+  .judge .j-skip{background:transparent; color:var(--ink-2); border-color:var(--rule)}
+  .judge .j-skip:hover{color:var(--accent-2); border-color:var(--accent-2)}
+  .judge .j-skip:hover{background:color-mix(in oklab, var(--accent-2) 14%, transparent)}
 
-  .scores{display:flex; gap:8px; overflow-x:auto; padding:2px 0 0}
-  .sc{background:var(--panel); border:1px solid var(--line); border-radius:12px; padding:8px 14px; min-width:96px; text-align:center; flex:0 0 auto}
-  .sc.cur{border-color:var(--accent); background:var(--panel3)}
-  .sc b{display:block; font-size:22px; font-variant-numeric:tabular-nums; line-height:1.2}
-  .sc span{font-size:11.5px; color:var(--dim)}
+  .util{display:flex; gap:8px; flex-wrap:wrap; margin-bottom:10px}
+  .util button{flex:1; min-width:96px; padding:11px; font-size:13.5px; border-color:var(--rule); color:var(--ink-2)}
+  .util button:hover{border-color:var(--ink); color:var(--ink)}
+  .kbd{font-family:var(--font-mono); font-size:11.5px; border:1px solid var(--rule); border-radius:3px; padding:1px 6px; color:var(--muted)}
 
-  /* ===== 結果 ===== */
-  .rank{display:flex; flex-direction:column; gap:10px; margin:16px 0}
-  .rk{display:flex; align-items:center; gap:14px; background:var(--panel); border:1px solid var(--line); border-radius:14px; padding:14px 18px}
-  .rk .no{font-size:22px; font-weight:900; color:var(--dim); width:34px}
-  .rk .nm{flex:1; font-size:19px; font-weight:800}
-  .rk .pt{font-size:28px; font-weight:900; font-variant-numeric:tabular-nums}
-  .rk .st{font-size:12px; color:var(--dim)}
-  .rk.first{border-color:var(--gold); background:var(--gold-bg)}
+  /* ---- ready ---- */
+  body.is-ready{overflow:hidden}
+  .ready{position:fixed; inset:0; background:var(--paper); display:flex; align-items:center; justify-content:center;
+    padding:24px; z-index:60}
+  .readyCard{width:min(680px,100%); text-align:center; background:var(--accent); color:var(--accent-ink);
+    border:var(--bar) solid var(--accent-ink); border-radius:var(--radius); padding:clamp(24px,5vw,48px) 24px;
+    box-shadow:10px 10px 0 var(--accent-2)}
+  .readyRound{font-family:var(--font-mono); font-size:13px; opacity:.75}
+  .readyTeam{font-family:var(--font-display); font-weight:900; font-size:clamp(38px,7.5vw,68px); line-height:1.05; margin:8px 0 10px}
+  .readyHint{font-size:15px; line-height:1.7; opacity:.85}
+  .readyCard button{margin-top:22px; background:var(--accent-ink); color:var(--accent); border-color:var(--accent-ink);
+    box-shadow:6px 6px 0 color-mix(in oklab, var(--accent-ink) 55%, transparent); font-family:var(--font-display);
+    font-size:19px; font-weight:900; padding:16px 48px}
+  .readyKbd{margin-top:12px; font-size:12.5px; opacity:.75}
+  .readyCount{display:none; font-family:var(--font-mono); font-weight:700; font-size:clamp(72px,16vw,132px); line-height:1}
+  .readyCount.on{display:block; margin-top:14px}
+  .readyCount.pop{animation:fxPop .5s var(--ease)}
+  @keyframes fxPop{0%{scale:.55; opacity:0} 45%{scale:1.08; opacity:1} 100%{scale:1}}
 
-  /* ===== 排行榜 ===== */
-  .lbrow{display:flex; align-items:center; gap:12px; padding:10px 4px; border-bottom:1px solid var(--line-soft)}
-  .lbrow .no{width:30px; font-weight:900; color:var(--dim); font-variant-numeric:tabular-nums}
+  /* ---- result ---- */
+  .rank{display:flex; flex-direction:column; gap:0; margin:18px 0; border-top:var(--bar) solid var(--rule)}
+  .rk{display:flex; align-items:center; gap:14px; padding:16px 4px; border-bottom:1px solid var(--rule)}
+  .rk .no{font-family:var(--font-mono); font-size:15px; color:var(--muted); width:26px}
+  .rk .nm{flex:1; font-size:19px; font-weight:900}
+  .rk .st{font-size:12.5px; color:var(--muted); font-weight:400; margin-top:3px}
+  .rk .pt{font-family:var(--font-mono); font-size:32px; font-weight:700; font-variant-numeric:tabular-nums; color:var(--accent-2)}
+  .rk.first{border-left:4px solid var(--accent); padding-left:12px}
+  .rk.first .pt{color:var(--accent)}
+
+  /* ---- leaderboard ---- */
+  .lbrow{display:flex; align-items:center; gap:12px; padding:12px 4px; border-bottom:1px solid var(--rule)}
+  .lbrow .no{width:28px; font-family:var(--font-mono); color:var(--muted); font-size:13px}
   .lbrow .nm{flex:1; font-weight:700}
-  .lbrow .nm .st{font-size:12px; color:var(--dim); font-weight:400; margin-top:2px}
-  .lbrow .pt{font-weight:900; font-size:20px; font-variant-numeric:tabular-nums}
+  .lbrow .nm .st{font-size:12px; color:var(--muted); font-weight:400; margin-top:2px}
+  .lbrow .pt{font-family:var(--font-mono); font-size:22px; font-weight:700; color:var(--accent-2)}
 
-  /* ===== 題庫管理 ===== */
-  .bankgrid{display:grid; grid-template-columns:220px 1fr; gap:14px}
-  @media (max-width:720px){ .bankgrid{grid-template-columns:1fr} }
+  /* ---- question bank ---- */
+  .bankgrid{display:grid; grid-template-columns:240px minmax(0,1fr); gap:12px}
+  @media (max-width:760px){ .bankgrid{grid-template-columns:minmax(0,1fr)} }
   .decklist{display:flex; flex-direction:column; gap:6px}
-  .decklist button{text-align:left; padding:11px 13px; background:var(--panel2); font-size:13.5px; display:flex; justify-content:space-between; gap:8px}
-  .decklist button.on{background:var(--panel3); border:1px solid var(--accent)}
-  .decklist button i{color:var(--dim); font-style:normal; font-size:12px}
-  .items{max-height:54vh; overflow:auto; display:flex; flex-direction:column; gap:6px}
-  .it{display:grid; grid-template-columns:1fr 36px; gap:6px; align-items:center}
-  .it input{padding:7px 10px; font-size:14px}
-  .it button{background:transparent; color:var(--dim-4); font-size:16px; padding:0}
-  .it button:hover{color:var(--danger)}
+  .decklist button{display:flex; justify-content:space-between; gap:8px; text-align:left; padding:10px 12px;
+    border-color:var(--rule); color:var(--ink-2); font-size:13.5px}
+  .decklist button i{font-family:var(--font-mono); font-style:normal; font-size:12px; color:var(--muted)}
+  .decklist button.on{background:var(--accent); border-color:var(--accent); color:var(--accent-ink); box-shadow:3px 3px 0 var(--accent-2)}
+  .decklist button.on i{color:var(--accent-ink); opacity:.8}
+  .items{max-height:52vh; overflow:auto; display:flex; flex-direction:column; gap:6px}
+  .it{display:grid; grid-template-columns:minmax(0,1fr) 36px; gap:6px; align-items:center}
+  .it input{padding:8px 10px; font-size:14px}
+  .it button{padding:0; height:34px; border-color:transparent; color:var(--muted)}
+  .it button:hover{color:var(--accent); border-color:var(--rule)}
 
-  /* ===== 準備畫面 / 倒數 ===== */
-  .ready{position:fixed; inset:0; background:var(--ready-bg);
-    display:flex; align-items:center; justify-content:center; z-index:60; padding:24px}
-  .readyCard{text-align:center; max-width:640px; width:100%}
-  .readyRound{color:var(--dim-2); font-size:16px; letter-spacing:2px; margin-bottom:10px}
-  .readyTeam{font-size:clamp(40px,8vw,76px); font-weight:900; letter-spacing:2px; margin-bottom:8px}
-  .readyHint{color:var(--dim); font-size:15px; line-height:1.7; margin-bottom:26px}
-  .readyBtn{font-size:22px; padding:20px 64px; border-radius:16px;
-    background:linear-gradient(180deg,var(--accent-2),var(--accent-3)); box-shadow:0 8px 30px var(--accent-glow)}
-  .readyBtn:active{transform:translateY(2px)}
-  .readyKbd{color:var(--dim-3); font-size:13.5px; margin-top:16px}
-  .readyCount{font-size:clamp(72px,18vw,160px); font-weight:900; color:var(--txt); line-height:1;
-    display:none; margin-top:10px; text-shadow:0 0 40px var(--accent-glow-2)}
-  .readyCount.on{display:block}
-
-  .toast{position:fixed; left:50%; bottom:24px; transform:translateX(-50%); background:var(--toast-bg); border:1px solid var(--accent);
-    color:var(--txt); padding:11px 20px; border-radius:999px; font-size:14px; opacity:0; pointer-events:none; transition:opacity .2s; z-index:99}
+  .toast{position:fixed; left:50%; bottom:86px; translate:-50% 0; background:var(--accent); color:var(--accent-ink);
+    font-weight:700; font-size:14px; padding:10px 18px; border:var(--bar) solid var(--accent-ink);
+    border-radius:var(--radius); box-shadow:4px 4px 0 var(--accent-2); opacity:0; pointer-events:none; transition:opacity .2s; z-index:99}
   .toast.on{opacity:1}
+
   @media (prefers-reduced-motion: reduce){
     *,*::before,*::after{animation-duration:.001ms !important; animation-iteration-count:1 !important;
-      transition-duration:.001ms !important; scroll-behavior:auto !important}
+      transition-duration:.001ms !important}
     .bar > i{transition:none}
   }
-
-  .kbd{background:var(--panel2); border:1px solid var(--line); border-radius:6px; padding:2px 7px; font-size:11.5px; color:var(--dim); font-family:ui-monospace,monospace}
 </style>
 </head>
 <body>
@@ -185,106 +224,102 @@
 
   <!-- ========== 主頁 ========== -->
   <section class="view active" id="v-home">
-    <h1>大電視 · 破冰主持台</h1>
-    <p class="sub">一人背向屏幕猜，全隊描述／做動作。主持一部機控場，對錯由人手拍板。</p>
-    <div class="row" style="margin-bottom:14px"><span class="pill" id="srcPill">題庫來源：本機</span></div>
+    <header class="top">
+      <div>
+        <h1>大電視</h1>
+        <p class="sub">一人背向屏幕猜，全隊描述。主持按對或跳過，對錯由人拍板。</p>
+      </div>
+      <span class="pill" id="srcPill">題庫來源：本機</span>
+    </header>
 
-    <div class="card">
-      <h2>組別／玩家</h2>
-      <div class="row">
-        <label>數量</label>
-        <div class="stepper">
-          <button id="teamMinus">−</button><b id="teamCount">2</b><button id="teamPlus">＋</button>
+    <div class="setup">
+      <section class="well">
+        <h2>組別 / 玩家</h2>
+        <div class="row">
+          <label>數量</label>
+          <div class="stepper">
+            <button id="teamMinus" aria-label="減少組別">−</button><b id="teamCount">2</b><button id="teamPlus" aria-label="增加組別">＋</button>
+          </div>
+          <span class="kv">可以打玩家名</span>
         </div>
-        <span class="kv">改名可以打玩家名，例如「阿明」</span>
-      </div>
-      <div class="names" id="nameList"></div>
-    </div>
+        <div class="names" id="nameList"></div>
+      </section>
 
-    <div class="card">
-      <h2>回合設定</h2>
-      <div class="row" style="margin-bottom:10px">
-        <label>每回合</label>
-        <input id="secInput" type="number" min="0" max="600" step="5" style="width:100px">
-        <span class="kv">秒（0 = 不限時，主持自己按結束）</span>
-      </div>
-      <div class="row" style="margin-bottom:10px">
-        <label>總回合</label>
-        <input id="roundInput" type="number" min="1" max="20" style="width:100px">
-        <span class="kv">每個組別輪流一次 = 1 回合</span>
-      </div>
-      <div class="row">
-        <label>選項</label>
-        <label class="kv"><input type="checkbox" id="bgmChk" style="width:auto; margin-right:6px">背景音樂</label>
-        <label class="kv" style="margin-left:16px"><input type="checkbox" id="vfxChk" style="width:auto; margin-right:6px">畫面動效</label>
-      </div>
-      <p class="kv" style="margin:8px 0 0; opacity:.75">背景音樂包埋提示音，畫面動效係答對閃光、跳過震動同倒數彈跳。</p>
-    </div>
+      <section class="well">
+        <h2>回合</h2>
+        <div class="row" style="margin-bottom:12px">
+          <label>每回合</label>
+          <input id="secInput" type="number" min="0" max="600" step="5" style="width:88px">
+          <span class="kv">秒 · 0 = 不限時</span>
+        </div>
+        <div class="row" style="margin-bottom:12px">
+          <label>總回合</label>
+          <input id="roundInput" type="number" min="1" max="20" style="width:88px">
+          <span class="kv">每組輪一次 = 1 回合</span>
+        </div>
+        <div class="row">
+          <label>選項</label>
+          <label class="kv"><input type="checkbox" id="bgmChk" style="margin-right:6px">背景音樂</label>
+          <label class="kv" style="margin-left:14px"><input type="checkbox" id="vfxChk" style="margin-right:6px">畫面動效</label>
+        </div>
+        <p class="kv" style="margin-top:8px">背景音樂包埋提示音；動效係答對閃光、跳過震動同倒數彈跳。</p>
+      </section>
 
-    <div class="card">
-      <h2>題庫</h2>
-      <div class="chips" id="deckChips"></div>
-      <div class="row" style="margin-top:12px">
-        <span class="kv" id="deckCount"></span>
-        <button class="btn-ghost" id="btnAll">全選</button>
-        <button class="btn-ghost" id="btnNone">全不選</button>
-      </div>
-    </div>
-
-    <button class="btn-primary" id="btnStart">開始遊戲</button>
-    <div class="row" style="margin-top:12px; justify-content:center">
-      <button class="btn-ghost" id="btnBankHome">管理題庫</button>
-      <button class="btn-ghost" id="btnLb">排行榜</button>
-      <button class="btn-ghost" id="btnFull">全螢幕</button>
+      <section class="well span2">
+        <h2>題庫</h2>
+        <div class="chips" id="deckChips"></div>
+        <div class="row" style="margin-top:12px">
+          <span class="kv" id="deckCount"></span>
+          <button class="btn-quiet" id="btnAll">全選</button>
+          <button class="btn-quiet" id="btnNone">全不選</button>
+        </div>
+      </section>
     </div>
   </section>
 
   <!-- ========== 遊戲 ========== -->
   <section class="view" id="v-play">
-    <div class="topline">
-      <div style="display:flex; gap:8px; align-items:center; flex-wrap:wrap">
-        <span class="badge" id="pRound">第 1 / 1 回合</span>
-        <span class="badge turn" id="pTurn">輪到 A 隊</span>
-        <span class="badge" id="pLeft"></span>
+    <div class="play-top">
+      <div class="row" style="gap:8px">
+        <span class="tag" id="pRound">第 1 / 1 回合</span>
+        <span class="tag turn" id="pTurn">輪到 A 隊</span>
+        <span class="tag" id="pLeft"></span>
       </div>
-      <div style="display:flex; align-items:center; gap:14px">
-        <span class="clock" id="pClock">60</span>
-        <button class="btn-ghost" id="btnPause">暫停</button>
+      <div class="row" style="gap:12px">
+        <span class="clock" id="pClock">60</span><span class="kv" style="margin-left:-4px">秒</span>
+        <button class="btn-quiet" id="btnPause">暫停</button>
       </div>
     </div>
 
-    <div class="question">
-      <div class="qdeck" id="pDeck"></div>
-      <div class="qtext" id="pText"></div>
-      <div class="qhint" id="pHint"></div>
+    <div class="stage question" id="stage">
+      <div class="stage-deck" id="pDeck"></div>
+      <div class="stage-q" id="pText"></div>
+      <div class="stage-hint" id="pHint"></div>
     </div>
 
     <div class="bar" id="pBar"><i></i></div>
 
+    <div class="score-strip" id="pScores"></div>
+
     <div class="judge">
-      <button class="j-ok" data-judge="ok">✓ 對</button>
+      <button class="j-ok" data-judge="ok">對</button>
       <button class="j-skip" data-judge="skip">跳過</button>
     </div>
 
-    <div class="util" style="margin-bottom:12px">
-      <button id="btnUndo">↩ 撤銷</button>
+    <div class="util">
+      <button id="btnUndo">撤銷</button>
       <button id="btnEndTurn">結束本回合</button>
-      <button id="btnQuit">結束遊戲</button>
+      <button id="btnQuit" style="margin-left:auto;color:var(--muted)">結束遊戲</button>
     </div>
 
-    <div class="scores" id="pScores"></div>
-    <p class="qhint" style="margin-top:12px">
-      鍵盤：<span class="kbd">Space</span> 對／開始　<span class="kbd">S</span> 跳過　<span class="kbd">Z</span> 撤銷　<span class="kbd">Esc</span> 暫停
-    </p>
+    <p class="kv">鍵盤 <span class="kbd">Space</span> 對 <span class="kbd">S</span> 跳過 <span class="kbd">Z</span> 撤銷 <span class="kbd">Esc</span> 暫停</p>
 
     <div class="ready" id="readyOverlay" style="display:none">
       <div class="readyCard">
         <div class="readyRound" id="rdRound"></div>
         <div class="readyTeam" id="rdTeam"></div>
-        <div class="readyHint" id="rdHint">
-          派一個人背向屏幕<br>隊友準備好就撳「開始」
-        </div>
-        <button class="readyBtn" id="btnReady">開始</button>
+        <div class="readyHint" id="rdHint">派一個人背向屏幕，隊友準備好就撳開始</div>
+        <button id="btnReady">開始</button>
         <div class="readyKbd">或者撳 <span class="kbd">Space</span></div>
         <div class="readyCount" id="rdCount"></div>
       </div>
@@ -294,70 +329,82 @@
   <!-- ========== 排行榜 ========== -->
   <section class="view" id="v-lb">
     <h1>排行榜</h1>
-    <p class="sub" id="lbSub">全部場次累計</p>
-    <div class="card">
-      <h2>累計榜</h2>
+    <p class="kv" id="lbSub" style="margin:6px 0 18px">全部場次累計</p>
+    <div class="well" style="margin-bottom:12px">
+      <h2>累計</h2>
       <div id="lbPlayers"></div>
     </div>
-    <div class="card">
+    <div class="well">
       <h2>最近場次</h2>
       <div id="lbRecent"></div>
     </div>
-    <div class="row" style="justify-content:center;margin-top:8px">
-      <button class="btn-ghost" id="btnLbBack">← 返主頁</button>
+    <div class="row" style="justify-content:center;margin-top:18px">
+      <button class="btn-quiet" id="btnLbBack">返主頁</button>
     </div>
   </section>
 
   <!-- ========== 結果 ========== -->
   <section class="view" id="v-result">
     <h1>結果</h1>
-    <p class="sub" id="rSub"></p>
+    <p class="kv" id="rSub" style="margin:6px 0 0"></p>
     <div class="rank" id="rankList"></div>
-    <button class="btn-primary" id="btnAgain">再玩一次</button>
-    <div class="row" style="margin-top:12px; justify-content:center">
-      <button class="btn-ghost" id="btnBackHome">返主頁</button>
+    <button class="btn-primary btn-big" id="btnAgain">再玩一次</button>
+    <div class="row" style="justify-content:center;margin-top:14px">
+      <button class="btn-quiet" id="btnBackHome">返主頁</button>
     </div>
   </section>
 
   <!-- ========== 題庫管理（離線用） ========== -->
   <section class="view" id="v-bank">
-    <h1>題庫管理</h1>
-    <p class="sub">存喺你呢部機（localStorage）。連到後端時會改用後台，呢頁只係離線備用。</p>
+    <h1>題庫</h1>
+    <p class="kv" style="margin:6px 0 18px">存喺你呢部機；連到後端時會改用後台。</p>
     <div class="bankgrid">
-      <div>
+      <div class="well">
+        <h2>類別</h2>
         <div class="decklist" id="bankDecks"></div>
-        <div class="row" style="margin-top:10px">
-          <input id="newDeckName" placeholder="新類別名稱">
-          <button class="btn-ghost" id="btnAddDeck" style="flex:0 0 auto">＋ 新增</button>
+        <div class="row" style="margin-top:12px">
+          <input id="newDeckName" placeholder="新類別">
+          <button class="btn-quiet" id="btnAddDeck">新增</button>
         </div>
       </div>
-      <div class="card" style="margin:0">
-        <div class="row" style="justify-content:space-between; margin-bottom:10px">
+      <div class="well">
+        <div class="row" style="justify-content:space-between;margin-bottom:12px">
           <h2 style="margin:0" id="bankDeckTitle">類別</h2>
           <div class="row" style="gap:8px">
-            <button class="btn-ghost" id="btnImport">匯入 JSON</button>
-            <button class="btn-ghost" id="btnExport">匯出 JSON</button>
-            <button class="btn-ghost" id="btnDelDeck">刪除類別</button>
+            <button class="btn-quiet" id="btnImport">匯入</button>
+            <button class="btn-quiet" id="btnExport">匯出</button>
+            <button class="btn-quiet" id="btnDelDeck">刪除類別</button>
           </div>
         </div>
         <div class="items" id="bankItems"></div>
-        <div style="margin-top:14px">
-          <h2>批量新增（每行一題）</h2>
+        <div style="margin-top:16px">
+          <h2>批量新增，每行一題</h2>
           <textarea id="bulkInput" rows="4" placeholder="雞蛋仔&#10;菠蘿包&#10;開會"></textarea>
           <div class="row" style="margin-top:8px">
-            <button class="btn-ghost" id="btnBulkAdd" style="flex:1">加入題目</button>
+            <button class="btn-quiet" id="btnBulkAdd" style="flex:1">加入題目</button>
           </div>
         </div>
       </div>
     </div>
-    <div class="row" style="margin-top:16px; justify-content:center">
-      <button class="btn-ghost" id="btnBankBack">← 返主頁</button>
+    <div class="row" style="justify-content:center;margin-top:18px">
+      <button class="btn-quiet" id="btnBankBack">返主頁</button>
     </div>
   </section>
 </div>
+
+<div class="startbar">
+  <div>
+    <button class="btn-primary" id="btnStart">開始遊戲</button>
+    <div class="rail">
+      <button class="btn-quiet" id="btnBankHome">題庫</button>
+      <button class="btn-quiet" id="btnLb">排行榜</button>
+      <button class="btn-quiet" id="btnFull">全螢幕</button>
+    </div>
+  </div>
+</div>
+
 <input type="file" id="fileInput" accept=".json,application/json" style="display:none">
 <div class="toast" id="toast"></div>
-
 <script>
 "use strict";
 
@@ -437,6 +484,7 @@ function saveCfg(){ store.set(K_CFG, cfg); }
 
 function showView(id){
   $$(".view").forEach(v=>v.classList.toggle("active", v.id===id));
+  document.body.dataset.view = id.replace(/^v-/, "");
   window.scrollTo(0,0);
 }
 let toastT=null;
@@ -576,6 +624,8 @@ function renderHome(){
   });
   const total = bank.decks.filter(d=>cfg.decks.includes(d.id)).reduce((s,d)=>s+d.items.length,0);
   $("#deckCount").textContent = `已選 ${cfg.decks.length} 個類別 · 共 ${total} 題`;
+  $("#btnAll").disabled = cfg.decks.length >= bank.decks.length;
+  $("#btnNone").disabled = cfg.decks.length === 0;
 }
 
 /* ================= 題庫管理（離線用） ================= */
@@ -645,10 +695,14 @@ function enterReady(){
   $("#rdCount").classList.remove("on");
   $("#btnReady").style.display = "";
   $("#readyOverlay").style.display = "flex";
+  document.body.classList.add("is-ready");
   renderPlay();
 }
 
-function hideReady(){ $("#readyOverlay").style.display = "none"; }
+function hideReady(){
+  $("#readyOverlay").style.display = "none";
+  document.body.classList.remove("is-ready");
+}
 
 /* 撳「開始」→ 3、2、1 → 真正出題計時 */
 function startRound(){
@@ -721,7 +775,7 @@ function renderTimer(){
 function renderPlay(){
   $("#pRound").textContent = `第 ${G.round} / ${G.rounds} 回合`;
   $("#pTurn").textContent = "輪到 " + G.teams[G.turn].name;
-  $("#pLeft").textContent = `池剩 ${G.pool.length}`;
+  $("#pLeft").textContent = `剩 ${G.pool.length} 題`;
 
   const it = G.cur || {t:"", deck:""};   // ready 階段未有題目
   $("#pText").textContent = it.t;
@@ -791,7 +845,7 @@ function endGame(){
         <div class="st">對 ${t.ok} · 跳 ${t.skip}</div>
       </div>
       <div class="pt">${t.score}</div>
-    </div>`).join("") + `<p class="sub" style="text-align:center;margin-top:6px">總分 ${total}</p>`;
+    </div>`).join("") + `<p class="kv" style="text-align:right;margin-top:10px">總分 ${total}</p>`;
   showView("v-result");
   beep(880,0.12,0.15); setTimeout(()=>beep(1180,0.18,0.15),140);
   if(REMOTE.ok){
@@ -960,6 +1014,7 @@ document.addEventListener("visibilitychange", ()=>{
 });
 
 /* ================= 啟動 ================= */
+document.body.dataset.view = "home";
 renderHome();
 updateSrc();
 pullRemoteBank();
