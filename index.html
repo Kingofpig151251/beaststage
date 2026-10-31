@@ -250,14 +250,15 @@
     border-radius:var(--radius); box-shadow:4px 4px 0 var(--accent-2); opacity:0; pointer-events:none; transition:opacity .2s; z-index:99}
   .toast.on{opacity:1}
 
-  /* iPad 直度（744 / 820 / 834 闊）：加大觸控目標，題目留大位 */
-  @media (min-width:700px) and (max-width:1023px){
+  /* 觸控裝置（iPad 直度同橫度都算）：加大觸控目標 */
+  @media (pointer:coarse){
     .stepper button{width:44px; height:44px}
     .judge button{padding:26px 12px}
     .chip{min-height:46px; padding:11px 14px}
     .decklist button{min-height:46px; padding:13px 14px}
     .it button{height:44px}
-    input,textarea{font-size:16px}          /* iOS 唔會自動放大 */
+    .util button{padding:14px 12px}
+    input,textarea{font-size:16px}          /* iOS 焦點時唔會自動放大 */
   }
   /* 橫度或矮屏：收緊垂直節奏，確保唔使捲 */
   @media (max-height:900px){
