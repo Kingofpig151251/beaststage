@@ -322,8 +322,8 @@
   .lbrow:first-child .pt{color:var(--accent)}
   .lbrow:first-child .nm{font-weight:900}
 
-  /* ---- 題庫：密集兩欄 ---- */
-  .bank-head{display:flex; align-items:center; gap:10px; flex-wrap:wrap; margin-bottom:12px}
+  /* ---- 題庫：一行一題表格 ---- */
+  .bank-head{display:flex; align-items:center; gap:10px; flex-wrap:wrap; margin-bottom:10px}
   .bank-head h1{margin:0; font-size:clamp(22px,3vw,30px); line-height:1}
   .bank-head .back{padding:7px 10px; font-size:13px}
   .bank-head #btnSyncNow{padding:7px 12px; font-size:13px; margin-left:auto}
@@ -334,52 +334,51 @@
   .sync-dot.bad{color:var(--accent)}
   .sync-dot.bad::before{background:var(--accent)}
 
-  .bankgrid{display:grid; grid-template-columns:minmax(0,220px) minmax(0,1fr); gap:12px;
-    height:calc(100dvh - 160px); min-height:420px}
-  .deckrail{display:flex; flex-direction:column; gap:8px; min-width:0; min-height:0;
-    border:1px solid var(--rule); border-radius:var(--radius); background:var(--paper-2); padding:10px}
-  .decklist{display:flex; flex-direction:column; gap:3px; flex:1 1 auto; min-height:0; overflow-y:auto}
-  .decklist button{display:flex; justify-content:space-between; gap:8px; text-align:left;
-    padding:8px 10px; font-size:13.5px; border-color:transparent; background:transparent; color:var(--ink-2);
-    border-radius:3px}
-  .decklist button i{font-family:var(--font-mono); font-style:normal; font-size:12px; color:var(--muted)}
-  .decklist button.on{background:var(--accent); color:var(--accent-ink)}
-  .decklist button.on i{color:var(--accent-ink); opacity:.85}
-  .deckadd{display:grid; grid-template-columns:minmax(0,1fr) 40px; gap:6px}
-  .deckadd input{padding:8px 10px; font-size:14px}
-  .deckadd button{padding:0; height:38px; font-size:17px; line-height:1}
+  /* 類別：橫向 tabs，一行過 */
+  .decktabs{display:flex; gap:4px; overflow-x:auto; padding-bottom:6px; margin-bottom:6px;
+    border-bottom:1px solid var(--rule); scrollbar-width:thin}
+  .decktabs button{display:flex; align-items:center; gap:7px; flex:0 0 auto; padding:7px 12px;
+    border:0; border-bottom:2px solid transparent; border-radius:0; background:transparent;
+    color:var(--ink-2); font-size:13.5px; white-space:nowrap}
+  .decktabs button i{font-family:var(--font-mono); font-style:normal; font-size:11.5px; color:var(--muted)}
+  .decktabs button.on{color:var(--ink); border-bottom-color:var(--accent); font-weight:700}
+  .decktabs button.on i{color:var(--accent)}
 
-  .itempane{min-width:0; min-height:0; display:flex; flex-direction:column; gap:10px;
-    border:1px solid var(--rule); border-radius:var(--radius); background:var(--paper-2); padding:12px}
-  .itemhead{display:flex; align-items:baseline; gap:10px}
-  .itemhead h2{margin:0; font-size:clamp(18px,2.2vw,22px)}
-  .itemhead .danger{padding:4px 9px; font-size:12px; color:var(--muted)}
-  .itemhead .danger:hover{color:var(--accent); border-color:var(--accent)}
+  .deckbar{display:flex; align-items:center; gap:8px; flex-wrap:wrap; margin-bottom:10px}
+  .deckbar input{width:170px; padding:7px 10px; font-size:13.5px}
+  .deckbar button{padding:7px 12px; font-size:13px}
+  .deckbar .danger{margin-left:auto; color:var(--muted)}
+  .deckbar .danger:hover{color:var(--accent); border-color:var(--accent)}
 
-  .items{display:grid; grid-template-columns:repeat(auto-fill,minmax(186px,1fr)); gap:5px;
-    align-content:start; flex:1 1 auto; min-height:0; overflow-y:auto}
-  .it{display:grid; grid-template-columns:24px minmax(0,1fr) 26px; align-items:center;
-    border:1px solid var(--rule); border-radius:3px; background:var(--paper-3)}
-  .it .n{font-family:var(--font-mono); font-size:10.5px; color:var(--muted); text-align:right}
-  .it input{border:0; background:transparent; padding:8px 6px; font-size:14px; min-width:0; color:var(--ink)}
-  .it input:focus{outline:2px solid var(--focus); outline-offset:-2px}
-  .it button{padding:0; height:100%; min-height:34px; border:0; background:transparent; color:var(--ink-2); font-size:13px}
-  .it button:hover{color:var(--accent)}
+  /* 題目表：一行一題，表尾永遠有一行空白 */
+  #v-bank{max-width:720px; margin:0 auto}
+  .qhead{display:grid; grid-template-columns:34px minmax(0,1fr) 34px; align-items:center;
+    font-family:var(--font-mono); font-size:10.5px; color:var(--muted); padding-bottom:4px}
+  .qhead span:nth-child(2){padding-left:8px}
+  .qtable{display:flex; flex-direction:column}
+  .qrow{display:grid; grid-template-columns:34px minmax(0,1fr) 34px; align-items:center;
+    border-bottom:1px solid var(--rule); min-height:36px}
+  .qrow:first-child{border-top:1px solid var(--rule)}
+  .qrow .n{font-family:var(--font-mono); font-size:11px; color:var(--muted); text-align:right; padding-right:8px}
+  .qrow input, .qrow textarea{border:0; background:transparent; padding:8px; font-size:15px; color:var(--ink);
+    min-width:0; font-family:inherit; line-height:1.35}
+  .qrow textarea{resize:none; height:36px; overflow:hidden; display:block}
+  .qrow input:focus{outline:2px solid var(--focus); outline-offset:-2px; background:var(--paper-2)}
+  .qrow button{padding:0; height:100%; min-height:34px; border:0; background:transparent;
+    color:var(--muted); font-size:13px; opacity:0; transition:opacity .12s}
+  .qrow:hover button, .qrow button:focus-visible{opacity:1}
+  @media (hover:none){ .qrow button{opacity:1} }
+  .qrow button:hover{color:var(--accent)}
+  .qrow.add{border-bottom:0; border-top:1px dashed var(--rule); margin-top:2px}
+  .qrow.add .n{color:var(--accent)}
+  .qrow.add textarea{color:var(--ink)}
+  .qrow.add textarea::placeholder{color:var(--muted)}
+  .qrow.add button{color:var(--muted); cursor:default}
 
-  .bulk{margin-top:auto; border-top:1px solid var(--rule); padding-top:6px}
-  .bulk summary{cursor:pointer; font-size:13px; color:var(--muted); padding:6px 2px; list-style:none}
-  .bulk summary::before{content:"＋ "; font-family:var(--font-mono)}
-  .bulk[open] summary::before{content:"− "}
-  .bulk textarea{width:100%; margin:6px 0 8px; font-size:14px}
-  .bulk button{padding:9px 16px; font-size:13.5px}
-
-  @media (max-width:860px){
-    .bankgrid{grid-template-columns:minmax(0,1fr); height:auto; min-height:0}
-    .deckrail{max-height:none}
-    .itempane{min-height:auto}
-    .decklist{flex-direction:row; overflow-x:auto; max-height:none; padding-bottom:2px}
-    .decklist button{flex:0 0 auto; white-space:nowrap; border-color:var(--rule)}
-    .items{grid-template-columns:repeat(auto-fill,minmax(160px,1fr))}
+  @media (max-width:700px){
+    .qtable{max-width:none}
+    .deckbar input{flex:1 1 140px; width:auto}
+    .deckbar .danger{margin-left:0}
   }
 
   .toast{position:fixed; right:16px; bottom:16px; background:var(--paper-3); color:var(--ink);
@@ -559,31 +558,49 @@
       <button class="btn-quiet" id="btnSyncNow">重新載入</button>
     </div>
 
-    <div class="bankgrid">
-      <aside class="deckrail">
-        <div class="decklist" id="bankDecks"></div>
-        <div class="deckadd">
-          <input id="newDeckName" placeholder="新類別名" maxlength="20">
-          <button class="btn-quiet" id="btnAddDeck">＋</button>
-        </div>
-      </aside>
+    <div class="decktabs" id="bankDecks"></div>
 
-      <div class="itempane">
-        <div class="itemhead">
-          <h2 id="bankDeckTitle">類別</h2>
-          <span class="kv" id="bankDeckCount"></span>
-          <button class="btn-quiet danger" id="btnDelDeck">刪除類別</button>
-        </div>
-        <div class="items" id="bankItems"></div>
-        <details class="bulk">
-          <summary>批量新增（每行一題）</summary>
-          <textarea id="bulkInput" rows="4" placeholder="雞蛋仔&#10;菠蘿包&#10;開會"></textarea>
-          <button class="btn-quiet" id="btnBulkAdd">加入題目</button>
-        </details>
-      </div>
+    <div class="deckbar">
+      <input id="newDeckName" placeholder="新類別名" maxlength="20">
+      <button class="btn-quiet" id="btnAddDeck">新增類別</button>
+      <button class="btn-quiet danger" id="btnDelDeck">刪除本類別</button>
+    </div>
+
+    <div class="qhead"><span>#</span><span>題目</span><span></span></div>
+    <div class="qtable" id="bankItems"></div>
+  </section>
+
+  <!-- ========== 排行榜 ========== -->
+  <section class="view" id="v-lb">
+    <h1>排行榜</h1>
+    <p class="kv" id="lbSub" style="margin:6px 0 18px">全部場次累計</p>
+    <div class="well" style="margin-bottom:12px">
+      <h2>累計</h2>
+      <div id="lbPlayers"></div>
+    </div>
+    <div class="well">
+      <h2>最近場次</h2>
+      <div id="lbRecent"></div>
+    </div>
+    <div class="row" style="justify-content:center;margin-top:18px">
+      <button class="btn-quiet" id="btnLbBack">返主頁</button>
     </div>
   </section>
 
+  <!-- ========== 結果 ========== -->
+  <section class="view" id="v-result">
+    <h1>結果</h1>
+    <p class="kv" id="rSub" style="margin:6px 0 0"></p>
+    <div id="champBox"></div>
+    <div class="rank" id="rankList"></div>
+    <div class="result-actions">
+      <button class="btn-primary btn-big" id="btnAgain">再玩一次</button>
+      <button class="btn-quiet" id="btnLbFromResult">排行榜</button>
+      <button class="btn-quiet" id="btnBackHome">返主頁</button>
+    </div>
+  </section>
+
+  <!-- ========== 題庫（雲端共用） ========== -->
   <!-- ========== 排行榜 ========== -->
   <section class="view" id="v-lb">
     <h1>排行榜</h1>
@@ -796,25 +813,26 @@ function renderBank(){
   $("#bankMeta").textContent = bank.decks.length ? `${bank.decks.length} 類 · ${totalAll} 題` : "未有題庫";
 
   if(!bank.decks.some(d=>d.id===bankDeck)) bankDeck = bank.decks[0] ? bank.decks[0].id : null;
+
   $("#bankDecks").innerHTML = bank.decks.map(d=>`
     <button class="${d.id===bankDeck?"on":""}" data-bd="${esc(d.id)}">
-      <span>${esc(d.name)}</span><i>${d.items.length}</i>
-    </button>`).join("") || `<p class="sub" style="margin:0">未有類別</p>`;
+      ${esc(d.name)}<i>${d.items.length}</i>
+    </button>`).join("") || `<span class="kv">未有類別</span>`;
   $$("#bankDecks button").forEach(b=>b.onclick=()=>{ bankDeck=b.dataset.bd; renderBank(); });
 
   const deck = bank.decks.find(d=>d.id===bankDeck);
-  $("#bankDeckTitle").textContent = deck ? deck.name : "類別";
-  $("#bankDeckCount").textContent = deck ? `${deck.items.length} 題` : "";
-  $("#bankItems").innerHTML = deck ? deck.items.map((it,i)=>`
-    <div class="it">
+  $("#bankItems").innerHTML = (deck ? deck.items.map((it,i)=>`
+    <div class="qrow">
       <span class="n">${i+1}</span>
       <input data-t="${i}" value="${esc(it.t)}" placeholder="題目">
       <button data-del="${i}" title="刪除" aria-label="刪除第 ${i+1} 題">✕</button>
-    </div>`).join("") : "";
+    </div>`).join("") : "")
+    + `<div class="qrow add">
+         <span class="n">+</span>
+         <textarea id="qNew" rows="1" placeholder="${deck ? "打題目，Enter 新增；可一次貼多行" : "先開一個類別"}" ${deck?"":"disabled"}></textarea>
+         <button aria-hidden="true" tabindex="-1">↵</button>
+       </div>`;
 
-  ["#newDeckName","#btnAddDeck","#btnDelDeck","#btnBulkAdd","#bulkInput"].forEach(sel=>{
-    const el = $(sel); if(el) el.disabled = false;
-  });
   if(deck){
     $$("#bankItems input[data-t]").forEach(inp=>inp.onchange=()=>{
       const i=+inp.dataset.t, v=inp.value.trim();
@@ -825,6 +843,21 @@ function renderBank(){
       deck.items.splice(+b.dataset.del,1); saveBank(); renderBank(); renderHome(); pushBank();
       toast("已刪除");
     });
+    const add = $("#qNew");
+    if(add){
+      const commit = ()=>{
+        const lines = add.value.split("\n").map(x=>x.trim()).filter(Boolean);
+        const fresh = lines.filter(t=>!deck.items.some(x=>x.t===t));
+        if(!fresh.length){ add.value=""; return; }
+        fresh.forEach(t=>deck.items.push({t}));
+        add.value="";
+        saveBank(); renderBank(); renderHome(); pushBank();
+        const again = $("#qNew"); if(again) again.focus();
+        toast(fresh.length===lines.length ? `已加入 ${fresh.length} 題` : `已加入 ${fresh.length} 題（${lines.length-fresh.length} 重複）`);
+      };
+      add.onkeydown = e=>{ if(e.key==="Enter"){ e.preventDefault(); commit(); } };
+      add.onpaste = ()=>setTimeout(commit, 0);
+    }
   }
 }
 
@@ -1145,20 +1178,6 @@ $("#btnDelDeck").onclick = ()=>{
   bank.decks = bank.decks.filter(d=>d.id!==bankDeck);
   cfg.decks = cfg.decks.filter(id=>id!==bankDeck);
   saveBank(); saveCfg(); renderBank(); renderHome(); pushBank(); toast("已刪除類別");
-};
-$("#btnBulkAdd").onclick = ()=>{
-  const deck = bank.decks.find(d=>d.id===bankDeck); if(!deck){ toast("先揀或新增一個類別"); return; }
-  const lines = $("#bulkInput").value.split("\n").map(s=>s.trim()).filter(Boolean);
-  let n=0;
-  lines.forEach(line=>{
-    const title = line.split("|")[0].trim();     // 舊格式「題目|禁字」都食得住
-    if(!title || deck.items.some(x=>x.t===title)) return;
-    deck.items.push({t:title}); n++;
-  });
-  $("#bulkInput").value="";
-  saveBank(); renderBank(); renderHome();
-  if(n) pushBank();
-  toast(n? `已加入 ${n} 題` : "冇新題目加入");
 };
 $("#btnBankBack").onclick = ()=>{ showView("v-home"); renderHome(); };
 /* 鍵盤控場 */
