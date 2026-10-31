@@ -151,7 +151,7 @@
   .stage::after{content:""; position:absolute; inset:0; pointer-events:none; z-index:-1;
     background-image:repeating-linear-gradient(to bottom, transparent 0 2px, color-mix(in oklab, var(--shade) 22%, transparent) 2px 3px)}
   @supports not (background: color-mix(in oklab, white 50%, black)){
-    .stage::after{background-image:repeating-linear-gradient(to bottom, transparent 0 2px, rgba(0,0,0,.22) 2px 3px)}
+    .stage::after{background-image:repeating-linear-gradient(to bottom, transparent 0 2px, var(--scanline) 2px 3px)}
   }
   .stage-deck{font-size:12px; font-weight:700; color:var(--muted)}
   .stage-q{font-family:var(--font-display); font-weight:900; font-size:clamp(40px,9vw,92px); line-height:1.08;
