@@ -422,8 +422,8 @@
         <h2>計時</h2>
         <div class="row" style="margin-bottom:12px">
           <label>每回合</label>
-          <input id="secInput" type="number" min="0" max="600" step="5" style="width:88px">
-          <span class="kv">秒 · 0 = 不限時</span>
+          <input id="secInput" type="number" min="5" max="600" step="5" style="width:88px">
+          <span class="kv">秒</span>
         </div>
         <div class="row">
           <label class="kv"><input type="checkbox" id="vfxChk" style="margin-right:6px">畫面動效</label>
@@ -454,9 +454,6 @@
       <div class="flash-tools">
         <span class="flash-clock"><b class="clock" id="pClock">60</b><em>秒</em></span>
         <button class="btn-quiet" id="btnPause">暫停</button>
-        <button class="btn-quiet" id="btnEndTurn">結束回合</button>
-        <span class="tool-sep" aria-hidden="true"></span>
-        <button class="btn-quiet quit" id="btnQuit">結束遊戲</button>
       </div>
     </div>
 
@@ -849,7 +846,7 @@ function startGame(){
   if(!pool.length){ toast("請先揀最少一個有題目嘅類別"); return; }
 
   G = {
-    sec: Number(cfg.sec)||0,
+    sec: Math.max(5, Number(cfg.sec)||60),
     teams: names.map(n=>({name:n, score:0, ok:0, skip:0})),
     turn:0,
     pool: shuffle(pool.slice()), used: [], cur:null,
@@ -1097,7 +1094,7 @@ async function openLb(){
 $("#teamMinus").onclick = ()=>{ cfg.teams=Math.max(1,cfg.teams-1); saveCfg(); renderHome(); };
 $("#teamPlus").onclick  = ()=>{ cfg.teams=Math.min(8,cfg.teams+1); saveCfg(); renderHome(); };
 $$(".presets button").forEach(b=>b.onclick=()=>{ cfg.teams=+b.dataset.teams; saveCfg(); renderHome(); });
-$("#secInput").onchange  = e=>{ cfg.sec=Math.max(0,Math.min(600,+e.target.value||0)); saveCfg(); };
+$("#secInput").onchange  = e=>{ cfg.sec=Math.max(5,Math.min(600,+e.target.value||60)); saveCfg(); };
 $("#vfxChk").onchange = e=>{
   cfg.vfx = e.target.checked; saveCfg();
   if(!cfg.vfx){                       // 關咗就即刻清走殘留效果
@@ -1114,8 +1111,6 @@ $("#btnFull").onclick = ()=>{ if(!document.fullscreenElement){ document.document
 $$("[data-judge]").forEach(b=>b.onclick=()=>judge(b.dataset.judge));
 $("#btnReady").onclick = startRound;
 $("#btnUndo").onclick = undo;
-$("#btnEndTurn").onclick = ()=>endTurn();
-$("#btnQuit").onclick = ()=>{ if(confirm("結束今次遊戲並睇結果？")) endGame(); };
 $("#btnPause").onclick = ()=>{ if(!G || G.phase!=="running") return; G.paused=!G.paused; $("#btnPause").textContent = G.paused?"繼續":"暫停"; };
 
 $("#btnAgain").onclick = startGame;
