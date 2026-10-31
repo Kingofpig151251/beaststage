@@ -317,7 +317,9 @@
   .lbrow .no{width:28px; font-family:var(--font-mono); color:var(--muted); font-size:13px}
   .lbrow .nm{flex:1; font-weight:700}
   .lbrow .nm .st{font-size:12px; color:var(--muted); font-weight:400; margin-top:2px}
-  .lbrow .pt{font-family:var(--font-mono); font-size:22px; font-weight:700; color:var(--accent-2)}
+  .lbrow .pt{font-family:var(--font-mono); font-size:22px; font-weight:700; color:var(--ink)}
+  .lbrow:first-child .pt{color:var(--accent)}
+  .lbrow:first-child .nm{font-weight:900}
 
   /* ---- question bank ---- */
   .bankgrid{display:grid; grid-template-columns:240px minmax(0,1fr); gap:12px}
@@ -495,6 +497,7 @@
     <div class="rank" id="rankList"></div>
     <div class="result-actions">
       <button class="btn-primary btn-big" id="btnAgain">再玩一次</button>
+      <button class="btn-quiet" id="btnLbFromResult">排行榜</button>
       <button class="btn-quiet" id="btnBackHome">返主頁</button>
     </div>
   </section>
@@ -1034,6 +1037,7 @@ $("#btnPause").onclick = ()=>{ if(!G || G.phase!=="running") return; G.paused=!G
 
 $("#btnAgain").onclick = startGame;
 $("#btnBackHome").onclick = ()=>{ showView("v-home"); renderHome(); };
+$("#btnLbFromResult").onclick = openLb;
 
 $("#btnBankHome").onclick = ()=>{
   if(REMOTE.ok){ window.open("/admin.html", "_blank"); return; }   // 有後端就開後台
