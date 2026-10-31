@@ -122,6 +122,26 @@ def read_bank(c):
     return {"name": row["value"] if row else "題庫", "decks": decks, "updated_at": upd}
 
 
+def _snapshot(cur):
+    """覆寫前將現有題庫存一份 JSON 快照，保留最近 3 份（meta key: snap1..snap3）。"""
+    import json as _json
+    cur.execute("SELECT key FROM meta WHERE key IN ('snap1','snap2','snap3')")
+    have = {r["key"] for r in cur.fetchall()}
+    cur.execute("SELECT id, name FROM decks ORDER BY sort, name")
+    decks = []
+    for d in cur.fetchall():
+        cur.execute("SELECT text FROM items WHERE deck_id=%s ORDER BY sort, id", (d["id"],))
+        decks.append({"id": d["id"], "name": d["name"], "items": [r["text"] for r in cur.fetchall()]})
+    if not decks:
+        return
+    payload = _json.dumps({"decks": decks}, ensure_ascii=False)
+    if "snap3" in have:
+        cur.execute("DELETE FROM meta WHERE key='snap3'")
+    cur.execute("UPDATE meta SET key='snap3' WHERE key='snap2'")
+    cur.execute("UPDATE meta SET key='snap2' WHERE key='snap1'")
+    cur.execute("INSERT INTO meta(key,value) VALUES('snap1',%s)", (payload,))
+
+
 def slug(name):
     s = re.sub(r"[^a-z0-9]+", "-", (name or "").lower()).strip("-")
     return s or "deck"
@@ -365,14 +385,14 @@ def item_del(iid: int, request: Request):
 
 @app.put("/api/bank")
 async def bank_replace(request: Request):
-    if (r := need_token(request)):
-        return r
+    # 開放寫入（題庫只存雲端、冇寫入碼）；每次覆寫前留低上一版做快照
     schema()
     body = await request.json()
     decks = body.get("decks")
     if not isinstance(decks, list):
         return JSONResponse({"error": "decks 要係 array"}, status_code=400)
     with conn() as c, c.cursor() as cur:
+        _snapshot(cur)
         cur.execute("DELETE FROM items")
         cur.execute("DELETE FROM decks")
         if body.get("name"):

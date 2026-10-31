@@ -35,8 +35,7 @@ class H(SimpleHTTPRequestHandler):
 
     def do_PUT(self):
         global BANK
-        if self.headers.get("X-Admin-Token") != TOK:
-            return self._json({"error": "no token"}, 401)
+        # 開放寫入：唔檢查 token
         n = int(self.headers.get("Content-Length") or 0)
         body = json.loads(self.rfile.read(n) or b"{}")
         BANK = {"name": body.get("name") or "共用題庫", "decks": body.get("decks") or []}

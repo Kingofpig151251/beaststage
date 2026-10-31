@@ -81,13 +81,15 @@ docker compose up -d          # 預設 8080，資料喺 ./data
 
 ## 四、題庫（雲端共用）
 
-「題庫」頁最上面有一行**寫入碼**：
+題庫只存雲端，冇本機副本，亦**冇寫入碼**：
 
-- **睇**：唔使寫入碼，開 App 就由雲端載入（`GET /api/bank`）
-- **改**：填寫入碼（= 後端 `BIGTV_PIN`）之後，加類別／改題／刪題／批量加題會即刻寫返雲端
-- **換機**：任何一部機開同一個網址就係同一份題庫
-- 狀態顯示：`未連線` / `只讀` / `同步中…` / `已同步` / `寫入失敗（檢查寫入碼／連線）`
-- 本機只記住你嘅偏好（隊數、秒數、揀邊幾個類別），**唔會存題目**
+- 開 App 由 `GET /api/bank` 載入（所有機共用同一份）
+- 題庫頁改完即刻 `PUT /api/bank`（400ms debounce），唔使登入
+- 狀態顯示：`未連線` / `同步中…` / `已同步` / `寫入失敗（檢查連線）`
+- 「重新載入」＝由雲端再拉一次
+- 本機只記住偏好（隊數、秒數、揀邊幾個類別），唔會存題目
+
+⚠️ 寫入係開放嘅：知道網址嘅人就可以改題庫。為防手誤清空，後端每次覆寫前會留一份快照（`meta` 表 `snap1`–`snap3`，最近 3 版），要還原可以撈返。
 
 ## 五、API
 
@@ -127,7 +129,7 @@ POST   /api/reset {what:"sessions"|"bank"}
 2. Vercel 專案 `bigtv` 已連 GitHub：**push 上 main 就自動部署去 production**
 3. 環境變數（Vercel → Settings → Environment Variables）
    - `DATABASE_URL`：Neon Postgres（由 Vercel Marketplace 的 Neon integration 自動注入）
-   - `BIGTV_PIN`：題庫同步碼（同時係 API 寫入權杖）
+   - `BIGTV_PIN`：登入 token 用（`/api/login`），題庫寫入唔需要
    - `BIGTV_SECRET`：簽登入 token 用（serverless 冇共享記憶體，改用 HMAC 簽名）
 4. 本地開發：`vercel dev`（會用 `.env.local`），或者照用 `python3 server.py`
 
