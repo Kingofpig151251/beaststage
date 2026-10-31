@@ -512,11 +512,12 @@
   <!-- ========== 題庫管理（離線用） ========== -->
   <section class="view" id="v-bank">
     <h1>題庫</h1>
+    <p class="kv" style="margin:2px 0 10px">題庫存喺雲端，所有機共用同一份；冇連線就讀唔到。</p>
     <div class="syncbar">
-      <label for="syncKey">同步碼</label>
-      <input id="syncKey" type="password" autocomplete="off" placeholder="未設定 · 只存本機">
-      <button class="btn-quiet" id="btnSyncNow">立即同步</button>
-      <span class="kv" id="syncState">只存本機</span>
+      <label for="syncKey">寫入碼</label>
+      <input id="syncKey" type="password" autocomplete="off" placeholder="未設定 · 只可以睇，唔可以改">
+      <button class="btn-quiet" id="btnSyncNow">重新載入</button>
+      <span class="kv" id="syncState">載入中…</span>
     </div>
     <div class="bankgrid">
       <div class="well">
@@ -531,8 +532,6 @@
         <div class="row" style="justify-content:space-between;margin-bottom:12px">
           <h2 style="margin:0" id="bankDeckTitle">類別</h2>
           <div class="row" style="gap:8px">
-            <button class="btn-quiet" id="btnImport">匯入</button>
-            <button class="btn-quiet" id="btnExport">匯出</button>
             <button class="btn-quiet" id="btnDelDeck">刪除類別</button>
           </div>
         </div>
@@ -563,56 +562,24 @@
   </div>
 </div>
 
-<input type="file" id="fileInput" accept=".json,application/json" style="display:none">
 <div class="toast" id="toast"></div>
 <script>
 "use strict";
 
-/* ================= 內建題庫 ================= */
-const DEFAULT_BANK = {
-  name: "香港破冰題庫",
-  decks: [
-    { id:"food", name:"港式小食", items:[
-      "雞蛋仔","菠蘿包","絲襪奶茶","咖喱魚蛋","燒賣","蛋撻",
-      "西多士","腸粉","砵仔糕","煎釀三寶","車仔麵","魚蛋燒賣"
-    ]},
-    { id:"place", name:"香港地標", items:[
-      "山頂纜車","天星小輪","廟街夜市","黃大仙祠","青馬大橋",
-      "迪士尼樂園","海洋公園","旺角花墟","赤柱","中環摩天輪"
-    ]},
-    { id:"action", name:"日常動作", items:[
-      "搭地鐵逼車","打邊爐","飲珍珠奶茶","搶演唱會飛","排隊買口罩","追巴士",
-      "黐住部冷氣","食月餅","搬屋","影証件相","開會打瞌睡","換燈泡"
-    ]},
-    { id:"song", name:"廣東歌／歌手", items:[
-      "陳奕迅","MIRROR","鄭秀文","喜帖街","海闊天空",
-      "富士山下","紅日","譚詠麟","梅艷芳","羅文"
-    ]},
-    { id:"tv", name:"劇集／角色", items:[
-      "大時代","獎門人","歡樂今宵","包青天","家有喜事","無間道","功夫","衝上雲霄"
-    ]},
-    { id:"work", name:"職場／校園", items:[
-      "OT 到凌晨","交報告","開會","Presentation","打咭",
-      "小息","考試","班會","舊生聚會","Team building"
-    ]}
-  ]
-};
-
 const HINT = "由 {who} 派一個人背向屏幕。隊友描述或做動作，唔准講出題目上面任何一隻字。";
 
 /* ================= 狀態 ================= */
-const K_BANK="bigtv.bank.v3", K_CFG="bigtv.cfg.v3";
+const K_CFG="bigtv.cfg.v3";   // 題庫唔再存本機，只存雲端
 const store = {
   get(k,d){ try{ const v=localStorage.getItem(k); return v?JSON.parse(v):d; }catch(e){ return d; } },
   set(k,v){ try{ localStorage.setItem(k,JSON.stringify(v)); }catch(e){} }
 };
 
-let bank = normalizeBank(store.get(K_BANK, null) || clone(DEFAULT_BANK));
+let bank = { name:"題庫", decks:[] };   // 開機由雲端載入
 let cfg  = Object.assign({
   teams:2, names:["A 隊","B 隊","C 隊","D 隊","E 隊","F 隊","G 隊","H 隊"],
-  sec:60, decks: bank.decks.map(d=>d.id), vfx:true
+  sec:60, decks: [], vfx:true
 }, store.get(K_CFG, {}));
-if(cfg.sound !== undefined && cfg.bgm === undefined){ cfg.bgm = cfg.sound; delete cfg.sound; }
 
 let G = null;
 let bankDeck = bank.decks[0] ? bank.decks[0].id : null;
@@ -626,7 +593,7 @@ function esc(s){ return String(s).replace(/[&<>"']/g, c=>({"&":"&amp;","<":"&lt;
 
 /* 題目一律以 {t:"..."} 存；舊格式（字串 / {t,ban}）都食得住 */
 function normalizeBank(b){
-  if(!b || !Array.isArray(b.decks)) return clone(DEFAULT_BANK);
+  if(!b || !Array.isArray(b.decks)) return { name:"題庫", decks:[] };
   return {
     name: b.name || "題庫",
     decks: b.decks.map((d,i)=>({
@@ -639,14 +606,15 @@ function normalizeBank(b){
     }))
   };
 }
-function saveBank(){ store.set(K_BANK, bank); }
+function saveBank(){ /* 題庫只存雲端，本機唔留副本 */ }
 
 /* ---- 題庫同步：同步碼 = 後端 PIN，換 token 之後 PUT 整份題庫 ---- */
 let syncTok = {v:null, exp:0};
 function setSyncState(kind, msg){
   const el = $("#syncState"); if(!el) return;
-  const map = {local:["", "只存本機"], syncing:["", "同步中…"], ok:["ok", "已同步"],
-    nokey:["", "未設定同步碼"], error:["", "同步失敗（檢查同步碼／連線）"]};
+  const map = {local:["", "只讀"], syncing:["", "同步中…"], ok:["ok", "已同步"],
+    nokey:["", "未設定寫入碼"], error:["", "寫入失敗（檢查寫入碼／連線）"],
+    offline:["", "未連線"]};
   const [cls, text] = map[kind] || ["", msg || ""];
   el.className = "kv" + (cls ? " " + cls : "");
   el.textContent = text;
@@ -704,12 +672,12 @@ async function pullRemoteBank(){
     saveCfg();
     REMOTE.ok = true;
     renderHome(); updateSrc();
-  }catch(e){ REMOTE.ok = false; updateSrc(); }
+  }catch(e){ REMOTE.ok = false; updateSrc(); renderHome(); setSyncState("offline"); }
 }
 function updateSrc(){
   const el = $("#srcPill");
   if(!el) return;
-  el.textContent = REMOTE.ok ? "題庫來源：共用題庫" : "題庫來源：本機";
+  el.textContent = REMOTE.ok ? "題庫：已連線" : "題庫：未連線";
   el.className = "pill" + (REMOTE.ok ? " on" : "");
 }
 
@@ -758,10 +726,14 @@ function renderHome(){
     saveCfg(); renderHome();
   });
   const total = bank.decks.filter(d=>cfg.decks.includes(d.id)).reduce((s,d)=>s+d.items.length,0);
-  $("#deckCount").textContent = `已選 ${cfg.decks.length} 個類別 · 共 ${total} 題`;
+  $("#deckCount").textContent = bank.decks.length
+    ? `已選 ${cfg.decks.length} 個類別 · 共 ${total} 題`
+    : "未連線：題庫讀唔到";
   $("#teamMinus").disabled = cfg.teams <= 1;
   $("#teamPlus").disabled = cfg.teams >= 8;
-  $("#btnAll").disabled = cfg.decks.length >= bank.decks.length;
+  $("#btnStart").disabled = !bank.decks.length;
+  $("#btnStart").textContent = bank.decks.length ? "開始遊戲" : "題庫未連線";
+  $("#btnAll").disabled = !bank.decks.length || cfg.decks.length >= bank.decks.length;
   $("#btnNone").disabled = cfg.decks.length === 0;
 }
 
@@ -769,7 +741,7 @@ function renderHome(){
 function renderBank(){
   if($("#syncKey") && document.activeElement !== $("#syncKey")){
     $("#syncKey").value = cfg.syncKey || "";
-    setSyncState(cfg.syncKey ? "local" : "nokey");
+    setSyncState(!REMOTE.ok ? "offline" : (cfg.syncKey ? "local" : "nokey"));
   }
   if(!bank.decks.some(d=>d.id===bankDeck)) bankDeck = bank.decks[0] ? bank.decks[0].id : null;
   $("#bankDecks").innerHTML = bank.decks.map(d=>`
@@ -1144,42 +1116,53 @@ $("#btnBulkAdd").onclick = ()=>{
   if(n) pushBank();
   toast(n? `已加入 ${n} 題` : "冇新題目加入");
 };
-$("#btnExport").onclick = ()=>{
-  const plain = { name: bank.name, decks: bank.decks.map(d=>({
-    id:d.id, name:d.name, items:d.items.map(i=>i.t)
-  }))};
-  const blob = new Blob([JSON.stringify(plain,null,2)], {type:"application/json"});
-  const a = document.createElement("a");
-  a.href = URL.createObjectURL(blob);
-  a.download = `bigtv-bank-${new Date().toISOString().slice(0,10)}.json`;
-  a.click(); URL.revokeObjectURL(a.href);
-  toast("已匯出");
+$("#btnBankBack").onclick = ()=>{ showView("v-home"); renderHome(); };
+async function syncPull(){
+  syncTok = {v:null, exp:0};
+  setSyncState("syncing");
+  await pullRemoteBank();
+  if(REMOTE.ok){ renderBank(); setSyncState("ok"); return true; }
+  return false;
+}
+$("#syncKey").onchange = async e=>{
+  cfg.syncKey = e.target.value.trim(); saveCfg();
+  if(!cfg.syncKey){ setSyncState("nokey"); return; }
+  // 設定同步碼：雲端有題庫就拉落嚟，冇（或連唔到）就推本機上去
+  if(!await syncPull()) pushBank(0);
 };
-$("#btnImport").onclick = ()=> $("#fileInput").click();
-$("#fileInput").onchange = e=>{
-  const f = e.target.files[0]; if(!f) return;
-  const rd = new FileReader();
-  rd.onload = ()=>{
-    try{
-      const incoming = normalizeBank(JSON.parse(rd.result));
-      incoming.decks.forEach(nd=>{
-        const ex = bank.decks.find(d=>d.name===nd.name);
-        if(ex){
-          nd.items.forEach(it=>{ if(!ex.items.some(x=>x.t===it.t)) ex.items.push(it); });
-        } else {
-          nd.id = "i"+Date.now().toString(36)+Math.floor(Math.random()*999);
-          bank.decks.push(nd);
-          cfg.decks.push(nd.id);
-        }
-      });
-      saveBank(); saveCfg(); renderBank(); renderHome();
-      toast("已合併匯入：" + incoming.decks.length + " 個類別");
-    }catch(err){ toast("JSON 格式有問題"); }
-  };
-  rd.readAsText(f);
-  e.target.value="";
+$("#btnSyncNow").onclick = async ()=>{
+  if(!cfg.syncKey){ setSyncState("nokey"); toast("請先輸入同步碼"); return; }
+  if(await syncPull()) toast("已由雲端同步");
 };
 
+$("#btnAddDeck").onclick = ()=>{
+  const n = $("#newDeckName").value.trim(); if(!n) return;
+  const id = "u"+Date.now().toString(36);
+  bank.decks.push({id, name:n, items:[]});
+  bankDeck = id; cfg.decks.push(id);
+  $("#newDeckName").value=""; saveBank(); saveCfg(); renderBank(); renderHome(); pushBank(); toast("已新增類別");
+};
+$("#btnDelDeck").onclick = ()=>{
+  const deck = bank.decks.find(d=>d.id===bankDeck); if(!deck) return;
+  if(!confirm(`刪除類別「${deck.name}」同裡面 ${deck.items.length} 題？`)) return;
+  bank.decks = bank.decks.filter(d=>d.id!==bankDeck);
+  cfg.decks = cfg.decks.filter(id=>id!==bankDeck);
+  saveBank(); saveCfg(); renderBank(); renderHome(); pushBank(); toast("已刪除類別");
+};
+$("#btnBulkAdd").onclick = ()=>{
+  const deck = bank.decks.find(d=>d.id===bankDeck); if(!deck){ toast("先揀或新增一個類別"); return; }
+  const lines = $("#bulkInput").value.split("\n").map(s=>s.trim()).filter(Boolean);
+  let n=0;
+  lines.forEach(line=>{
+    const title = line.split("|")[0].trim();     // 舊格式「題目|禁字」都食得住
+    if(!title || deck.items.some(x=>x.t===title)) return;
+    deck.items.push({t:title}); n++;
+  });
+  $("#bulkInput").value="";
+  saveBank(); renderBank(); renderHome();
+  if(n) pushBank();
+  toast(n? `已加入 ${n} 題` : "冇新題目加入");
+};
 /* 鍵盤控場 */
 document.addEventListener("keydown", e=>{
   if(!$("#v-play").classList.contains("active")) return;
