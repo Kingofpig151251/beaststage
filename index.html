@@ -234,15 +234,24 @@
   #v-play{position:relative}
 
   .flash-top{display:flex; align-items:center; justify-content:space-between; gap:10px;
-    padding:8px 14px; border-bottom:1px solid var(--rule); flex:0 0 auto; flex-wrap:wrap}
+    padding:6px 14px; border-bottom:1px solid var(--rule); flex:0 0 auto; flex-wrap:wrap}
   .flash-tools{display:flex; gap:6px; align-items:center}
   .tool-sep{width:1px; height:20px; background:var(--rule); margin:0 4px}
   .flash-tools button{padding:8px 12px; font-size:13px}
   .flash-tools .quit{border-style:dashed}
-  .flash-clock{display:flex; align-items:baseline; gap:4px; font-family:var(--font-mono)}
-  .flash-clock b{font-size:clamp(26px,3.6vh,40px); line-height:1; font-variant-numeric:tabular-nums}
-  .flash-clock em{font-style:normal; font-size:12px; color:var(--muted)}
-  .flash-bar{margin:0; height:4px; border-radius:0}
+  .icon-btn{width:42px; height:42px; padding:0; display:grid; place-items:center; flex:0 0 auto;
+    border:1px solid var(--rule); border-radius:50%; background:transparent; color:var(--ink-2)}
+  .icon-btn svg{width:17px; height:17px; fill:currentColor}
+  .icon-btn:hover{color:var(--ink); border-color:var(--ink-2)}
+  .ring{position:relative; width:56px; height:56px; display:grid; place-items:center; flex:0 0 auto}
+  .ring svg{position:absolute; inset:0; width:100%; height:100%; transform:rotate(-90deg)}
+  .ring-track{fill:none; stroke:var(--paper-3); stroke-width:3}
+  .ring-prog{fill:none; stroke:var(--accent-2); stroke-width:3; stroke-linecap:round;
+    stroke-dasharray:119.4; stroke-dashoffset:0; transition:stroke-dashoffset .25s linear, stroke .3s}
+  .ring b{font-family:var(--font-mono); font-size:19px; line-height:1; font-variant-numeric:tabular-nums}
+  .ring.warn .ring-prog{stroke:var(--accent)}
+  .ring.dead .ring-prog{stroke:var(--accent); animation:none}
+  .ring.paused .ring-prog{stroke:var(--muted)}
 
   .card{flex:1 1 auto; min-height:0; display:flex; flex-direction:column; align-items:center;
     justify-content:center; gap:10px; background:none; border:0; position:relative;
@@ -259,8 +268,9 @@
   .flash-hud .undo{justify-self:center; padding:12px 18px; font-size:13.5px}
   .flash-hud .j-skip{justify-self:start}
   .flash-hud .j-ok{justify-self:end}
-  .flash-hud .j-ok,.flash-hud .j-skip{min-height:88px; width:clamp(150px,22vw,240px); padding:0;
-    font-size:clamp(22px,3.2vh,30px)}
+  .flash-hud .j-ok{min-height:88px; width:clamp(150px,22vw,240px); padding:0; font-size:clamp(22px,3.2vh,30px)}
+  .flash-hud .j-skip{min-height:76px; width:clamp(112px,16vw,176px); padding:0; font-size:clamp(17px,2.4vh,22px);
+    color:var(--ink-2)}
   .flash-hud .j-ok{background:var(--accent); color:var(--accent-ink); box-shadow:var(--shadow); border-color:var(--accent)}
   .flash-hud .j-skip{background:var(--paper-2); color:var(--ink); border-color:var(--rule)}
   .flash-hud{flex:0 0 auto; display:grid; grid-template-columns:minmax(0,1fr) auto minmax(0,1fr); gap:12px;
@@ -269,8 +279,9 @@
   .flash-hud .undo{justify-self:center; padding:12px 18px; font-size:13.5px}
   .flash-hud .j-skip{justify-self:start}
   .flash-hud .j-ok{justify-self:end}
-  .flash-hud .j-ok,.flash-hud .j-skip{min-height:88px; width:clamp(150px,22vw,240px); padding:0;
-    font-size:clamp(22px,3.2vh,30px)}
+  .flash-hud .j-ok{min-height:88px; width:clamp(150px,22vw,240px); padding:0; font-size:clamp(22px,3.2vh,30px)}
+  .flash-hud .j-skip{min-height:76px; width:clamp(112px,16vw,176px); padding:0; font-size:clamp(17px,2.4vh,22px);
+    color:var(--ink-2)}
   .flash-hud .j-ok{background:var(--accent); color:var(--accent-ink); box-shadow:var(--shadow); border-color:var(--accent)}
   .flash-hud .j-skip{background:var(--paper-2); color:var(--ink); border-color:var(--rule)}
 
@@ -452,12 +463,18 @@
         <span class="kv" id="pLeft"></span>
       </div>
       <div class="flash-tools">
-        <span class="flash-clock"><b class="clock" id="pClock">60</b><em>秒</em></span>
-        <button class="btn-quiet" id="btnPause">暫停</button>
+        <button class="icon-btn" id="btnPause" aria-label="暫停" title="暫停（Esc）">
+          <svg viewBox="0 0 24 24" aria-hidden="true"><rect x="7" y="5" width="3.6" height="14" rx="1.2"/><rect x="13.4" y="5" width="3.6" height="14" rx="1.2"/></svg>
+        </button>
+        <div class="ring" id="ring" aria-label="剩餘時間">
+          <svg viewBox="0 0 44 44" aria-hidden="true">
+            <circle class="ring-track" cx="22" cy="22" r="19"/>
+            <circle class="ring-prog" id="ringProg" cx="22" cy="22" r="19"/>
+          </svg>
+          <b class="clock" id="pClock">60</b>
+        </div>
       </div>
     </div>
-
-    <div class="bar flash-bar" id="pBar"><i></i></div>
 
     <main class="card question" id="stage">
       <div class="card-word" id="pText"></div>
@@ -865,7 +882,7 @@ function enterReady(){
   G.cur = null;
   G.remaining = G.sec;
   G.paused = false;
-  $("#btnPause").textContent = "暫停";
+  setPauseIcon(false);
   $("#rdRound").textContent = `第 ${G.turn+1} / ${G.teams.length} 隊`;
   $("#rdTeam").textContent = G.teams[G.turn].name;
   $("#rdScores").innerHTML = G.teams.map((t,i)=>
@@ -936,17 +953,16 @@ function startTimer(){
   G.timerId = id;
 }
 
+const RING_LEN = 2 * Math.PI * 19;   // r=19
 function renderTimer(){
-  const el=$("#pClock"), bar=$("#pBar");
-  if(!G.sec){
-    el.textContent="∞"; el.className="clock"; bar.className="bar"; $("#pBar > i").style.transform="scaleX(1)";
-    return;
-  }
+  const el=$("#pClock"), ring=$("#ring"), prog=$("#ringProg");
+  if(!ring) return;
   el.textContent = Math.ceil(G.remaining);
-  el.className = "clock" + (G.remaining<=5 ? " dead" : G.remaining<=15 ? " warn" : "");
   const pct = Math.max(0, Math.min(1, G.remaining / G.sec));
-  $("#pBar > i").style.transform = `scaleX(${pct.toFixed(3)})`;
-  bar.className = "bar" + (G.remaining<=5 ? " dead" : G.remaining<=15 ? " warn" : "");
+  prog.style.strokeDashoffset = (RING_LEN * (1 - pct)).toFixed(1);
+  ring.classList.toggle("warn", G.remaining <= 10 && G.remaining > 3);
+  ring.classList.toggle("dead", G.remaining <= 3);
+  ring.classList.toggle("paused", !!G.paused);
 }
 
 // 題目字自動撐滿字卡：優先一行（唔好把「演唱會」劈開），字太細才容許斷行
@@ -1111,7 +1127,20 @@ $("#btnFull").onclick = ()=>{ if(!document.fullscreenElement){ document.document
 $$("[data-judge]").forEach(b=>b.onclick=()=>judge(b.dataset.judge));
 $("#btnReady").onclick = startRound;
 $("#btnUndo").onclick = undo;
-$("#btnPause").onclick = ()=>{ if(!G || G.phase!=="running") return; G.paused=!G.paused; $("#btnPause").textContent = G.paused?"繼續":"暫停"; };
+function setPauseIcon(p){
+  const b = $("#btnPause"); if(!b) return;
+  b.innerHTML = p
+    ? '<svg viewBox="0 0 24 24" aria-hidden="true"><path d="M8 5.2v13.6L19 12z"/></svg>'
+    : '<svg viewBox="0 0 24 24" aria-hidden="true"><rect x="7" y="5" width="3.6" height="14" rx="1.2"/><rect x="13.4" y="5" width="3.6" height="14" rx="1.2"/></svg>';
+  b.setAttribute("aria-label", p ? "繼續" : "暫停");
+  b.classList.toggle("on", !!p);
+}
+$("#btnPause").onclick = ()=>{
+  if(!G || G.phase!=="running") return;
+  G.paused = !G.paused;
+  setPauseIcon(G.paused);
+  renderTimer();
+};
 
 $("#btnAgain").onclick = startGame;
 $("#btnBackHome").onclick = ()=>{ showView("v-home"); renderHome(); };

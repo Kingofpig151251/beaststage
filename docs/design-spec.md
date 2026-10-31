@@ -55,7 +55,9 @@
 
 ## 五、元件清單（只准用呢啲，唔准為單一畫面自創）
 
-`pill`（狀態）· `tag`（回合／輪到）· `btn-primary`（每頁唯一主動作）· `btn-quiet`（其餘）· `input` / `textarea` · `card`（主持舞台）· `row`（工具清單一行）· `sync-dot`（連線狀態）· `toast`（右下細 pill）
+`pill`（狀態）· `tag`（回合／輪到）· `btn-primary`（每頁唯一主動作）· `btn-quiet`（其餘）· `icon-btn`（圓形圖示掣，例如暫停）· `ring`（圓環計時，數字喺圈內）· `input` / `textarea` · `card`（主持舞台）· `row`（工具清單一行）· `sync-dot`（連線狀態）· `toast`（右下細 pill）
+
+**時間只用一個元件**：圓環（`ring`）。唔准同時用「數字 + 長條」講同一件事。
 
 **規則**：新畫面要嘅嘢如果清單冇，先加落呢份 spec，再加落 CSS，最後才用。
 
