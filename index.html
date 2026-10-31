@@ -249,20 +249,20 @@
   .icon-btn svg{width:17px; height:17px; fill:currentColor}
   .icon-btn.stroke svg{fill:none; stroke:currentColor; stroke-width:1.9; stroke-linecap:round; stroke-linejoin:round}
   .icon-btn:hover{color:var(--ink); border-color:var(--ink-2)}
-  /* 實心碟＝按鈕（空心環只係讀數），配 app 嘅按壓物理 */
-  .ring{position:relative; width:58px; height:58px; display:grid; place-items:center; flex:0 0 auto;
+  /* 同退出掣同一家族：42px 空心圓 + 1px 邊；可撳感嚟自 hover / press / focus */
+  .ring{position:relative; width:42px; height:42px; display:grid; place-items:center; flex:0 0 auto;
     padding:0; color:inherit; cursor:pointer; border-radius:50%;
-    background:var(--paper-3); border:1px solid var(--rule); box-shadow:0 2px 0 var(--shade);
-    transition:background .12s, border-color .12s, transform .06s, box-shadow .06s}
-  .ring:hover{background:var(--paper-2); border-color:var(--ink-2)}
-  .ring:active{transform:translateY(2px); box-shadow:none}
+    background:transparent; border:1px solid var(--rule);
+    transition:border-color .12s, color .12s, transform .06s}
+  .ring:hover{border-color:var(--ink-2); color:var(--ink)}
+  .ring:active{transform:translateY(1px)}
   .ring:focus-visible{outline:2px solid var(--focus); outline-offset:2px}
-  .ring.paused{background:var(--paper-2); border-color:var(--ink-2)}
+  .ring.paused{border-color:var(--ink-2); color:var(--ink)}
   .ring svg{position:absolute; inset:0; width:100%; height:100%; transform:rotate(-90deg)}
-  .ring-track{fill:none; stroke:color-mix(in oklab, var(--rule) 70%, var(--paper-3)); stroke-width:3}
-  .ring-prog{fill:none; stroke:var(--accent-2); stroke-width:3; stroke-linecap:round;
-    stroke-dasharray:119.4; stroke-dashoffset:0; transition:stroke-dashoffset .25s linear, stroke .3s}
-  .ring b{font-family:var(--font-mono); font-size:19px; line-height:1; font-variant-numeric:tabular-nums}
+  .ring-track{fill:none; stroke:color-mix(in oklab, var(--rule) 55%, transparent); stroke-width:2.4}
+  .ring-prog{fill:none; stroke:var(--accent-2); stroke-width:2.4; stroke-linecap:round;
+    stroke-dasharray:100.5; stroke-dashoffset:0; transition:stroke-dashoffset .25s linear, stroke .3s}
+  .ring b{font-family:var(--font-mono); font-size:14.5px; line-height:1; font-variant-numeric:tabular-nums}
   .ring.warn .ring-prog{stroke:var(--accent)}
   .ring.dead .ring-prog{stroke:var(--accent); animation:none}
   .ring.paused .ring-prog{stroke:var(--muted)}
@@ -501,8 +501,8 @@
       </button>
       <button class="ring" id="btnPause" aria-label="暫停" title="暫停（Esc）">
         <svg viewBox="0 0 44 44" aria-hidden="true">
-          <circle class="ring-track" cx="22" cy="22" r="19"/>
-          <circle class="ring-prog" id="ringProg" cx="22" cy="22" r="19"/>
+          <circle class="ring-track" cx="22" cy="22" r="16"/>
+          <circle class="ring-prog" id="ringProg" cx="22" cy="22" r="16"/>
         </svg>
         <b class="clock" id="pClock">60</b>
       </button>
@@ -991,7 +991,7 @@ function startTimer(){
   G.timerId = id;
 }
 
-const RING_LEN = 2 * Math.PI * 19;   // r=19
+const RING_LEN = 2 * Math.PI * 16;   // r=16（留返邊同弧之間嘅空隙）
 function renderTimer(){
   const el=$("#pClock"), ring=$("#btnPause"), prog=$("#ringProg");
   if(!ring) return;
