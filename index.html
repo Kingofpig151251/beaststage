@@ -314,6 +314,7 @@
 
   /* ---- leaderboard ---- */
   .lbrow{display:flex; align-items:center; gap:12px; padding:12px 4px; border-bottom:1px solid var(--rule)}
+  .lbrow:last-child{border-bottom:0}
   .lbrow .no{width:28px; font-family:var(--font-mono); color:var(--muted); font-size:13px}
   .lbrow .nm{flex:1; font-weight:700}
   .lbrow .nm .st{font-size:12px; color:var(--muted); font-weight:400; margin-top:2px}
@@ -990,17 +991,17 @@ async function openLb(){
     const r = await fetch("/api/leaderboard?limit=20", {cache:"no-store"});
     if(!r.ok) throw new Error("bad status");
     const d = await r.json();
-    $("#lbSub").textContent = `共 ${d.sessions_total} 場 · 全部場次累計`;
+    $("#lbSub").textContent = `共 ${d.sessions_total} 場`;
     $("#lbPlayers").innerHTML = (d.players||[]).map((pl,i)=>`
       <div class="lbrow">
         <div class="no">${i+1}</div>
-        <div class="nm">${esc(pl.name)}<div class="st">${pl.games} 場 · 最佳 ${pl.best} · 對 ${pl.ok}／跳 ${pl.skips}</div></div>
+        <div class="nm">${esc(pl.name)}<div class="st">${pl.games} 場 · 最佳 ${pl.best} 分 · 對 ${pl.ok} · 跳 ${pl.skips}</div></div>
         <div class="pt">${pl.total}</div>
       </div>`).join("") || `<p class="sub">未有紀錄</p>`;
     $("#lbRecent").innerHTML = (d.recent||[]).map(s=>`
       <div class="lbrow">
         <div class="nm">${esc((s.finished_at||"").replace("T"," ").slice(0,16))}
-          <span class="st"> · ${s.players} 人</span>
+          <span class="st"> · ${s.players} 隊</span>
           <div class="st">冠軍 ${esc(s.winner||"未有")}（${s.winner_score??0} 分）</div>
         </div>
       </div>`).join("") || `<p class="sub">未有場次</p>`;
