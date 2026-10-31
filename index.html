@@ -323,7 +323,8 @@
   .lbrow:first-child .nm{font-weight:900}
 
   /* ---- 題庫：一份純文字 ---- */
-  .bank-head{display:flex; align-items:center; gap:10px; flex-wrap:wrap; margin-bottom:6px}
+  .bank-head{display:flex; align-items:center; gap:10px; flex-wrap:wrap; margin-bottom:6px;
+    position:sticky; top:0; z-index:5; background:var(--paper); padding:6px 0 8px}
   .bank-head h1{margin:0; font-size:clamp(22px,3vw,30px); line-height:1}
   .bank-head .back{padding:7px 10px; font-size:13px}
   .bank-head #btnSyncNow{padding:7px 12px; font-size:13px; margin-left:auto}
@@ -335,11 +336,11 @@
   .sync-dot.bad::before{background:var(--accent)}
   .bank-hint{margin:0 0 10px; font-size:12.5px}
   .bank-hint code{font-family:var(--font-mono); font-size:12px; color:var(--accent-2)}
-  #bankText{width:100%; height:calc(100dvh - 190px); min-height:360px; resize:vertical;
+  #bankText{width:100%; height:auto; min-height:calc(100dvh - 190px); resize:vertical; overflow:hidden;
     font-family:var(--font-body); font-size:16px; line-height:1.75; padding:16px 18px;
     background:var(--paper-2); color:var(--ink); border:1px solid var(--rule); border-radius:var(--radius)}
   #bankText:focus{outline:2px solid var(--focus); outline-offset:-2px}
-  @media (max-width:700px){ #bankText{height:calc(100dvh - 220px)} }
+  @media (max-width:700px){ #bankText{min-height:calc(100dvh - 230px)} }
 
   .toast{position:fixed; right:16px; bottom:16px; background:var(--paper-3); color:var(--ink);
     font-weight:600; font-size:13px; padding:8px 14px; border:1px solid var(--rule);
@@ -823,6 +824,12 @@ function renderBank(){
   $("#bankMeta").textContent = bank.decks.length ? `${bank.decks.length} 類 · ${totalAll} 題` : "未有題庫";
   const ta = $("#bankText");
   if(ta && document.activeElement !== ta) ta.value = bankToText();
+  autoGrow(ta);
+}
+function autoGrow(ta){
+  if(!ta) return;
+  ta.style.height = "0px";                 // 先歸零，scrollHeight 才是真實內容高
+  ta.style.height = Math.max(ta.scrollHeight + 6, 360) + "px";
 }
 
 /* ================= 遊戲流程 ================= */
@@ -1131,6 +1138,7 @@ $("#btnSyncNow").onclick = async ()=>{
 
 let bankSaveTimer = null;
 $("#bankText").oninput = ()=>{
+  autoGrow($("#bankText"));
   clearTimeout(bankSaveTimer);
   bankSaveTimer = setTimeout(()=>{
     const next = textToBank($("#bankText").value);
