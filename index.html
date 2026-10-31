@@ -247,7 +247,7 @@
 
   .card{flex:1 1 auto; min-height:0; display:flex; flex-direction:column; align-items:center;
     justify-content:center; gap:10px; background:none; border:0; position:relative;
-    padding:14px calc(18px + env(safe-area-inset-left)) 40px calc(18px + env(safe-area-inset-right))}
+    padding:10px calc(20px + env(safe-area-inset-left)) 10px calc(20px + env(safe-area-inset-right))}
   .card-deck{font-size:12px; letter-spacing:0;
     color:var(--ink-2); border:1px solid var(--rule); border-radius:99px; padding:3px 10px; flex:0 0 auto}
   .card-word{font-family:var(--font-display); font-weight:900; line-height:1.02; letter-spacing:-.02em;
@@ -256,10 +256,14 @@
   .card-hint{position:absolute; left:50%; transform:translateX(-50%); bottom:10px; width:min(72ch,86%);
     font-size:13.5px; color:var(--ink-2); text-align:center}
 
-  .flash-hud{flex:0 0 auto; display:grid; grid-template-columns:auto minmax(0,1fr) auto; gap:10px;
-    align-items:stretch; border-top:1px solid var(--rule);
-    padding:10px calc(14px + env(safe-area-inset-right)) calc(10px + env(safe-area-inset-bottom)) calc(14px + env(safe-area-inset-left))}
-  .flash-hud .j-ok,.flash-hud .j-skip{min-height:84px; padding:0 30px; font-size:clamp(20px,3vh,28px)}
+  .flash-hud{flex:0 0 auto; display:grid; grid-template-columns:minmax(0,1fr) auto minmax(0,1fr); gap:12px;
+    align-items:center; border-top:1px solid var(--rule);
+    padding:12px calc(16px + env(safe-area-inset-right)) calc(12px + env(safe-area-inset-bottom)) calc(16px + env(safe-area-inset-left))}
+  .flash-hud .undo{justify-self:center; padding:12px 18px; font-size:13.5px}
+  .flash-hud .j-skip{justify-self:start}
+  .flash-hud .j-ok{justify-self:end}
+  .flash-hud .j-ok,.flash-hud .j-skip{min-height:88px; width:clamp(150px,22vw,240px); padding:0;
+    font-size:clamp(22px,3.2vh,30px)}
   .flash-hud .j-ok{background:var(--accent); color:var(--accent-ink); box-shadow:var(--shadow); border-color:var(--accent)}
   .flash-hud .j-skip{background:var(--paper-2); color:var(--ink); border-color:var(--rule)}
   .hud-scores{display:flex; gap:6px; align-items:center; justify-content:center; overflow-x:auto;
@@ -297,6 +301,14 @@
     font-size:clamp(20px,3vh,28px); padding:clamp(16px,2.4vh,24px) clamp(56px,9vw,110px);
     box-shadow:6px 6px 0 color-mix(in oklab, var(--accent-ink) 55%, transparent)}
   .readyKbd{margin-top:clamp(12px,2vh,18px); font-size:clamp(12px,1.7vh,15px); opacity:.8}
+  .readyScores{display:flex; gap:10px; flex-wrap:wrap; justify-content:center;
+    margin-top:clamp(16px,3vh,30px)}
+  .readyScores span{display:inline-flex; align-items:baseline; gap:9px; padding:8px 15px;
+    border:2px solid currentColor; border-radius:999px; opacity:.7;
+    font-size:clamp(14px,2vh,18px)}
+  .readyScores b{font-family:var(--font-mono); font-size:clamp(17px,2.5vh,23px);
+    font-variant-numeric:tabular-nums; line-height:1}
+  .readyScores .cur{opacity:1; background:var(--accent-ink); color:var(--accent); border-color:var(--accent-ink)}
   .readyCount{display:none; font-family:var(--font-mono); font-weight:700; font-size:clamp(72px,16vw,132px); line-height:1}
   .readyCount.on{display:block; margin-top:14px}
   .readyCount.pop{animation:fxPop .5s var(--ease)}
@@ -439,14 +451,13 @@
   <!-- ========== 遊戲 ========== -->
   <section class="view" id="v-play">
     <div class="flash-top">
-      <div class="row" style="gap:8px">
-        <span class="tag turn" id="pTurn">輪到 A 隊</span>
-        <span class="tag" id="pLeft"></span>
+      <div class="row" style="gap:8px; min-width:0">
+        <span class="card-deck" id="pDeck"></span>
+        <span class="kv" id="pLeft"></span>
       </div>
-      <div class="flash-clock"><b class="clock" id="pClock">60</b><em>秒</em></div>
       <div class="flash-tools">
+        <span class="flash-clock"><b class="clock" id="pClock">60</b><em>秒</em></span>
         <button class="btn-quiet" id="btnPause">暫停</button>
-        <button class="btn-quiet" id="btnUndo">撤銷</button>
         <button class="btn-quiet" id="btnEndTurn">結束回合</button>
         <span class="tool-sep" aria-hidden="true"></span>
         <button class="btn-quiet quit" id="btnQuit">結束遊戲</button>
@@ -456,14 +467,12 @@
     <div class="bar flash-bar" id="pBar"><i></i></div>
 
     <main class="card question" id="stage">
-      <div class="card-deck" id="pDeck"></div>
       <div class="card-word" id="pText"></div>
-      <div class="card-hint" id="pHint"></div>
     </main>
 
     <div class="flash-hud">
       <button class="j-skip" data-judge="skip">跳過</button>
-      <div class="hud-scores" id="pScores" aria-label="賽況"></div>
+      <button class="btn-quiet undo" id="btnUndo">撤銷</button>
       <button class="j-ok" data-judge="ok">對</button>
     </div>
 
@@ -472,6 +481,7 @@
         <div class="readyRound" id="rdRound"></div>
         <div class="readyTeam" id="rdTeam"></div>
         <div class="readyHint" id="rdHint">派一個人背向屏幕，隊友準備好就撳開始</div>
+        <div class="readyScores" id="rdScores"></div>
         <button id="btnReady">開始</button>
         <div class="readyKbd">或者撳 <span class="kbd">Space</span></div>
         <div class="readyCount" id="rdCount"></div>
@@ -865,6 +875,8 @@ function enterReady(){
   $("#btnPause").textContent = "暫停";
   $("#rdRound").textContent = `第 ${G.turn+1} / ${G.teams.length} 隊`;
   $("#rdTeam").textContent = G.teams[G.turn].name;
+  $("#rdScores").innerHTML = G.teams.map((t,i)=>
+    `<span class="${i===G.turn?"cur":""}">${esc(t.name)}<b>${t.score}</b></span>`).join("");
   $("#rdCount").textContent = "";
   $("#rdCount").classList.remove("on");
   $("#btnReady").style.display = "";
@@ -968,22 +980,11 @@ function fitWord(text){
 addEventListener("resize", ()=>{ if(G && G.phase==="running") fitWord($("#pText").textContent); });
 
 function renderPlay(){
-  $("#pTurn").textContent = "輪到 " + G.teams[G.turn].name;
   $("#pLeft").textContent = `剩 ${G.pool.length} 題`;
-
   const it = G.cur || {t:"", deck:""};   // ready 階段未有題目
   $("#pText").textContent = it.t;
   $("#pDeck").textContent = it.deck || "";
-  $("#pHint").textContent = HINT.replace("{who}", G.teams[G.turn].name);
   fitWord(it.t);
-
-  // 賽況 HUD：按分數排，當前隊填 ember
-  const ranked = G.teams.map((t,i)=>({t,i})).sort((a,b)=> b.t.score-a.t.score || a.i-b.i);
-  $("#pScores").innerHTML = ranked.map(({t,i},k)=>`
-    <div class="chip-sc ${i===G.turn?"cur":""}">
-      <span class="n">${esc(t.name)}</span>
-      <b>${t.score}</b>
-    </div>`).join("");
 
   renderTimer();
 }
