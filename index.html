@@ -402,23 +402,16 @@
 
       <div class="stack">
       <section class="well">
-        <h2>回合</h2>
+        <h2>計時</h2>
         <div class="row" style="margin-bottom:12px">
           <label>每回合</label>
           <input id="secInput" type="number" min="0" max="600" step="5" style="width:88px">
           <span class="kv">秒 · 0 = 不限時</span>
         </div>
-        <div class="row" style="margin-bottom:12px">
-          <label>總回合</label>
-          <input id="roundInput" type="number" min="1" max="20" style="width:88px">
-          <span class="kv">每組輪一次 = 1 回合</span>
-        </div>
         <div class="row">
-          <label>選項</label>
-          <label class="kv"><input type="checkbox" id="bgmChk" style="margin-right:6px">背景音樂</label>
-          <label class="kv" style="margin-left:14px"><input type="checkbox" id="vfxChk" style="margin-right:6px">畫面動效</label>
+          <label class="kv"><input type="checkbox" id="vfxChk" style="margin-right:6px">畫面動效</label>
         </div>
-        <p class="kv" style="margin-top:8px">背景音樂包埋提示音；動效係答對閃光、跳過震動同倒數彈跳。</p>
+        <p class="kv" style="margin-top:8px">動效係答對閃光、跳過震動同倒數彈跳。</p>
       </section>
 
       <section class="well">
@@ -438,7 +431,6 @@
   <section class="view" id="v-play">
     <div class="flash-top">
       <div class="row" style="gap:8px">
-        <span class="tag" id="pRound">第 1 / 1 回合</span>
         <span class="tag turn" id="pTurn">輪到 A 隊</span>
         <span class="tag" id="pLeft"></span>
       </div>
@@ -603,7 +595,7 @@ const store = {
 let bank = normalizeBank(store.get(K_BANK, null) || clone(DEFAULT_BANK));
 let cfg  = Object.assign({
   teams:2, names:["A 隊","B 隊","C 隊","D 隊","E 隊","F 隊","G 隊","H 隊"],
-  sec:60, rounds:1, decks: bank.decks.map(d=>d.id), bgm:true, vfx:true
+  sec:60, decks: bank.decks.map(d=>d.id), vfx:true
 }, store.get(K_CFG, {}));
 if(cfg.sound !== undefined && cfg.bgm === undefined){ cfg.bgm = cfg.sound; delete cfg.sound; }
 
@@ -670,67 +662,6 @@ function updateSrc(){
   el.className = "pill" + (REMOTE.ok ? " on" : "");
 }
 
-/* ================= 音訊：BGM（程序化，冇音檔）+ 提示音 ================= */
-let actx=null, master=null;
-
-function audioCtx(){
-  if(!cfg.bgm) return null;                 // 一個總開關：關咗就成個音訊都停
-  try{
-    actx = actx || new (window.AudioContext||window.webkitAudioContext)();
-    if(actx.state === "suspended") actx.resume();
-    if(!master){ master = actx.createGain(); master.gain.value = 0.85; master.connect(actx.destination); }
-    return actx;
-  }catch(e){ return null; }
-}
-
-function tone(freq, dur=0.08, vol=0.15, type="sine", when=null){
-  const ctx = audioCtx(); if(!ctx) return;
-  const t = when ?? ctx.currentTime;
-  const o = ctx.createOscillator(), g = ctx.createGain();
-  o.type = type; o.frequency.value = freq;
-  g.gain.setValueAtTime(0, t);
-  g.gain.linearRampToValueAtTime(vol, t + 0.012);
-  g.gain.exponentialRampToValueAtTime(0.0001, t + dur);
-  o.connect(g); g.connect(master); o.start(t); o.stop(t + dur + 0.03);
-}
-
-/* 四小節和弦循環：Am7 - Fmaj7 - Cmaj7 - G6，慢速氛圍，音量壓得好低 */
-const BGM = {
-  on:false, timer:null, step:0, nextAt:0,
-  chords:[[220.00,261.63,329.63,392.00],[174.61,220.00,261.63,329.63],
-          [130.81,196.00,246.94,329.63],[196.00,246.94,293.66,392.00]],
-  start(){
-    if(this.on || !cfg.bgm) return;
-    const ctx = audioCtx(); if(!ctx) return;
-    this.on = true; this.step = 0; this.nextAt = ctx.currentTime + 0.2;
-    this.timer = setInterval(()=>this.schedule(), 300);
-  },
-  stop(){ this.on = false; clearInterval(this.timer); this.timer = null; },
-  schedule(){
-    const ctx = audioCtx(); if(!ctx || !this.on) return;
-    while(this.nextAt < ctx.currentTime + 0.8){
-      const t = this.nextAt, ch = this.chords[this.step % this.chords.length];
-      ch.forEach((f,i)=> this.pad(f, t, 2.9, 0.030 - i*0.005));
-      this.pad(ch[0]/2, t, 3.0, 0.055);            // 低音
-      this.pad(ch[1]*2, t + 1.45, 1.2, 0.012);     // 高音點綴
-      this.step++;
-      this.nextAt += 2.4;
-    }
-  },
-  pad(freq, t, dur, vol){
-    const ctx = audioCtx(); if(!ctx) return;
-    const o = ctx.createOscillator(), g = ctx.createGain();
-    o.type = "triangle"; o.frequency.value = freq;
-    g.gain.setValueAtTime(0, t);
-    g.gain.linearRampToValueAtTime(vol, t + 0.45);
-    g.gain.linearRampToValueAtTime(0, t + dur);
-    o.connect(g); g.connect(master); o.start(t); o.stop(t + dur + 0.05);
-  }
-};
-
-/* 舊名保留：其他位置照叫 beep */
-function beep(freq=880, dur=0.08, vol=0.15){ tone(freq, dur, vol); }
-
 /* ================= VFX ================= */
 function fxOk(){
   if(!cfg.vfx) return;
@@ -764,9 +695,7 @@ function renderHome(){
   });
 
   $("#secInput").value = cfg.sec;
-  $("#roundInput").value = cfg.rounds;
-  $("#bgmChk").checked = !!cfg.bgm;
-  $("#vfxChk").checked = !!cfg.vfx;
+    $("#vfxChk").checked = !!cfg.vfx;
 
   $("#deckChips").innerHTML = bank.decks.map(d=>`
     <button class="chip ${cfg.decks.includes(d.id)?"on":""}" data-deck="${esc(d.id)}">
@@ -816,7 +745,6 @@ function renderBank(){
 
 /* ================= 遊戲流程 ================= */
 function startGame(){
-  if(cfg.bgm) BGM.start();
   if(G){ clearInterval(G.timerId); G.timerToken++; }   // 清走上一局殘留嘅倒數
   const names = Array.from({length:cfg.teams},(_,i)=> cfg.names[i] || ("隊 "+(i+1)));
   const pool = [];
@@ -826,11 +754,11 @@ function startGame(){
   if(!pool.length){ toast("請先揀最少一個有題目嘅類別"); return; }
 
   G = {
-    sec: Number(cfg.sec)||0, rounds: Number(cfg.rounds)||1,
+    sec: Number(cfg.sec)||0,
     teams: names.map(n=>({name:n, score:0, ok:0, skip:0})),
-    turn:0, round:1,
+    turn:0,
     pool: shuffle(pool.slice()), used: [], cur:null,
-    log: [], paused:false, remaining:0, timerId:null, lastBeep:-1, timerToken:0,
+    log: [], paused:false, remaining:0, timerId:null, timerToken:0,
     phase:"ready"
   };
   showView("v-play");
@@ -846,7 +774,7 @@ function enterReady(){
   G.remaining = G.sec;
   G.paused = false;
   $("#btnPause").textContent = "暫停";
-  $("#rdRound").textContent = `第 ${G.round} / ${G.rounds} 回合`;
+  $("#rdRound").textContent = `第 ${G.turn+1} / ${G.teams.length} 隊`;
   $("#rdTeam").textContent = G.teams[G.turn].name;
   $("#rdCount").textContent = "";
   $("#rdCount").classList.remove("on");
@@ -870,11 +798,11 @@ function startRound(){
   el.classList.add("on");
   const BEAT = 1150;                 // 每個數字停 1.15 秒，畀人有時間準備
   let n = 3;
-  el.textContent = n; fxPop(el); beep(660, 0.10, 0.12);
+  el.textContent = n; fxPop(el);
   const tick = setInterval(()=>{
     n--;
-    if(n > 0){ el.textContent = n; fxPop(el); beep(660, 0.10, 0.12); }
-    else if(n === 0){ el.textContent = "開始"; fxPop(el); beep(990, 0.18, 0.16); }
+    if(n > 0){ el.textContent = n; fxPop(el); }
+    else if(n === 0){ el.textContent = "開始"; fxPop(el); }
     else {
       clearInterval(tick);
       el.classList.remove("on");
@@ -902,7 +830,6 @@ function drawItem(){
 function startTimer(){
   clearInterval(G.timerId);
   if(!G.sec){ renderTimer(); return; }
-  G.lastBeep = Math.ceil(G.remaining);
   const token = ++G.timerToken;
   const id = setInterval(()=>{
     if(token !== G.timerToken){ clearInterval(id); return; }   // 舊局嘅表，唔准再影響新局
@@ -910,8 +837,7 @@ function startTimer(){
     G.remaining = Math.max(0, G.remaining - 0.1);
     renderTimer();
     const sec = Math.ceil(G.remaining);
-    if(sec<=3 && sec>0 && sec!==G.lastBeep){ G.lastBeep=sec; beep(720,0.06,0.12); }
-    if(G.remaining<=0){ clearInterval(id); beep(320,0.35,0.18); endTurn(); }
+    if(G.remaining<=0){ clearInterval(id); endTurn(); }
   },100);
   G.timerId = id;
 }
@@ -953,7 +879,6 @@ function fitWord(text){
 addEventListener("resize", ()=>{ if(G && G.phase==="running") fitWord($("#pText").textContent); });
 
 function renderPlay(){
-  $("#pRound").textContent = `第 ${G.round} / ${G.rounds} 回合`;
   $("#pTurn").textContent = "輪到 " + G.teams[G.turn].name;
   $("#pLeft").textContent = `剩 ${G.pool.length} 題`;
 
@@ -980,8 +905,8 @@ function judge(kind){
   const delta = kind==="ok" ? 1 : 0;
   G.log.push({item:G.cur, kind, team:G.turn, delta});
   t.score += delta;
-  if(kind==="ok"){ t.ok++; beep(980,0.07,0.14); fxOk(); }
-  else { t.skip++; beep(420,0.09,0.10); fxSkip(); }
+  if(kind==="ok"){ t.ok++; fxOk(); }
+  else { t.skip++; fxSkip(); }
   G.cur = drawItem();
   renderPlay();
 }
@@ -1005,9 +930,7 @@ function endTurn(){
   G.phase = "ready";
   G.turn++;
   if(G.turn >= G.teams.length){
-    G.turn = 0;
-    G.round++;
-    if(G.round > G.rounds){ endGame(); return; }
+    endGame(); return;
   }
   enterReady();
 }
@@ -1021,7 +944,7 @@ function endGame(){
   const sorted = G.teams.map((t,i)=>({...t,i})).sort((a,b)=> b.score-a.score || b.ok-a.ok);
   const total = G.teams.reduce((s,t)=>s+t.score,0);
   const okTotal = G.teams.reduce((s,t)=>s+t.ok,0);
-  $("#rSub").textContent = `${G.rounds} 回合 · 全場答對 ${okTotal} 題 · 總分 ${total}`;
+  $("#rSub").textContent = `全場答對 ${okTotal} 題 · 總分 ${total}`;
 
   const top = sorted[0];
   const winners = sorted.filter(t=>t.score === top.score);
@@ -1045,11 +968,10 @@ function endGame(){
       <div class="pt">${t.score}</div>
     </div>`).join("") : "";
   showView("v-result");
-  beep(880,0.12,0.15); setTimeout(()=>beep(1180,0.18,0.15),140);
   if(REMOTE.ok){
     fetch("/api/sessions", {method:"POST", headers:{"Content-Type":"application/json"},
       body: JSON.stringify({
-        mode:"大電視", rounds:G.rounds, questions:G.log.length,
+        mode:"大電視", rounds:1, questions:G.log.length,
         teams: G.teams.map(t=>({name:t.name, score:t.score, ok:t.ok, skip:t.skip}))
       })
     }).catch(()=>{ toast("成績上傳失敗（server 斷線？）"); });
@@ -1090,11 +1012,6 @@ $("#teamMinus").onclick = ()=>{ cfg.teams=Math.max(1,cfg.teams-1); saveCfg(); re
 $("#teamPlus").onclick  = ()=>{ cfg.teams=Math.min(8,cfg.teams+1); saveCfg(); renderHome(); };
 $$(".presets button").forEach(b=>b.onclick=()=>{ cfg.teams=+b.dataset.teams; saveCfg(); renderHome(); });
 $("#secInput").onchange  = e=>{ cfg.sec=Math.max(0,Math.min(600,+e.target.value||0)); saveCfg(); };
-$("#roundInput").onchange= e=>{ cfg.rounds=Math.max(1,Math.min(20,+e.target.value||1)); saveCfg(); };
-$("#bgmChk").onchange = e=>{
-  cfg.bgm = e.target.checked; saveCfg();
-  if(cfg.bgm) BGM.start(); else BGM.stop();
-};
 $("#vfxChk").onchange = e=>{
   cfg.vfx = e.target.checked; saveCfg();
   if(!cfg.vfx){                       // 關咗就即刻清走殘留效果
@@ -1206,11 +1123,9 @@ document.addEventListener("keydown", e=>{
   else if(k==="escape" || k==="p"){ e.preventDefault(); $("#btnPause").click(); }
 });
 
-document.addEventListener("pointerdown", ()=>{ if(cfg.bgm && !BGM.on) BGM.start(); }, {passive:true});
 
 document.addEventListener("visibilitychange", ()=>{
-  if(document.hidden) BGM.stop();
-  else if(cfg.bgm && G && G.phase !== "done") BGM.start();
+
 });
 
 /* ================= 啟動 ================= */
