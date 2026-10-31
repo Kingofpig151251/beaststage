@@ -119,7 +119,14 @@ def read_bank(c):
                           "items": [{"id": r["id"], "t": r["text"]} for r in cur.fetchall()]})
         cur.execute("SELECT MAX(updated_at) AS u FROM decks")
         upd = cur.fetchone()["u"]
-    return {"name": row["value"] if row else "題庫", "decks": decks, "updated_at": upd}
+        cur.execute("SELECT value FROM meta WHERE key='sets'")
+        srow = cur.fetchone()
+    import json as _json
+    try:
+        sets = _json.loads(srow["value"]) if srow and srow["value"] else []
+    except Exception:
+        sets = []
+    return {"name": row["value"] if row else "題庫", "decks": decks, "sets": sets, "updated_at": upd}
 
 
 def _snapshot(cur):
@@ -407,6 +414,20 @@ async def bank_replace(request: Request):
                 if not t:
                     continue
                 cur.execute("INSERT INTO items(deck_id,text,sort) VALUES(%s,%s,%s)", (did, t[:200], j))
+    sets = body.get("sets")
+    if isinstance(sets, list):
+        clean = []
+        for s in sets[:30]:
+            if not isinstance(s, dict):
+                continue
+            items = [str(t)[:60] for t in (s.get("items") or []) if str(t).strip()]
+            clean.append({"id": str(s.get("id") or "")[:40] or "s"+str(len(clean)+1),
+                          "name": str(s.get("name") or "組合")[:20], "items": items[:300]})
+        import json as _json
+        with conn() as c, c.cursor() as cur:
+            cur.execute("INSERT INTO meta(key,value) VALUES('sets',%s) "
+                        "ON CONFLICT (key) DO UPDATE SET value=EXCLUDED.value",
+                        (_json.dumps(clean, ensure_ascii=False),))
     return {"ok": True, "decks": len(decks)}
 
 

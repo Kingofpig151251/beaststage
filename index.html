@@ -212,19 +212,24 @@
   .champ-score{grid-column:2; text-align:right}
   .champ-meta{grid-column:1 / -1}
   .champ-label{font-family:var(--font-mono); font-size:12px; opacity:.75}
-  .champ-name{font-weight:900; font-size:clamp(30px,5.4vw,54px); line-height:1.04; margin:4px 0 2px}
-  .champ-score{font-family:var(--font-mono); font-size:clamp(38px,6.4vw,60px); line-height:1; font-variant-numeric:tabular-nums}
+  .champ-name{font-weight:900; font-size:clamp(26px,4.4vw,44px); line-height:1.04; margin:2px 0 0}
+  .champ-score{font-family:var(--font-mono); font-size:clamp(32px,5.2vw,50px); line-height:1; font-variant-numeric:tabular-nums}
   .champ-score em{display:block; font-style:normal; font-size:12px; line-height:1.6; opacity:.75; margin-bottom:2px}
   .champ-score span{font-size:.34em; margin-left:6px; opacity:.75}
   .champ-meta{font-size:13px; opacity:.8; margin-top:8px}
   .champ.tied{background:var(--paper-3); color:var(--ink); border-color:var(--rule); box-shadow:10px 10px 0 var(--rule)}
 
-  .rank{margin-top:12px}
+  .rank{margin-top:8px}
+  #v-result.active{display:flex; flex-direction:column; height:calc(100dvh - 44px); min-height:0}
+  #v-result .rank{flex:1 1 auto; min-height:0; overflow-y:auto}
+  #v-result .result-actions{flex:0 0 auto}
   .rank-h{font-family:var(--font-mono); font-size:11.5px; color:var(--muted); padding:10px 4px 6px}
   .rk .pt{color:var(--ink)}
   .rk.first .pt{color:var(--accent)}
-  .result-actions{display:flex; gap:10px; flex-wrap:wrap; justify-content:center; margin-top:18px}
-  .result-actions .btn-big{margin:0; flex:1 1 260px; max-width:420px}
+  .result-actions{display:flex; gap:10px; flex-wrap:wrap; justify-content:center; margin-top:12px}
+  .result-actions .btn-big{margin:0; flex:1 1 260px; max-width:420px;
+    background:transparent; color:var(--accent); border:2px solid var(--accent); box-shadow:none}
+  .result-actions .btn-big:hover{background:color-mix(in oklab, var(--accent) 12%, transparent)}
   .result-actions .btn-quiet{flex:0 0 auto; padding:18px 24px}
 
   /* ===== 主持台：全屏字卡 ===== */
@@ -353,6 +358,10 @@
   .sync-dot.ok::before{background:var(--accent-2)}
   .sync-dot.bad{color:var(--accent)}
   .sync-dot.bad::before{background:var(--accent)}
+  .banktabs{display:flex; gap:4px; margin-bottom:10px; border-bottom:1px solid var(--rule)}
+  .banktabs button{padding:8px 14px; border:0; border-bottom:2px solid transparent; border-radius:0;
+    background:transparent; color:var(--muted); font-size:13.5px}
+  .banktabs button.on{color:var(--ink); border-bottom-color:var(--accent); font-weight:700}
   .bank-hint{margin:0 0 10px; font-size:12.5px}
   .bank-hint code{font-family:var(--font-mono); font-size:12px; color:var(--accent-2)}
   #bankText{width:100%; height:auto; min-height:calc(100dvh - 190px); resize:vertical; overflow:hidden;
@@ -360,6 +369,30 @@
     background:var(--paper-2); color:var(--ink); border:1px solid var(--rule); border-radius:var(--radius)}
   #bankText:focus{outline:2px solid var(--focus); outline-offset:-2px}
   @media (max-width:700px){ #bankText{min-height:calc(100dvh - 230px)} }
+
+  /* 組合：左題庫右已選 */
+  .setbar{display:flex; gap:6px; flex-wrap:wrap; margin-bottom:8px}
+  .setbar button{padding:7px 12px; font-size:13px; border:1px solid var(--rule); background:transparent;
+    color:var(--ink-2); border-radius:999px}
+  .setbar button.on{background:var(--accent); border-color:var(--accent); color:var(--accent-ink)}
+  .setbar button i{font-family:var(--font-mono); font-style:normal; font-size:11.5px; opacity:.7; margin-left:6px}
+  .setnew{display:flex; gap:8px; align-items:center; flex-wrap:wrap; margin-bottom:12px}
+  .setnew input{width:170px; padding:7px 10px; font-size:13.5px}
+  .setnew button{padding:7px 12px; font-size:13px}
+  .setnew .danger{margin-left:auto; color:var(--muted)}
+  .picker{display:grid; grid-template-columns:1fr 1fr; gap:14px; align-items:start}
+  @media (max-width:760px){ .picker{grid-template-columns:1fr} }
+  .pickcol{display:flex; flex-direction:column; gap:8px; min-width:0}
+  .pickhead{display:flex; align-items:baseline; gap:8px}
+  .pickhead h2{font-size:15px; margin:0}
+  .pickcol input{padding:8px 10px; font-size:13.5px}
+  .picklist{display:flex; flex-direction:column; gap:2px; max-height:calc(100dvh - 340px); overflow-y:auto;
+    border:1px solid var(--rule); border-radius:3px; padding:4px}
+  .picklist button{display:flex; justify-content:space-between; gap:8px; text-align:left; padding:7px 9px;
+    border:0; background:transparent; color:var(--ink-2); font-size:13.5px; border-radius:3px}
+  .picklist button:hover{background:var(--paper-3); color:var(--ink)}
+  .picklist button.on{color:var(--accent-2)}
+  .picklist .empty{padding:10px; font-size:12.5px; color:var(--muted)}
 
   .toast{position:fixed; right:16px; bottom:16px; background:var(--paper-3); color:var(--ink);
     font-weight:600; font-size:13px; padding:8px 14px; border:1px solid var(--rule);
@@ -443,13 +476,9 @@
       </section>
 
       <section class="well">
-        <h2>題庫</h2>
-        <div class="chips" id="deckChips"></div>
-        <div class="row" style="margin-top:12px">
-          <span class="kv" id="deckCount"></span>
-          <button class="btn-quiet" id="btnAll">全選</button>
-          <button class="btn-quiet" id="btnNone">全不選</button>
-        </div>
+        <h2>題目組合</h2>
+        <div class="chips" id="setChips"></div>
+        <p class="kv" id="setCount" style="margin-top:10px"></p>
       </section>
       </div>
     </div>
@@ -538,101 +567,56 @@
       <span class="sync-dot" id="syncState">已同步</span>
       <button class="btn-quiet" id="btnSyncNow">重新載入</button>
     </div>
-    <p class="kv bank-hint">每行一題。<code># 類別名</code> 開新類別。改完自動儲存。</p>
-    <textarea id="bankText" spellcheck="false" autocomplete="off" autocapitalize="off"></textarea>
+
+    <div class="banktabs">
+      <button data-tab="lib" class="on">題目庫</button>
+      <button data-tab="set">組合</button>
+    </div>
+
+    <div id="paneLib">
+      <p class="kv bank-hint">每行一題。<code># 類別名</code> 開新類別。改完自動儲存。</p>
+      <textarea id="bankText" spellcheck="false" autocomplete="off" autocapitalize="off"></textarea>
+    </div>
+
+    <div id="paneSet" hidden>
+      <div class="setbar" id="bankSetChips"></div>
+      <div class="setnew">
+        <input id="newSetName" placeholder="新組合名" maxlength="16">
+        <button class="btn-quiet" id="btnAddSet">新增組合</button>
+        <button class="btn-quiet danger" id="btnDelSet">刪除本組合</button>
+      </div>
+      <div class="picker">
+        <div class="pickcol">
+          <div class="pickhead"><h2>題庫</h2><span class="kv" id="bankLibCount"></span></div>
+          <input id="libSearch" placeholder="搜尋題目" autocomplete="off">
+          <div class="picklist" id="libList"></div>
+        </div>
+        <div class="pickcol">
+          <div class="pickhead"><h2>本組合</h2><span class="kv" id="bankSetCount"></span></div>
+          <div class="picklist" id="setList"></div>
+        </div>
+      </div>
+    </div>
   </section>
 
   <!-- ========== 排行榜 ========== -->
-  <section class="view" id="v-lb">
-    <h1>排行榜</h1>
-    <p class="kv" id="lbSub" style="margin:6px 0 18px">全部場次累計</p>
-    <div class="well" style="margin-bottom:12px">
-      <h2>累計</h2>
-      <div id="lbPlayers"></div>
-    </div>
-    <div class="well">
-      <h2>最近場次</h2>
-      <div id="lbRecent"></div>
-    </div>
-    <div class="row" style="justify-content:center;margin-top:18px">
-      <button class="btn-quiet" id="btnLbBack">返主頁</button>
-    </div>
-  </section>
 
   <!-- ========== 結果 ========== -->
-  <section class="view" id="v-result">
-    <h1>結果</h1>
-    <p class="kv" id="rSub" style="margin:6px 0 0"></p>
-    <div id="champBox"></div>
-    <div class="rank" id="rankList"></div>
-    <div class="result-actions">
-      <button class="btn-primary btn-big" id="btnAgain">再玩一次</button>
-      <button class="btn-quiet" id="btnLbFromResult">排行榜</button>
-      <button class="btn-quiet" id="btnBackHome">返主頁</button>
-    </div>
-  </section>
 
   <!-- ========== 題庫（雲端共用） ========== -->
   <!-- ========== 排行榜 ========== -->
-  <section class="view" id="v-lb">
-    <h1>排行榜</h1>
-    <p class="kv" id="lbSub" style="margin:6px 0 18px">全部場次累計</p>
-    <div class="well" style="margin-bottom:12px">
-      <h2>累計</h2>
-      <div id="lbPlayers"></div>
-    </div>
-    <div class="well">
-      <h2>最近場次</h2>
-      <div id="lbRecent"></div>
-    </div>
-    <div class="row" style="justify-content:center;margin-top:18px">
-      <button class="btn-quiet" id="btnLbBack">返主頁</button>
-    </div>
-  </section>
 
   <!-- ========== 結果 ========== -->
-  <section class="view" id="v-result">
-    <h1>結果</h1>
-    <p class="kv" id="rSub" style="margin:6px 0 0"></p>
-    <div id="champBox"></div>
-    <div class="rank" id="rankList"></div>
-    <div class="result-actions">
-      <button class="btn-primary btn-big" id="btnAgain">再玩一次</button>
-      <button class="btn-quiet" id="btnLbFromResult">排行榜</button>
-      <button class="btn-quiet" id="btnBackHome">返主頁</button>
-    </div>
-  </section>
 
   <!-- ========== 題庫（雲端共用） ========== -->
   <!-- ========== 排行榜 ========== -->
-  <section class="view" id="v-lb">
-    <h1>排行榜</h1>
-    <p class="kv" id="lbSub" style="margin:6px 0 18px">全部場次累計</p>
-    <div class="well" style="margin-bottom:12px">
-      <h2>累計</h2>
-      <div id="lbPlayers"></div>
-    </div>
-    <div class="well">
-      <h2>最近場次</h2>
-      <div id="lbRecent"></div>
-    </div>
-    <div class="row" style="justify-content:center;margin-top:18px">
-      <button class="btn-quiet" id="btnLbBack">返主頁</button>
-    </div>
-  </section>
 
   <!-- ========== 結果 ========== -->
-  <section class="view" id="v-result">
-    <h1>結果</h1>
-    <p class="kv" id="rSub" style="margin:6px 0 0"></p>
-    <div id="champBox"></div>
-    <div class="rank" id="rankList"></div>
-    <div class="result-actions">
-      <button class="btn-primary btn-big" id="btnAgain">再玩一次</button>
-      <button class="btn-quiet" id="btnLbFromResult">排行榜</button>
-      <button class="btn-quiet" id="btnBackHome">返主頁</button>
-    </div>
-  </section>
+
+  <!-- ========== 題庫（雲端共用） ========== -->
+  <!-- ========== 排行榜 ========== -->
+
+  <!-- ========== 結果 ========== -->
 
 
 </div>
@@ -661,10 +645,10 @@ const store = {
   set(k,v){ try{ localStorage.setItem(k,JSON.stringify(v)); }catch(e){} }
 };
 
-let bank = { name:"題庫", decks:[] };   // 開機由雲端載入
+let bank = { name:"題庫", decks:[], sets:[] };   // 開機由雲端載入
 let cfg  = Object.assign({
   teams:2, names:["A 隊","B 隊","C 隊","D 隊","E 隊","F 隊","G 隊","H 隊"],
-  sec:60, decks: [], vfx:true
+  sec:60, setId:"", vfx:true
 }, store.get(K_CFG, {}));
 
 let G = null;
@@ -689,6 +673,11 @@ function normalizeBank(b){
         .map(it => (typeof it === "string" ? it : String((it && it.t) || "")))
         .map(t => t.trim()).filter(Boolean)
         .map(t => ({ t }))
+    })),
+    sets: (b.sets||[]).map((st,i)=>({
+      id: st.id || ("s"+(i+1)),
+      name: (st.name || ("組合 "+(i+1))).slice(0,20),
+      items: (st.items||[]).map(t=>String(t).trim()).filter(Boolean)
     }))
   };
 }
@@ -710,7 +699,7 @@ function pushBank(delay){
   pushTimer = setTimeout(async ()=>{
     try{
       const r = await fetch("/api/bank", {method:"PUT", headers:{"Content-Type":"application/json"},
-        body: JSON.stringify({name: bank.name, decks: bank.decks})});
+        body: JSON.stringify({name: bank.name, decks: bank.decks, sets: bank.sets})});
       if(!r.ok) throw new Error("put");
       REMOTE.ok = true; updateSrc(); setSyncState("ok");
     }catch(e){ setSyncState("error"); }
@@ -739,8 +728,7 @@ async function pullRemoteBank(){
     if(!b.decks || !b.decks.length) throw new Error("empty");
     bank = normalizeBank(b);
     saveBank();
-    cfg.decks = cfg.decks.filter(id=>bank.decks.some(d=>d.id===id));
-    if(!cfg.decks.length) cfg.decks = bank.decks.map(d=>d.id);
+    if(cfg.setId && !bank.sets.some(st=>st.id===cfg.setId)) cfg.setId = "";
     saveCfg();
     REMOTE.ok = true;
     renderHome(); updateSrc();
@@ -788,25 +776,27 @@ function renderHome(){
   $("#secInput").value = cfg.sec;
     $("#vfxChk").checked = !!cfg.vfx;
 
-  $("#deckChips").innerHTML = bank.decks.map(d=>`
-    <button class="chip ${cfg.decks.includes(d.id)?"on":""}" data-deck="${esc(d.id)}">
-      ${esc(d.name)} <i style="opacity:.55;font-style:normal">${d.items.length}</i>
-    </button>`).join("");
-  $$("#deckChips .chip").forEach(b=>b.onclick=()=>{
-    const id=b.dataset.deck;
-    cfg.decks = cfg.decks.includes(id) ? cfg.decks.filter(x=>x!==id) : cfg.decks.concat(id);
-    saveCfg(); renderHome();
-  });
-  const total = bank.decks.filter(d=>cfg.decks.includes(d.id)).reduce((s,d)=>s+d.items.length,0);
-  $("#deckCount").textContent = bank.decks.length
-    ? `已選 ${cfg.decks.length} 個類別 · 共 ${total} 題`
+  // 題目組合：全部（預設）或自訂組合
+  const allCount = bank.decks.reduce((n,d)=>n+d.items.length, 0);
+  const chip = (id, name, n) => `
+    <button class="chip ${cfg.setId===id?"on":""}" data-set="${esc(id)}">
+      ${esc(name)} <i style="opacity:.55;font-style:normal">${n}</i>
+    </button>`;
+  $("#setChips").innerHTML = bank.decks.length
+    ? chip("", "全部", allCount) + bank.sets.map(st=>chip(st.id, st.name, st.items.length)).join("")
+    : "";
+  $$("#setChips .chip").forEach(b=>b.onclick=()=>{ cfg.setId = b.dataset.set; saveCfg(); renderHome(); });
+
+  const cur = cfg.setId ? bank.sets.find(st=>st.id===cfg.setId) : null;
+  const playCount = cur ? cur.items.length : allCount;
+  $("#setCount").textContent = bank.decks.length
+    ? (cur ? `已選：${cur.name} · ${playCount} 題` : `已選：全部題目 · ${playCount} 題`)
     : "未連線：題庫讀唔到";
+
   $("#teamMinus").disabled = cfg.teams <= 1;
   $("#teamPlus").disabled = cfg.teams >= 8;
-  $("#btnStart").disabled = !bank.decks.length;
-  $("#btnStart").textContent = bank.decks.length ? "開始遊戲" : "題庫未連線";
-  $("#btnAll").disabled = !bank.decks.length || cfg.decks.length >= bank.decks.length;
-  $("#btnNone").disabled = cfg.decks.length === 0;
+  $("#btnStart").disabled = !playCount;
+  $("#btnStart").textContent = !bank.decks.length ? "題庫未連線" : (playCount ? "開始遊戲" : "呢個組合未有題目");
 }
 
 /* ================= 題庫管理（離線用） ================= */
@@ -838,6 +828,7 @@ function textToBank(text){
   });
   return decks.length ? { name: bank.name || "題庫", decks } : { name: "題庫", decks: [] };
 }
+let bankSetId = null;
 function renderBank(){
   setSyncState(REMOTE.ok ? "ok" : "offline");
   const totalAll = bank.decks.reduce((n,d)=>n+d.items.length, 0);
@@ -845,6 +836,48 @@ function renderBank(){
   const ta = $("#bankText");
   if(ta && document.activeElement !== ta) ta.value = bankToText();
   autoGrow(ta);
+  if(!bank.sets.some(st=>st.id===bankSetId)) bankSetId = bank.sets[0] ? bank.sets[0].id : null;
+  renderSetPicker();
+}
+
+function renderSetPicker(){
+  const chips = $("#bankSetChips");
+  if(!chips) return;
+  chips.innerHTML = bank.sets.map(st=>`
+    <button class="${st.id===bankSetId?"on":""}" data-set="${esc(st.id)}">
+      ${esc(st.name)}<i>${st.items.length}</i></button>`).join("")
+    || `<span class="kv">未有組合</span>`;
+  $$("#bankSetChips button").forEach(b=>b.onclick=()=>{ bankSetId=b.dataset.set; renderSetPicker(); });
+
+  const set = bank.sets.find(st=>st.id===bankSetId);
+  const q = ($("#libSearch")?.value || "").trim().toLowerCase();
+  const libItems = [];
+  bank.decks.forEach(d=>d.items.forEach(it=>{
+    if(q && !it.t.toLowerCase().includes(q)) return;
+    libItems.push({t: it.t, deck: d.name});
+  }));
+  $("#bankLibCount").textContent = `${libItems.length} 題`;
+  $("#libList").innerHTML = libItems.map(it=>{
+    const inSet = set && set.items.includes(it.t);
+    return `<button data-add="${esc(it.t)}" class="${inSet?"on":""}">
+      <span>${esc(it.t)}</span><span class="kv">${inSet?"✓":esc(it.deck)}</span></button>`;
+  }).join("") || `<div class="empty">冇題目</div>`;
+  $$("#libList button").forEach(b=>b.onclick=()=>{
+    if(!set) return toast("先新增一個組合");
+    const t = b.dataset.add;
+    if(!set.items.includes(t)) set.items.push(t);
+    saveBank(); pushBank(); renderSetPicker(); toast("已加入組合");
+  });
+
+  $("#bankSetCount").textContent = set ? `${set.items.length} 題` : "";
+  $("#setList").innerHTML = set
+    ? (set.items.map((t,i)=>`<button data-del="${i}"><span>${esc(t)}</span><span class="kv">✕</span></button>`).join("")
+       || `<div class="empty">未有題目，左邊揀</div>`)
+    : `<div class="empty">先新增一個組合</div>`;
+  $$("#setList button").forEach(b=>b.onclick=()=>{
+    set.items.splice(+b.dataset.del,1);
+    saveBank(); pushBank(); renderSetPicker(); toast("已移除");
+  });
 }
 function autoGrow(ta){
   if(!ta) return;
@@ -856,11 +889,14 @@ function autoGrow(ta){
 function startGame(){
   if(G){ clearInterval(G.timerId); G.timerToken++; }   // 清走上一局殘留嘅倒數
   const names = Array.from({length:cfg.teams},(_,i)=> cfg.names[i] || ("隊 "+(i+1)));
+  const set = cfg.setId ? bank.sets.find(st=>st.id===cfg.setId) : null;
   const pool = [];
-  bank.decks.filter(d=>cfg.decks.includes(d.id)).forEach(d=>{
-    d.items.forEach(it=> pool.push({t:it.t, deck:d.name}));
-  });
-  if(!pool.length){ toast("請先揀最少一個有題目嘅類別"); return; }
+  if(set){
+    set.items.forEach(t=> pool.push({t, deck:set.name}));
+  }else{
+    bank.decks.forEach(d=> d.items.forEach(it=> pool.push({t:it.t, deck:d.name})));
+  }
+  if(!pool.length){ toast(set ? "呢個組合未有題目" : "題庫未有題目"); return; }
 
   G = {
     sec: Math.max(5, Number(cfg.sec)||60),
@@ -1118,8 +1154,6 @@ $("#vfxChk").onchange = e=>{
     document.querySelectorAll(".fx-plus").forEach(el=>el.remove());
   }
 };
-$("#btnAll").onclick  = ()=>{ cfg.decks=bank.decks.map(d=>d.id); saveCfg(); renderHome(); };
-$("#btnNone").onclick = ()=>{ cfg.decks=[]; saveCfg(); renderHome(); };
 $("#btnStart").onclick = startGame;
 if(!document.documentElement.requestFullscreen){ $("#btnFull").style.display = "none"; }
 $("#btnFull").onclick = ()=>{ if(!document.fullscreenElement){ document.documentElement.requestFullscreen&&document.documentElement.requestFullscreen(); } else { document.exitFullscreen&&document.exitFullscreen(); } };
@@ -1150,6 +1184,27 @@ $("#btnBankHome").onclick = ()=>{ showView("v-bank"); renderBank(); };
 $("#btnLb").onclick = openLb;
 $("#btnLbBack").onclick = ()=>{ showView("v-home"); renderHome(); };
 $("#btnBankBack").onclick = ()=>{ showView("v-home"); renderHome(); };
+$$(".banktabs button").forEach(b=>b.onclick=()=>{
+  $$(".banktabs button").forEach(x=>x.classList.toggle("on", x===b));
+  $("#paneLib").hidden = b.dataset.tab !== "lib";
+  $("#paneSet").hidden = b.dataset.tab !== "set";
+  if(b.dataset.tab === "set") renderSetPicker();
+});
+$("#btnAddSet").onclick = ()=>{
+  const n = $("#newSetName").value.trim(); if(!n) return;
+  const st = { id:"s"+Date.now().toString(36), name:n.slice(0,16), items:[] };
+  bank.sets.push(st); bankSetId = st.id; $("#newSetName").value = "";
+  saveBank(); pushBank(); renderSetPicker(); renderHome(); toast("已新增組合");
+};
+$("#btnDelSet").onclick = ()=>{
+  const set = bank.sets.find(st=>st.id===bankSetId); if(!set) return;
+  if(!confirm(`刪除組合「${set.name}」？題目仍然留喺題庫。`)) return;
+  bank.sets = bank.sets.filter(st=>st.id!==bankSetId);
+  bankSetId = bank.sets[0] ? bank.sets[0].id : null;
+  if(cfg.setId === set.id) cfg.setId = "";
+  saveCfg(); saveBank(); pushBank(); renderSetPicker(); renderHome(); toast("已刪除組合");
+};
+$("#libSearch").oninput = ()=> renderSetPicker();
 $("#btnSyncNow").onclick = async ()=>{
   setSyncState("syncing");
   await pullRemoteBank();
@@ -1167,8 +1222,7 @@ $("#bankText").oninput = ()=>{
               === JSON.stringify(bank.decks.map(d=>[d.id,d.name,d.items.map(i=>i.t)]));
     if(same) return;
     bank = next;
-    cfg.decks = cfg.decks.filter(id=>bank.decks.some(d=>d.id===id));
-    if(!cfg.decks.length) cfg.decks = bank.decks.map(d=>d.id);
+    if(cfg.setId && !bank.sets.some(st=>st.id===cfg.setId)) cfg.setId = "";
     saveCfg(); saveBank(); renderHome(); pushBank(); renderBankMeta();
   }, 700);
 };

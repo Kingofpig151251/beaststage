@@ -7,7 +7,7 @@ TOK = "mock-token"
 BANK = {"name": "共用題庫", "decks": [
     {"id": "food", "name": "港式小食", "items": [{"t": "雞蛋仔"}, {"t": "菠蘿包"}]},
     {"id": "place", "name": "香港地標", "items": [{"t": "尖沙咀鐘樓"}]},
-]}
+], "sets": [{"id": "s1", "name": "組合 A", "items": ["雞蛋仔"]}]}
 
 
 class H(SimpleHTTPRequestHandler):
@@ -38,7 +38,8 @@ class H(SimpleHTTPRequestHandler):
         # 開放寫入：唔檢查 token
         n = int(self.headers.get("Content-Length") or 0)
         body = json.loads(self.rfile.read(n) or b"{}")
-        BANK = {"name": body.get("name") or "共用題庫", "decks": body.get("decks") or []}
+        BANK = {"name": body.get("name") or "共用題庫", "decks": body.get("decks") or [],
+                "sets": body.get("sets") or []}
         return self._json({"ok": True, "decks": len(BANK["decks"])})
 
 
