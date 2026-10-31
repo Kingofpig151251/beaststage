@@ -185,6 +185,49 @@
   .kbd{font-family:var(--font-mono); font-size:11.5px; border:1px solid var(--rule); border-radius:3px; padding:1px 6px; color:var(--muted)}
 
 
+
+  /* ===== 主頁：左名單 / 右設定 ===== */
+  .setup{display:grid; grid-template-columns:minmax(0,1fr); gap:12px; align-items:start}
+  @media (min-width:1000px){
+    .setup{grid-template-columns:minmax(0,1fr) minmax(0,1fr)}
+    .setup .teams{position:sticky; top:16px}
+  }
+  .stack{display:grid; gap:12px; align-content:start}
+  .presets{display:flex; gap:6px}
+  .presets button{width:38px; height:38px; padding:0; font-family:var(--font-mono); font-size:13px;
+    border-color:var(--rule); color:var(--muted)}
+  .presets button.on{background:var(--accent); border-color:var(--accent); color:var(--accent-ink)}
+
+  /* 名單：一行一隊，號碼 + 名 */
+  .names{display:flex; flex-direction:column; gap:6px; margin-top:12px; max-height:48vh; overflow-y:auto}
+  .name-row{display:grid; grid-template-columns:24px minmax(0,1fr); gap:8px; align-items:center}
+  .name-row span{font-family:var(--font-mono); font-size:12px; color:var(--muted); text-align:right}
+  .name-row input{padding:10px 12px}
+
+  /* ===== 結果：冠軍台 + 總成績表 ===== */
+  .champ{background:var(--accent); color:var(--accent-ink); border:var(--bar) solid var(--accent-ink);
+    border-radius:var(--radius); box-shadow:8px 8px 0 var(--accent-2); padding:20px 22px; margin:16px 0 8px;
+    display:grid; grid-template-columns:minmax(0,1fr) auto; align-items:end; gap:0 16px}
+  .champ-label{grid-column:1 / -1}
+  .champ-name{grid-column:1}
+  .champ-score{grid-column:2; text-align:right}
+  .champ-meta{grid-column:1 / -1}
+  .champ-label{font-family:var(--font-mono); font-size:12px; opacity:.75}
+  .champ-name{font-weight:900; font-size:clamp(30px,5.4vw,54px); line-height:1.04; margin:4px 0 2px}
+  .champ-score{font-family:var(--font-mono); font-size:clamp(38px,6.4vw,60px); line-height:1; font-variant-numeric:tabular-nums}
+  .champ-score em{display:block; font-style:normal; font-size:12px; line-height:1.6; opacity:.75; margin-bottom:2px}
+  .champ-score span{font-size:.34em; margin-left:6px; opacity:.75}
+  .champ-meta{font-size:13px; opacity:.8; margin-top:8px}
+  .champ.tied{background:var(--paper-3); color:var(--ink); border-color:var(--rule); box-shadow:10px 10px 0 var(--rule)}
+
+  .rank{margin-top:12px}
+  .rank-h{font-family:var(--font-mono); font-size:11.5px; color:var(--muted); padding:10px 4px 6px}
+  .rk .pt{color:var(--ink)}
+  .rk.first .pt{color:var(--accent)}
+  .result-actions{display:flex; gap:10px; flex-wrap:wrap; justify-content:center; margin-top:18px}
+  .result-actions .btn-big{margin:0; flex:1 1 260px; max-width:420px}
+  .result-actions .btn-quiet{flex:0 0 auto; padding:18px 24px}
+
   /* ===== 主持台：賽況 rail · 舞台 · 操作欄 ===== */
   .console{display:grid; gap:12px; align-items:stretch}
   @media (min-width:1000px){
@@ -259,7 +302,7 @@
   .rk .no{font-family:var(--font-mono); font-size:15px; color:var(--muted); width:26px}
   .rk .nm{flex:1; font-size:19px; font-weight:900}
   .rk .st{font-size:12.5px; color:var(--muted); font-weight:400; margin-top:3px}
-  .rk .pt{font-family:var(--font-mono); font-size:32px; font-weight:700; font-variant-numeric:tabular-nums; color:var(--accent-2)}
+  .rk .pt{font-family:var(--font-mono); font-size:32px; font-weight:700; font-variant-numeric:tabular-nums; color:var(--ink)}
   .rk.first .no{background:var(--accent); color:var(--accent-ink); text-align:center; border-radius:2px}
   .rk.first .pt{color:var(--accent)}
 
@@ -337,18 +380,21 @@
     </header>
 
     <div class="setup">
-      <section class="well">
-        <h2>組別 / 玩家</h2>
-        <div class="row">
-          <label>數量</label>
+      <section class="well teams">
+        <h2>隊伍名單</h2>
+        <div class="row" style="justify-content:space-between">
           <div class="stepper">
-            <button id="teamMinus" aria-label="減少組別">−</button><b id="teamCount">2</b><button id="teamPlus" aria-label="增加組別">＋</button>
+            <button id="teamMinus" aria-label="減少隊伍">−</button><b id="teamCount">2</b><button id="teamPlus" aria-label="增加隊伍">＋</button>
           </div>
-          <span class="kv">可以打玩家名</span>
+          <div class="presets">
+            <button data-teams="2">2</button><button data-teams="4">4</button>
+            <button data-teams="6">6</button><button data-teams="8">8</button>
+          </div>
         </div>
         <div class="names" id="nameList"></div>
       </section>
 
+      <div class="stack">
       <section class="well">
         <h2>回合</h2>
         <div class="row" style="margin-bottom:12px">
@@ -369,7 +415,7 @@
         <p class="kv" style="margin-top:8px">背景音樂包埋提示音；動效係答對閃光、跳過震動同倒數彈跳。</p>
       </section>
 
-      <section class="well span2">
+      <section class="well">
         <h2>題庫</h2>
         <div class="chips" id="deckChips"></div>
         <div class="row" style="margin-top:12px">
@@ -378,6 +424,7 @@
           <button class="btn-quiet" id="btnNone">全不選</button>
         </div>
       </section>
+      </div>
     </div>
   </section>
 
@@ -457,9 +504,10 @@
   <section class="view" id="v-result">
     <h1>結果</h1>
     <p class="kv" id="rSub" style="margin:6px 0 0"></p>
+    <div id="champBox"></div>
     <div class="rank" id="rankList"></div>
-    <button class="btn-primary btn-big" id="btnAgain">再玩一次</button>
-    <div class="row" style="justify-content:center;margin-top:14px">
+    <div class="result-actions">
+      <button class="btn-primary btn-big" id="btnAgain">再玩一次</button>
       <button class="btn-quiet" id="btnBackHome">返主頁</button>
     </div>
   </section>
@@ -712,7 +760,9 @@ function fxPop(el){
 function renderHome(){
   $("#teamCount").textContent = cfg.teams;
   $("#nameList").innerHTML = Array.from({length:cfg.teams},(_,i)=>`
-    <input data-name="${i}" value="${esc(cfg.names[i]||("隊 "+(i+1)))}" maxlength="12">`).join("");
+    <label class="name-row"><span>${i+1}</span>
+      <input data-name="${i}" value="${esc(cfg.names[i]||("隊 "+(i+1)))}" maxlength="12"></label>`).join("");
+  $$(".presets button").forEach(b=>b.classList.toggle("on", +b.dataset.teams === cfg.teams));
   $$("#nameList input").forEach(inp=>inp.onchange=()=>{
     cfg.names[+inp.dataset.name] = inp.value.trim() || ("隊 "+(+inp.dataset.name+1));
     inp.value = cfg.names[+inp.dataset.name]; saveCfg();
@@ -734,6 +784,8 @@ function renderHome(){
   });
   const total = bank.decks.filter(d=>cfg.decks.includes(d.id)).reduce((s,d)=>s+d.items.length,0);
   $("#deckCount").textContent = `已選 ${cfg.decks.length} 個類別 · 共 ${total} 題`;
+  $("#teamMinus").disabled = cfg.teams <= 1;
+  $("#teamPlus").disabled = cfg.teams >= 8;
   $("#btnAll").disabled = cfg.decks.length >= bank.decks.length;
   $("#btnNone").disabled = cfg.decks.length === 0;
 }
@@ -956,15 +1008,29 @@ function endGame(){
   const sorted = G.teams.map((t,i)=>({...t,i})).sort((a,b)=> b.score-a.score || b.ok-a.ok);
   const total = G.teams.reduce((s,t)=>s+t.score,0);
   const okTotal = G.teams.reduce((s,t)=>s+t.ok,0);
-  $("#rSub").textContent = `${G.rounds} 回合 · 全場答對 ${okTotal} 題`;
-  $("#rankList").innerHTML = sorted.map((t,idx)=>`
-    <div class="rk ${idx===0 && t.score>0 ? "first":""}">
-      <div class="no">${idx+1}</div>
+  $("#rSub").textContent = `${G.rounds} 回合 · 全場答對 ${okTotal} 題 · 總分 ${total}`;
+
+  const top = sorted[0];
+  const winners = sorted.filter(t=>t.score === top.score);
+  const tied = winners.length > 1;
+  $("#champBox").innerHTML = `
+    <div class="champ ${tied ? "tied" : ""}">
+      <div class="champ-label">${tied ? "並列第一" : "冠軍"}</div>
+      <div class="champ-name">${winners.map(t=>esc(t.name)).join(" · ")}</div>
+      <div class="champ-score"><em>總分</em>${top.score}<span>分</span></div>
+      <div class="champ-meta">對 ${top.ok} · 跳 ${top.skip}</div>
+    </div>`;
+
+  const rest = sorted.slice(winners.length);
+  $("#rankList").innerHTML = rest.length ? `
+    <div class="rank-h">其餘名次</div>` + rest.map((t,idx)=>`
+    <div class="rk">
+      <div class="no">${idx+winners.length+1}</div>
       <div class="nm">${esc(t.name)}
         <div class="st">對 ${t.ok} · 跳 ${t.skip}</div>
       </div>
       <div class="pt">${t.score}</div>
-    </div>`).join("") + `<p class="kv" style="text-align:right;margin-top:10px">總分 ${total}</p>`;
+    </div>`).join("") : "";
   showView("v-result");
   beep(880,0.12,0.15); setTimeout(()=>beep(1180,0.18,0.15),140);
   if(REMOTE.ok){
@@ -1009,6 +1075,7 @@ async function openLb(){
 /* ================= 事件 ================= */
 $("#teamMinus").onclick = ()=>{ cfg.teams=Math.max(1,cfg.teams-1); saveCfg(); renderHome(); };
 $("#teamPlus").onclick  = ()=>{ cfg.teams=Math.min(8,cfg.teams+1); saveCfg(); renderHome(); };
+$$(".presets button").forEach(b=>b.onclick=()=>{ cfg.teams=+b.dataset.teams; saveCfg(); renderHome(); });
 $("#secInput").onchange  = e=>{ cfg.sec=Math.max(0,Math.min(600,+e.target.value||0)); saveCfg(); };
 $("#roundInput").onchange= e=>{ cfg.rounds=Math.max(1,Math.min(20,+e.target.value||1)); saveCfg(); };
 $("#bgmChk").onchange = e=>{
