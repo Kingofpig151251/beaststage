@@ -313,6 +313,12 @@
   .rk.first .pt{color:var(--accent)}
 
   /* ---- leaderboard ---- */
+  .syncbar{display:flex; align-items:center; gap:10px; flex-wrap:wrap; margin:6px 0 18px;
+    padding:10px 12px; border:1px solid var(--rule); border-radius:var(--radius); background:var(--paper-2)}
+  .syncbar label{font-size:13px; color:var(--ink-2)}
+  .syncbar input{flex:1 1 200px; min-width:0; padding:9px 12px; font-size:14px}
+  .syncbar .kv{flex:0 0 auto}
+  .syncbar .kv.ok{color:var(--accent-2)}
   .lbrow{display:flex; align-items:center; gap:12px; padding:12px 4px; border-bottom:1px solid var(--rule)}
   .lbrow:last-child{border-bottom:0}
   .lbrow .no{width:28px; font-family:var(--font-mono); color:var(--muted); font-size:13px}
@@ -506,7 +512,12 @@
   <!-- ========== 題庫管理（離線用） ========== -->
   <section class="view" id="v-bank">
     <h1>題庫</h1>
-    <p class="kv" style="margin:6px 0 18px">存喺你呢部機；連到後端時會改用後台。</p>
+    <div class="syncbar">
+      <label for="syncKey">同步碼</label>
+      <input id="syncKey" type="password" autocomplete="off" placeholder="未設定 · 只存本機">
+      <button class="btn-quiet" id="btnSyncNow">立即同步</button>
+      <span class="kv" id="syncState">只存本機</span>
+    </div>
     <div class="bankgrid">
       <div class="well">
         <h2>類別</h2>
@@ -625,10 +636,46 @@ function normalizeBank(b){
         .map(it => (typeof it === "string" ? it : String((it && it.t) || "")))
         .map(t => t.trim()).filter(Boolean)
         .map(t => ({ t }))
-    })).filter(d=>d.items.length)
+    }))
   };
 }
 function saveBank(){ store.set(K_BANK, bank); }
+
+/* ---- 題庫同步：同步碼 = 後端 PIN，換 token 之後 PUT 整份題庫 ---- */
+let syncTok = {v:null, exp:0};
+function setSyncState(kind, msg){
+  const el = $("#syncState"); if(!el) return;
+  const map = {local:["", "只存本機"], syncing:["", "同步中…"], ok:["ok", "已同步"],
+    nokey:["", "未設定同步碼"], error:["", "同步失敗（檢查同步碼／連線）"]};
+  const [cls, text] = map[kind] || ["", msg || ""];
+  el.className = "kv" + (cls ? " " + cls : "");
+  el.textContent = text;
+}
+async function syncLogin(){
+  if(syncTok.v && syncTok.exp > Date.now()/1000) return syncTok.v;
+  const r = await fetch("/api/login", {method:"POST", headers:{"Content-Type":"application/json"},
+    body: JSON.stringify({pin: cfg.syncKey})});
+  if(!r.ok) throw new Error("login");
+  const d = await r.json();
+  syncTok = {v:d.token, exp: Date.now()/1000 + Math.max(60,(d.expires_in||3600)-60)};
+  return syncTok.v;
+}
+let pushTimer = null;
+function pushBank(delay){
+  clearTimeout(pushTimer);
+  if(!cfg.syncKey){ setSyncState("nokey"); return; }
+  setSyncState("syncing");
+  pushTimer = setTimeout(async ()=>{
+    try{
+      const t = await syncLogin();
+      const r = await fetch("/api/bank", {method:"PUT",
+        headers:{"Content-Type":"application/json","X-Admin-Token":t},
+        body: JSON.stringify({name: bank.name, decks: bank.decks})});
+      if(!r.ok) throw new Error("put");
+      REMOTE.ok = true; updateSrc(); setSyncState("ok");
+    }catch(e){ syncTok = {v:null,exp:0}; setSyncState("error"); }
+  }, delay ?? 400);
+}
 function saveCfg(){ store.set(K_CFG, cfg); }
 
 function showView(id){
@@ -720,6 +767,10 @@ function renderHome(){
 
 /* ================= 題庫管理（離線用） ================= */
 function renderBank(){
+  if($("#syncKey") && document.activeElement !== $("#syncKey")){
+    $("#syncKey").value = cfg.syncKey || "";
+    setSyncState(cfg.syncKey ? "local" : "nokey");
+  }
   if(!bank.decks.some(d=>d.id===bankDeck)) bankDeck = bank.decks[0] ? bank.decks[0].id : null;
   $("#bankDecks").innerHTML = bank.decks.map(d=>`
     <button class="${d.id===bankDeck?"on":""}" data-bd="${esc(d.id)}">
@@ -738,10 +789,10 @@ function renderBank(){
     $$("#bankItems input[data-t]").forEach(inp=>inp.onchange=()=>{
       const i=+inp.dataset.t, v=inp.value.trim();
       if(v) deck.items[i].t = v; else inp.value = deck.items[i].t;
-      saveBank(); renderHome();
+      saveBank(); renderHome(); pushBank();
     });
     $$("#bankItems button[data-del]").forEach(b=>b.onclick=()=>{
-      deck.items.splice(+b.dataset.del,1); saveBank(); renderBank(); renderHome();
+      deck.items.splice(+b.dataset.del,1); saveBank(); renderBank(); renderHome(); pushBank();
       toast("已刪除");
     });
   }
@@ -1047,20 +1098,37 @@ $("#btnBankHome").onclick = ()=>{
 $("#btnLb").onclick = openLb;
 $("#btnLbBack").onclick = ()=>{ showView("v-home"); renderHome(); };
 $("#btnBankBack").onclick = ()=>{ showView("v-home"); renderHome(); };
+async function syncPull(){
+  syncTok = {v:null, exp:0};
+  setSyncState("syncing");
+  await pullRemoteBank();
+  if(REMOTE.ok){ renderBank(); setSyncState("ok"); return true; }
+  return false;
+}
+$("#syncKey").onchange = async e=>{
+  cfg.syncKey = e.target.value.trim(); saveCfg();
+  if(!cfg.syncKey){ setSyncState("nokey"); return; }
+  // 設定同步碼：雲端有題庫就拉落嚟，冇（或連唔到）就推本機上去
+  if(!await syncPull()) pushBank(0);
+};
+$("#btnSyncNow").onclick = async ()=>{
+  if(!cfg.syncKey){ setSyncState("nokey"); toast("請先輸入同步碼"); return; }
+  if(await syncPull()) toast("已由雲端同步");
+};
 
 $("#btnAddDeck").onclick = ()=>{
   const n = $("#newDeckName").value.trim(); if(!n) return;
   const id = "u"+Date.now().toString(36);
   bank.decks.push({id, name:n, items:[]});
   bankDeck = id; cfg.decks.push(id);
-  $("#newDeckName").value=""; saveBank(); saveCfg(); renderBank(); renderHome(); toast("已新增類別");
+  $("#newDeckName").value=""; saveBank(); saveCfg(); renderBank(); renderHome(); pushBank(); toast("已新增類別");
 };
 $("#btnDelDeck").onclick = ()=>{
   const deck = bank.decks.find(d=>d.id===bankDeck); if(!deck) return;
   if(!confirm(`刪除類別「${deck.name}」同裡面 ${deck.items.length} 題？`)) return;
   bank.decks = bank.decks.filter(d=>d.id!==bankDeck);
   cfg.decks = cfg.decks.filter(id=>id!==bankDeck);
-  saveBank(); saveCfg(); renderBank(); renderHome(); toast("已刪除類別");
+  saveBank(); saveCfg(); renderBank(); renderHome(); pushBank(); toast("已刪除類別");
 };
 $("#btnBulkAdd").onclick = ()=>{
   const deck = bank.decks.find(d=>d.id===bankDeck); if(!deck){ toast("先揀或新增一個類別"); return; }
@@ -1073,6 +1141,7 @@ $("#btnBulkAdd").onclick = ()=>{
   });
   $("#bulkInput").value="";
   saveBank(); renderBank(); renderHome();
+  if(n) pushBank();
   toast(n? `已加入 ${n} 題` : "冇新題目加入");
 };
 $("#btnExport").onclick = ()=>{

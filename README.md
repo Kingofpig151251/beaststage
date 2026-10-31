@@ -17,14 +17,14 @@
 
 ### 本機（唔使 server）
 雙擊 `index.html`。離線、零依賴、資料留喺 localStorage。
-缺點：換機要自己匯出／匯入 JSON；冇歷史排行榜。
+題庫可以跨機共享（見下面「題庫同步」），唔使匯出匯入。
 
-### 自架（有後台 + 排行榜）
+### 自架（有共用題庫 + 排行榜）
 ```bash
 BIGTV_PIN=2468 python3 server.py
 ```
 - 主持台：`http://localhost:8080`
-- 後台：`http://localhost:8080/admin`（密碼 = `BIGTV_PIN`）
+- 題庫跨機共享：喺主持台「題庫」頁輸入同步碼（= `BIGTV_PIN`），改題自動上傳
 
 或者 Docker：
 ```bash
@@ -77,23 +77,23 @@ docker compose up -d          # 預設 8080，資料喺 ./data
 
 配平板或者 notebook 用最順手；「全螢幕」可以將部機變純題目屏。
 
-## 四、後台（`/admin`）
+## 四、題庫同步（跨機共享）
 
-PIN 登入後：
+主持台「題庫」頁最上面有一行**同步碼**：
 
-- **題庫**：左邊類別（新增／改名／刪除），右邊逐題改，改完自動儲存
-- **批量新增**：每行一題，重覆自動跳過
-- **匯入 JSON**：同名類別合併，唔會覆蓋
-- **匯出 JSON**：帶去另一部機或者做備份
-- **排行榜**：累計榜（總分／場次／最佳／答對數）、最近場次、逐場刪除、清空成績
+- **未填**：題庫只存喺呢部機（localStorage），完全離線可用
+- **填入同步碼**（= 後端 `BIGTV_PIN`）：開 App 時會拉雲端題庫；改題／加題／刪題會自動推上去
+- 換機或者第二部機：填同一個同步碼就見到同一份題庫，唔使匯出匯入
+- 「立即同步」＝由雲端重新拉一次（覆蓋本機）
+- 狀態會顯示：`只存本機` / `同步中…` / `已同步` / `同步失敗（檢查同步碼／連線）`
 
-主持台完場會自動上報成績（連到後端時）。**玩家名就係身份**，同名累計埋一齊。
+匯出／匯入 JSON 仍然保留，做一次性備份用。
 
 ## 五、API
 
 ```
 GET    /api/ping
-GET    /api/bank                    題庫（主持台同後台共用）
+GET    /api/bank                    題庫（公開讀取）
 PUT    /api/bank                    整份取代（要登入）
 POST   /api/login {pin} → {token}    token 放 X-Admin-Token header
 GET    /api/leaderboard?limit=10    累計榜 + 最近場次
@@ -127,7 +127,7 @@ POST   /api/reset {what:"sessions"|"bank"}
 2. Vercel 專案 `bigtv` 已連 GitHub：**push 上 main 就自動部署去 production**
 3. 環境變數（Vercel → Settings → Environment Variables）
    - `DATABASE_URL`：Neon Postgres（由 Vercel Marketplace 的 Neon integration 自動注入）
-   - `BIGTV_PIN`：後台密碼
+   - `BIGTV_PIN`：題庫同步碼（同時係 API 寫入權杖）
    - `BIGTV_SECRET`：簽登入 token 用（serverless 冇共享記憶體，改用 HMAC 簽名）
 4. 本地開發：`vercel dev`（會用 `.env.local`），或者照用 `python3 server.py`
 
@@ -137,7 +137,6 @@ POST   /api/reset {what:"sessions"|"bank"}
 
 ```
 index.html                 主持台（單檔，可獨立用）
-admin.html                 後台
 server.py                  自架版後端（Python 標準庫 + SQLite）
 api/_app.py                Vercel 版後端（FastAPI + Postgres）
 api/[...path].py           Vercel catch-all 入口
