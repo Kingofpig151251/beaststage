@@ -173,17 +173,6 @@
   .bar.warn > i{background:var(--accent)}
   .bar.dead > i{background:var(--accent); animation:fxPulse 1s ease-in-out infinite}
 
-  .score-strip{display:grid; grid-auto-flow:column; grid-auto-columns:minmax(120px,1fr); gap:10px; overflow-x:auto; padding-bottom:2px}
-  .sc{display:flex; align-items:center; justify-content:space-between; gap:10px;
-    background:var(--paper-2); border:var(--bar) solid var(--rule); border-radius:var(--radius); padding:8px 14px}
-  .sc b{font-family:var(--font-mono); font-size:32px; line-height:1; font-variant-numeric:tabular-nums; color:var(--muted)}
-  .sc span{font-size:13px; color:var(--muted); order:-1}
-  .sc.cur{border-color:var(--accent); background:var(--paper-3); box-shadow:4px 4px 0 var(--accent)}
-  @supports (background: color-mix(in oklab, white 50%, black)){
-    .sc.cur{background:color-mix(in oklab, var(--accent) 12%, var(--paper-2))}
-  }
-  .sc.cur b{color:var(--accent)}
-  .sc.cur span{color:var(--ink)}
 
   .judge{display:grid; grid-template-columns:1.6fr 1fr; gap:12px; margin:14px 0 8px}
   .judge button{font-family:var(--font-display); font-size:clamp(20px,2.6vw,26px); font-weight:900;
@@ -194,6 +183,56 @@
   .util{display:flex; gap:8px; flex-wrap:wrap; margin-bottom:10px}
   .util button{flex:1; min-width:96px; padding:11px; font-size:13.5px; border-color:var(--rule); color:var(--ink-2)}
   .kbd{font-family:var(--font-mono); font-size:11.5px; border:1px solid var(--rule); border-radius:3px; padding:1px 6px; color:var(--muted)}
+
+
+  /* ===== 主持台：賽況 rail · 舞台 · 操作欄 ===== */
+  .console{display:grid; gap:12px; align-items:stretch}
+  @media (min-width:1000px){
+    .console{grid-template-columns:264px minmax(0,1fr) 296px}
+    .rail{max-height:calc(100dvh - 190px); overflow-y:auto}   /* 8 隊都唔會頂爆版面 */
+  }
+  .rail{background:var(--paper-2); border:var(--bar) solid var(--rule); border-radius:var(--radius);
+    padding:10px; display:flex; flex-direction:column; gap:6px; min-width:0; min-height:0}
+  .rail-h{font-family:var(--font-mono); font-size:11.5px; font-weight:700; color:var(--muted);
+    display:flex; justify-content:space-between; gap:8px; padding:2px 6px 8px; border-bottom:1px solid var(--rule)}
+  .sc{display:grid; grid-template-columns:20px minmax(0,1fr) auto; gap:2px 8px; align-items:center;
+    padding:8px 8px; border-radius:3px; min-width:0}
+  .sc .rank{font-family:var(--font-mono); font-size:12px; color:var(--muted)}
+  .sc .name{font-weight:700; font-size:14px; overflow:hidden; text-overflow:ellipsis; white-space:nowrap}
+  .sc b{font-family:var(--font-mono); font-size:24px; line-height:1; color:var(--ink); font-variant-numeric:tabular-nums}
+  .sc .meta{grid-column:2 / -1; font-size:11.5px; color:var(--muted)}
+  .rail.dense .sc{padding:3px 8px; gap:0 8px}
+  .rail.dense .sc b{font-size:19px}
+  .rail.dense .sc .name{font-size:13px}
+  .rail.dense .sc .meta{display:none}
+  .sc.cur{background:var(--accent); color:var(--accent-ink); box-shadow:3px 3px 0 var(--accent-2)}
+  .sc.cur .rank,.sc.cur .meta{color:var(--accent-ink); opacity:.8}
+  .sc.cur b{color:var(--accent-ink)}
+
+  .actions{display:flex; flex-direction:column; gap:10px; min-width:0}
+  .actions .judge-wrap{margin-top:auto; display:flex; flex-direction:column; gap:8px; flex:1; min-height:230px}
+  .actions .judge{display:grid; grid-template-columns:minmax(0,1fr); grid-template-rows:1.35fr 1fr; gap:10px; margin:0; flex:1}
+  .actions .judge button{display:flex; align-items:center; justify-content:center}
+  .actions-sep{font-family:var(--font-mono); font-size:11px; color:var(--muted); border-top:1px solid var(--rule); padding-top:8px}
+  @media (hover:none){ .actions .keys{display:none} }
+  .stage-top{display:flex; justify-content:space-between; align-items:center; gap:10px; width:100%; margin-bottom:6px}
+  .actions .judge button{padding:34px 12px}
+  .actions .util{display:grid; grid-template-columns:1fr 1fr; gap:8px; margin:0}
+  .actions .util button{min-width:0}
+  .actions .quit{color:var(--muted); border-color:var(--rule)}
+  .actions .keys{margin-top:auto; line-height:1.9}
+
+  /* 直度／窄版：rail 變頂部橫帶，操作變底部兩大掣 */
+  @media (max-width:999px){
+    .console{grid-template-columns:minmax(0,1fr)}
+    .rail{flex-direction:row; overflow-x:auto; gap:8px; padding:8px}
+    .rail-h{display:none}
+    .sc{min-width:132px; flex:0 0 auto}
+    .actions{gap:8px}
+    .actions .judge{grid-template-columns:1.6fr 1fr}
+    .actions .judge button{padding:22px 12px}
+    .actions .keys{display:none}
+  }
 
   /* ---- ready ---- */
   body.is-ready{overflow:hidden}
@@ -350,34 +389,40 @@
         <span class="tag turn" id="pTurn">輪到 A 隊</span>
         <span class="tag" id="pLeft"></span>
       </div>
-      <div class="row" style="gap:12px">
-        <span class="clock" id="pClock">60</span><span class="kv" style="margin-left:-4px">秒</span>
-        <button class="btn-quiet" id="btnPause">暫停</button>
-      </div>
     </div>
 
-    <div class="stage question" id="stage">
-      <div class="stage-deck" id="pDeck"></div>
-      <div class="stage-q" id="pText"></div>
-      <div class="stage-hint" id="pHint"></div>
+    <div class="console">
+      <aside class="rail" id="pScores" aria-label="賽況"></aside>
+
+      <main class="stage question" id="stage">
+        <div class="stage-top">
+          <div class="stage-deck" id="pDeck"></div>
+          <div class="row" style="gap:10px">
+            <span class="clock" id="pClock">60</span><span class="kv">秒</span>
+            <button class="btn-quiet" id="btnPause">暫停</button>
+          </div>
+        </div>
+        <div class="stage-q" id="pText"></div>
+        <div class="stage-hint" id="pHint"></div>
+        <div class="bar" id="pBar"><i></i></div>
+      </main>
+
+      <aside class="actions">
+        <p class="kv keys">鍵盤 <span class="kbd">Space</span> 對 <span class="kbd">S</span> 跳過 <span class="kbd">Z</span> 撤銷 <span class="kbd">Esc</span> 暫停</p>
+        <div class="util">
+          <button id="btnUndo">撤銷</button>
+          <button id="btnEndTurn">結束本回合</button>
+        </div>
+        <button id="btnQuit" class="btn-quiet quit">結束遊戲</button>
+        <div class="judge-wrap">
+          <div class="actions-sep">判定</div>
+          <div class="judge">
+            <button class="j-ok" data-judge="ok">對</button>
+            <button class="j-skip" data-judge="skip">跳過</button>
+          </div>
+        </div>
+      </aside>
     </div>
-
-    <div class="bar" id="pBar"><i></i></div>
-
-    <div class="score-strip" id="pScores"></div>
-
-    <div class="judge">
-      <button class="j-ok" data-judge="ok">對</button>
-      <button class="j-skip" data-judge="skip">跳過</button>
-    </div>
-
-    <div class="util">
-      <button id="btnUndo">撤銷</button>
-      <button id="btnEndTurn">結束本回合</button>
-      <button id="btnQuit" style="margin-left:auto;color:var(--muted)">結束遊戲</button>
-    </div>
-
-    <p class="kv">鍵盤 <span class="kbd">Space</span> 對 <span class="kbd">S</span> 跳過 <span class="kbd">Z</span> 撤銷 <span class="kbd">Esc</span> 暫停</p>
 
     <div class="ready" id="readyOverlay" style="display:none">
       <div class="readyCard">
@@ -847,10 +892,19 @@ function renderPlay(){
   $("#pDeck").textContent = it.deck || "";
   $("#pHint").textContent = HINT.replace("{who}", G.teams[G.turn].name);
 
-  $("#pScores").innerHTML = G.teams.map((t,i)=>`
-    <div class="sc ${i===G.turn?"cur":""}">
-      <b>${t.score}</b><span>${esc(t.name)}</span>
-    </div>`).join("");
+  // 賽況 rail：按分數排，當前隊伍填 ember
+  const ranked = G.teams.map((t,i)=>({t,i})).sort((a,b)=> b.t.score-a.t.score || a.i-b.i);
+  $("#pScores").classList.toggle("dense", G.teams.length > 6);
+  const done = G.round-1 === G.rounds ? G.teams.length : G.turn;   // 本回合已完成隊數
+  $("#pScores").innerHTML =
+    `<div class="rail-h"><span>第 ${G.round}/${G.rounds} 回合</span><span>${done}/${G.teams.length} 隊完成</span></div>`
+    + ranked.map(({t,i},k)=>`
+      <div class="sc ${i===G.turn?"cur":""}">
+        <span class="rank">${k+1}</span>
+        <span class="name">${esc(t.name)}</span>
+        <b>${t.score}</b>
+        <span class="meta">對 ${t.ok} · 跳 ${t.skip}</span>
+      </div>`).join("");
 
   renderTimer();
 }
