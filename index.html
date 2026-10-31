@@ -3,37 +3,58 @@
 <head>
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<meta name="description" content="大電視破冰主持台：一部機控場，一人背向屏幕猜，全隊描述，主持按對或跳過，題庫同排行榜可以自訂。">
 <title>大電視 · 破冰主持台</title>
 <style>
+  /* Hallmark · floor-only pass, no theme deal (2026-10-31)
+     critique · it is a host console, not a landing page: kept the dark system, tokenised colour, fixed motion, focus and contrast tells
+     waive 24b · spacing runs a 2px rhythm (8/10/12/14/16/18/20/22/24) for optical balance on a 1080p projection; not a 4px grid */
   :root{
-    --bg:#0b0e14; --panel:#141a24; --panel2:#1b2330; --line:#28313f;
-    --txt:#eef3fa; --dim:#8b98ab; --skip:#f2b53c; --accent:#5b8cff; --danger:#e8564a;
+    /* surface */
+    --bg:#0b0e14; --bg-top:#17233a; --field:#0b0e14;
+    --panel:#141a24; --panel2:#1b2330; --panel3:#1b2740;
+    --line:#28313f; --line-soft:#1c2431;
+    /* ink */
+    --txt:#eef3fa; --dim:#8b98ab; --dim-2:#9dabbf; --dim-3:#7b8798; --dim-4:#7d8797; --dim-5:#4d5b70;
+    /* accent */
+    --accent:#5b8cff; --accent-2:#3f74ff; --accent-3:#2c5ce0; --accent-soft:#7aa2ff;
+    --accent-glow:rgba(63,116,255,.35); --accent-glow-2:rgba(91,140,255,.5);
+    /* judge */
+    --ok:#3ee38c; --ok-2:#1fa85e; --ok-ink:#04220f;
+    --ok-line:#256b45; --ok-soft:#8ff0bd; --ok-bg:#0f2a1c;
+    --skip:#f7c154; --skip-2:#d99b1e; --skip-ink:#221a05;
+    --gold:#c9a227; --gold-bg:#221d10;
+    --danger:#e8564a;
+    /* misc */
+    --ready-bg:rgba(6,9,14,.92); --toast-bg:#20304a;
+    --font:-apple-system,BlinkMacSystemFont,"PingFang HK","Noto Sans HK","Microsoft JhengHei",system-ui,sans-serif;
     --r:16px;
   }
   *{box-sizing:border-box; -webkit-tap-highlight-color:transparent}
-  html,body{margin:0;height:100%}
+  html,body{margin:0;height:100%; overflow-x:clip}
   body{
-    background:radial-gradient(1200px 700px at 70% -10%, #17233a 0%, var(--bg) 60%);
-    color:var(--txt); font-family:-apple-system,BlinkMacSystemFont,"PingFang HK","Noto Sans HK","Microsoft JhengHei",system-ui,sans-serif;
-    min-height:100%; overflow-x:hidden;
+    background:radial-gradient(1200px 700px at 70% -10%, var(--bg-top) 0%, var(--bg) 60%);
+    color:var(--txt); font-family:var(--font);
+    min-height:100%;
   }
   button{font-family:inherit; cursor:pointer; border:none; border-radius:12px; font-weight:700; color:var(--txt); background:var(--panel2)}
   button:active{transform:translateY(1px)}
   input,textarea{font-family:inherit; font-size:15px; color:var(--txt); background:var(--bg);
     border:1px solid var(--line); border-radius:10px; padding:9px 12px; outline:none; width:100%}
-  input:focus,textarea:focus{border-color:var(--accent)}
+  :focus-visible{outline:2px solid var(--accent); outline-offset:2px; border-radius:8px}
+  input:focus-visible,textarea:focus-visible,button:focus-visible{outline:2px solid var(--accent); outline-offset:2px}
   .wrap{max-width:1080px; margin:0 auto; padding:16px 16px 90px}
   .view{display:none}
   .view.active{display:block}
-  h1{font-size:22px; margin:0 0 2px; letter-spacing:.5px}
+  h1{font-size:22px; margin:0 0 2px; letter-spacing:.5px; text-wrap:balance}
   h2{font-size:14px; color:var(--dim); font-weight:600; margin:0 0 10px; letter-spacing:1px}
   .sub{color:var(--dim); font-size:13px; margin:0 0 18px}
-  .card{background:var(--panel); border:1px solid var(--line); border-radius:var(--r); padding:16px; margin-bottom:14px}
+  .card{background:var(--panel); color:var(--txt); border:1px solid var(--line); border-radius:var(--r); padding:16px; margin-bottom:14px}
   .row{display:flex; gap:10px; align-items:center; flex-wrap:wrap}
   .row > label{font-size:13.5px; color:var(--dim); min-width:76px}
   .kv{font-size:13px; color:var(--dim)}
   .pill{font-size:12.5px;padding:5px 12px;border-radius:999px;border:1px solid var(--line);color:var(--dim);display:inline-block}
-  .pill.on{border-color:#256b45;color:#8ff0bd;background:#0f2a1c}
+  .pill.on{border-color:var(--ok-line);color:var(--ok-soft);background:var(--ok-bg)}
 
   .names{display:grid; grid-template-columns:repeat(auto-fill,minmax(140px,1fr)); gap:8px; margin-top:10px}
   .stepper{display:flex; align-items:center; gap:8px}
@@ -42,15 +63,15 @@
 
   .chips{display:flex; flex-wrap:wrap; gap:8px}
   .chip{background:var(--panel2); border:1px solid var(--line); border-radius:999px; padding:8px 14px; font-size:13.5px; font-weight:600; color:var(--dim)}
-  .chip.on{background:#1b2740; border-color:var(--accent); color:var(--txt)}
+  .chip.on{background:var(--panel3); border-color:var(--accent); color:var(--txt)}
 
-  .btn-primary{width:100%; padding:18px; font-size:18px; background:linear-gradient(180deg,#3f74ff,#2c5ce0); border-radius:14px; margin-top:6px}
+  .btn-primary{width:100%; padding:18px; font-size:18px; background:linear-gradient(180deg,var(--accent-2),var(--accent-3)); border-radius:14px; margin-top:6px}
   .btn-ghost{background:transparent; border:1px solid var(--line); color:var(--dim); padding:10px 14px; font-size:13.5px}
 
   /* ===== 遊戲畫面 ===== */
   .topline{display:flex; justify-content:space-between; align-items:center; gap:10px; margin-bottom:12px; flex-wrap:wrap}
   .badge{background:var(--panel2); border:1px solid var(--line); border-radius:999px; padding:6px 13px; font-size:13px; font-weight:700}
-  .badge.turn{background:#1b2740; border-color:var(--accent)}
+  .badge.turn{background:var(--panel3); border-color:var(--accent)}
   .clock{font-variant-numeric:tabular-nums; font-weight:800; font-size:26px; letter-spacing:1px}
   .clock.warn{color:var(--skip)}
   .clock.dead{color:var(--danger)}
@@ -59,27 +80,47 @@
     background:var(--panel); border:1px solid var(--line); border-radius:22px;
     padding:34px 26px; text-align:center; margin-bottom:12px; min-height:34vh;
     display:flex; flex-direction:column; justify-content:center; gap:16px;
+    position:relative; overflow:hidden;
   }
-  .qtext{font-size:clamp(38px,9.5vw,96px); font-weight:900; line-height:1.15; letter-spacing:2px; word-break:break-word}
+  /* VFX（由設定嘅 VFX 開關控制，冇開就冇 class，等於冇動效） */
+  .question.fx-ok{animation:fxOk .5s ease-out}
+  @keyframes fxOk{
+    0%{box-shadow:inset 0 0 0 2px var(--ok), inset 0 0 80px -10px var(--ok)}
+    100%{box-shadow:inset 0 0 0 2px transparent, inset 0 0 0 -10px transparent}
+  }
+  .question.fx-skip{animation:fxShake .34s ease-in-out}
+  @keyframes fxShake{0%,100%{transform:translateX(0)}25%{transform:translateX(-8px)}70%{transform:translateX(8px)}}
+  .fx-plus{position:absolute; top:18%; right:14%; font-size:clamp(28px,5vw,52px); font-weight:900;
+    color:var(--ok); pointer-events:none; opacity:0; animation:fxPlus .8s ease-out forwards}
+  @keyframes fxPlus{0%{opacity:0; transform:translateY(10px) scale(.8)}
+    25%{opacity:1; transform:translateY(0) scale(1)}
+    100%{opacity:0; transform:translateY(-46px) scale(1.05)}}
+  .readyCount.pop{animation:fxPop .5s ease-out}
+  @keyframes fxPop{0%{transform:scale(.55); opacity:0} 45%{transform:scale(1.1); opacity:1} 100%{transform:scale(1)}}
+  .clock.dead{animation:fxPulse 1s ease-in-out infinite}
+  @keyframes fxPulse{0%,100%{opacity:1} 50%{opacity:.45}}
+  .qtext{font-size:clamp(38px,9.5vw,96px); font-weight:900; line-height:1.15; letter-spacing:2px;
+    word-break:break-word; text-wrap:balance}
   .qhint{color:var(--dim); font-size:13.5px}
-  .qdeck{color:#4d5b70; font-size:12px; letter-spacing:1px}
+  .qdeck{color:var(--dim-5); font-size:12px}
 
-  .bar{height:8px; background:#1c2431; border-radius:99px; overflow:hidden; margin-bottom:14px}
-  .bar > i{display:block; height:100%; width:100%; background:linear-gradient(90deg,#3f74ff,#7aa2ff); transition:width .1s linear}
+  .bar{height:8px; background:var(--line-soft); border-radius:99px; overflow:hidden; margin-bottom:14px}
+  .bar > i{display:block; height:100%; width:100%; transform-origin:left center; transform:scaleX(1);
+    background:linear-gradient(90deg,var(--accent-2),var(--accent-soft)); transition:transform .1s linear}
   .bar.warn > i{background:var(--skip)}
   .bar.dead > i{background:var(--danger)}
 
   .judge{display:grid; grid-template-columns:1.5fr 1fr; gap:10px; margin-bottom:10px}
   .judge button{padding:22px 8px; font-size:19px; border-radius:16px}
-  .j-ok{background:linear-gradient(180deg,#3ee38c,#1fa85e); color:#04220f}
-  .j-skip{background:linear-gradient(180deg,#f7c154,#d99b1e); color:#221a05}
+  .j-ok{background:linear-gradient(180deg,var(--ok),var(--ok-2)); color:var(--ok-ink)}
+  .j-skip{background:linear-gradient(180deg,var(--skip),var(--skip-2)); color:var(--skip-ink)}
 
   .util{display:flex; gap:10px; flex-wrap:wrap}
   .util button{flex:1; min-width:92px; padding:12px; font-size:13.5px; background:var(--panel2); color:var(--dim)}
 
   .scores{display:flex; gap:8px; overflow-x:auto; padding:2px 0 0}
   .sc{background:var(--panel); border:1px solid var(--line); border-radius:12px; padding:8px 14px; min-width:96px; text-align:center; flex:0 0 auto}
-  .sc.cur{border-color:var(--accent); background:#1b2740}
+  .sc.cur{border-color:var(--accent); background:var(--panel3)}
   .sc b{display:block; font-size:22px; font-variant-numeric:tabular-nums; line-height:1.2}
   .sc span{font-size:11.5px; color:var(--dim)}
 
@@ -90,10 +131,10 @@
   .rk .nm{flex:1; font-size:19px; font-weight:800}
   .rk .pt{font-size:28px; font-weight:900; font-variant-numeric:tabular-nums}
   .rk .st{font-size:12px; color:var(--dim)}
-  .rk.first{border-color:#c9a227; background:#221d10}
+  .rk.first{border-color:var(--gold); background:var(--gold-bg)}
 
   /* ===== 排行榜 ===== */
-  .lbrow{display:flex; align-items:center; gap:12px; padding:10px 4px; border-bottom:1px solid #1c2431}
+  .lbrow{display:flex; align-items:center; gap:12px; padding:10px 4px; border-bottom:1px solid var(--line-soft)}
   .lbrow .no{width:30px; font-weight:900; color:var(--dim); font-variant-numeric:tabular-nums}
   .lbrow .nm{flex:1; font-weight:700}
   .lbrow .nm .st{font-size:12px; color:var(--dim); font-weight:400; margin-top:2px}
@@ -104,32 +145,38 @@
   @media (max-width:720px){ .bankgrid{grid-template-columns:1fr} }
   .decklist{display:flex; flex-direction:column; gap:6px}
   .decklist button{text-align:left; padding:11px 13px; background:var(--panel2); font-size:13.5px; display:flex; justify-content:space-between; gap:8px}
-  .decklist button.on{background:#1b2740; border:1px solid var(--accent)}
+  .decklist button.on{background:var(--panel3); border:1px solid var(--accent)}
   .decklist button i{color:var(--dim); font-style:normal; font-size:12px}
   .items{max-height:54vh; overflow:auto; display:flex; flex-direction:column; gap:6px}
   .it{display:grid; grid-template-columns:1fr 36px; gap:6px; align-items:center}
   .it input{padding:7px 10px; font-size:14px}
-  .it button{background:transparent; color:#7d8797; font-size:16px; padding:0}
+  .it button{background:transparent; color:var(--dim-4); font-size:16px; padding:0}
   .it button:hover{color:var(--danger)}
 
   /* ===== 準備畫面 / 倒數 ===== */
-  .ready{position:fixed; inset:0; background:rgba(6,9,14,.92); backdrop-filter:blur(6px);
+  .ready{position:fixed; inset:0; background:var(--ready-bg);
     display:flex; align-items:center; justify-content:center; z-index:60; padding:24px}
   .readyCard{text-align:center; max-width:640px; width:100%}
-  .readyRound{color:#9dabbf; font-size:16px; letter-spacing:2px; margin-bottom:10px}
+  .readyRound{color:var(--dim-2); font-size:16px; letter-spacing:2px; margin-bottom:10px}
   .readyTeam{font-size:clamp(40px,8vw,76px); font-weight:900; letter-spacing:2px; margin-bottom:8px}
   .readyHint{color:var(--dim); font-size:15px; line-height:1.7; margin-bottom:26px}
   .readyBtn{font-size:22px; padding:20px 64px; border-radius:16px;
-    background:linear-gradient(180deg,#3f74ff,#2c5ce0); box-shadow:0 8px 30px rgba(63,116,255,.35)}
+    background:linear-gradient(180deg,var(--accent-2),var(--accent-3)); box-shadow:0 8px 30px var(--accent-glow)}
   .readyBtn:active{transform:translateY(2px)}
-  .readyKbd{color:#7b8798; font-size:13.5px; margin-top:16px}
+  .readyKbd{color:var(--dim-3); font-size:13.5px; margin-top:16px}
   .readyCount{font-size:clamp(72px,18vw,160px); font-weight:900; color:var(--txt); line-height:1;
-    display:none; margin-top:10px; text-shadow:0 0 40px rgba(91,140,255,.5)}
+    display:none; margin-top:10px; text-shadow:0 0 40px var(--accent-glow-2)}
   .readyCount.on{display:block}
 
-  .toast{position:fixed; left:50%; bottom:24px; transform:translateX(-50%); background:#20304a; border:1px solid var(--accent);
+  .toast{position:fixed; left:50%; bottom:24px; transform:translateX(-50%); background:var(--toast-bg); border:1px solid var(--accent);
     color:var(--txt); padding:11px 20px; border-radius:999px; font-size:14px; opacity:0; pointer-events:none; transition:opacity .2s; z-index:99}
   .toast.on{opacity:1}
+  @media (prefers-reduced-motion: reduce){
+    *,*::before,*::after{animation-duration:.001ms !important; animation-iteration-count:1 !important;
+      transition-duration:.001ms !important; scroll-behavior:auto !important}
+    .bar > i{transition:none}
+  }
+
   .kbd{background:var(--panel2); border:1px solid var(--line); border-radius:6px; padding:2px 7px; font-size:11.5px; color:var(--dim); font-family:ui-monospace,monospace}
 </style>
 </head>
@@ -168,8 +215,10 @@
       </div>
       <div class="row">
         <label>選項</label>
-        <label class="kv"><input type="checkbox" id="soundChk" style="width:auto; margin-right:6px">提示音</label>
+        <label class="kv"><input type="checkbox" id="bgmChk" style="width:auto; margin-right:6px">背景音樂</label>
+        <label class="kv" style="margin-left:16px"><input type="checkbox" id="vfxChk" style="width:auto; margin-right:6px">畫面動效</label>
       </div>
+      <p class="kv" style="margin:8px 0 0; opacity:.75">背景音樂包埋提示音，畫面動效係答對閃光、跳過震動同倒數彈跳。</p>
     </div>
 
     <div class="card">
@@ -206,7 +255,7 @@
 
     <div class="question">
       <div class="qdeck" id="pDeck"></div>
-      <div class="qtext" id="pText">—</div>
+      <div class="qtext" id="pText"></div>
       <div class="qhint" id="pHint"></div>
     </div>
 
@@ -214,7 +263,7 @@
 
     <div class="judge">
       <button class="j-ok" data-judge="ok">✓ 對</button>
-      <button class="j-skip" data-judge="skip">跳過 ›</button>
+      <button class="j-skip" data-judge="skip">跳過</button>
     </div>
 
     <div class="util" style="margin-bottom:12px">
@@ -354,8 +403,9 @@ const store = {
 let bank = normalizeBank(store.get(K_BANK, null) || clone(DEFAULT_BANK));
 let cfg  = Object.assign({
   teams:2, names:["A 隊","B 隊","C 隊","D 隊","E 隊","F 隊","G 隊","H 隊"],
-  sec:60, rounds:1, decks: bank.decks.map(d=>d.id), sound:true
+  sec:60, rounds:1, decks: bank.decks.map(d=>d.id), bgm:true, vfx:true
 }, store.get(K_CFG, {}));
+if(cfg.sound !== undefined && cfg.bgm === undefined){ cfg.bgm = cfg.sound; delete cfg.sound; }
 
 let G = null;
 let bankDeck = bank.decks[0] ? bank.decks[0].id : null;
@@ -419,18 +469,85 @@ function updateSrc(){
   el.className = "pill" + (REMOTE.ok ? " on" : "");
 }
 
-/* ================= 音效 ================= */
-let actx=null;
-function beep(freq=880, dur=0.08, vol=0.15){
-  if(!cfg.sound) return;
+/* ================= 音訊：BGM（程序化，冇音檔）+ 提示音 ================= */
+let actx=null, master=null;
+
+function audioCtx(){
+  if(!cfg.bgm) return null;                 // 一個總開關：關咗就成個音訊都停
   try{
     actx = actx || new (window.AudioContext||window.webkitAudioContext)();
-    const o=actx.createOscillator(), g=actx.createGain();
-    o.frequency.value=freq; o.type="sine"; g.gain.value=vol;
-    o.connect(g); g.connect(actx.destination); o.start();
-    g.gain.exponentialRampToValueAtTime(0.001, actx.currentTime+dur);
-    o.stop(actx.currentTime+dur+0.02);
-  }catch(e){}
+    if(actx.state === "suspended") actx.resume();
+    if(!master){ master = actx.createGain(); master.gain.value = 0.85; master.connect(actx.destination); }
+    return actx;
+  }catch(e){ return null; }
+}
+
+function tone(freq, dur=0.08, vol=0.15, type="sine", when=null){
+  const ctx = audioCtx(); if(!ctx) return;
+  const t = when ?? ctx.currentTime;
+  const o = ctx.createOscillator(), g = ctx.createGain();
+  o.type = type; o.frequency.value = freq;
+  g.gain.setValueAtTime(0, t);
+  g.gain.linearRampToValueAtTime(vol, t + 0.012);
+  g.gain.exponentialRampToValueAtTime(0.0001, t + dur);
+  o.connect(g); g.connect(master); o.start(t); o.stop(t + dur + 0.03);
+}
+
+/* 四小節和弦循環：Am7 - Fmaj7 - Cmaj7 - G6，慢速氛圍，音量壓得好低 */
+const BGM = {
+  on:false, timer:null, step:0, nextAt:0,
+  chords:[[220.00,261.63,329.63,392.00],[174.61,220.00,261.63,329.63],
+          [130.81,196.00,246.94,329.63],[196.00,246.94,293.66,392.00]],
+  start(){
+    if(this.on || !cfg.bgm) return;
+    const ctx = audioCtx(); if(!ctx) return;
+    this.on = true; this.step = 0; this.nextAt = ctx.currentTime + 0.2;
+    this.timer = setInterval(()=>this.schedule(), 300);
+  },
+  stop(){ this.on = false; clearInterval(this.timer); this.timer = null; },
+  schedule(){
+    const ctx = audioCtx(); if(!ctx || !this.on) return;
+    while(this.nextAt < ctx.currentTime + 0.8){
+      const t = this.nextAt, ch = this.chords[this.step % this.chords.length];
+      ch.forEach((f,i)=> this.pad(f, t, 2.9, 0.030 - i*0.005));
+      this.pad(ch[0]/2, t, 3.0, 0.055);            // 低音
+      this.pad(ch[1]*2, t + 1.45, 1.2, 0.012);     // 高音點綴
+      this.step++;
+      this.nextAt += 2.4;
+    }
+  },
+  pad(freq, t, dur, vol){
+    const ctx = audioCtx(); if(!ctx) return;
+    const o = ctx.createOscillator(), g = ctx.createGain();
+    o.type = "triangle"; o.frequency.value = freq;
+    g.gain.setValueAtTime(0, t);
+    g.gain.linearRampToValueAtTime(vol, t + 0.45);
+    g.gain.linearRampToValueAtTime(0, t + dur);
+    o.connect(g); g.connect(master); o.start(t); o.stop(t + dur + 0.05);
+  }
+};
+
+/* 舊名保留：其他位置照叫 beep */
+function beep(freq=880, dur=0.08, vol=0.15){ tone(freq, dur, vol); }
+
+/* ================= VFX ================= */
+function fxOk(){
+  if(!cfg.vfx) return;
+  const q = document.querySelector(".question");
+  q.classList.remove("fx-ok","fx-skip"); void q.offsetWidth; q.classList.add("fx-ok");
+  const plus = document.createElement("span");
+  plus.className = "fx-plus"; plus.textContent = "+1";
+  q.appendChild(plus);
+  setTimeout(()=>plus.remove(), 900);
+}
+function fxSkip(){
+  if(!cfg.vfx) return;
+  const q = document.querySelector(".question");
+  q.classList.remove("fx-ok","fx-skip"); void q.offsetWidth; q.classList.add("fx-skip");
+}
+function fxPop(el){
+  if(!cfg.vfx || !el) return;
+  el.classList.remove("pop"); void el.offsetWidth; el.classList.add("pop");
 }
 
 /* ================= 主頁 ================= */
@@ -445,7 +562,8 @@ function renderHome(){
 
   $("#secInput").value = cfg.sec;
   $("#roundInput").value = cfg.rounds;
-  $("#soundChk").checked = !!cfg.sound;
+  $("#bgmChk").checked = !!cfg.bgm;
+  $("#vfxChk").checked = !!cfg.vfx;
 
   $("#deckChips").innerHTML = bank.decks.map(d=>`
     <button class="chip ${cfg.decks.includes(d.id)?"on":""}" data-deck="${esc(d.id)}">
@@ -491,6 +609,7 @@ function renderBank(){
 
 /* ================= 遊戲流程 ================= */
 function startGame(){
+  if(cfg.bgm) BGM.start();
   if(G){ clearInterval(G.timerId); G.timerToken++; }   // 清走上一局殘留嘅倒數
   const names = Array.from({length:cfg.teams},(_,i)=> cfg.names[i] || ("隊 "+(i+1)));
   const pool = [];
@@ -538,20 +657,20 @@ function startRound(){
   $("#btnReady").style.display = "none";
   const el = $("#rdCount");
   el.classList.add("on");
+  const BEAT = 1150;                 // 每個數字停 1.15 秒，畀人有時間準備
   let n = 3;
-  el.textContent = n;
-  beep(660, 0.08, 0.12);
+  el.textContent = n; fxPop(el); beep(660, 0.10, 0.12);
   const tick = setInterval(()=>{
     n--;
-    if(n > 0){ el.textContent = n; beep(660, 0.08, 0.12); }
-    else if(n === 0){ el.textContent = "開始！"; beep(990, 0.16, 0.16); }
+    if(n > 0){ el.textContent = n; fxPop(el); beep(660, 0.10, 0.12); }
+    else if(n === 0){ el.textContent = "開始"; fxPop(el); beep(990, 0.18, 0.16); }
     else {
       clearInterval(tick);
       el.classList.remove("on");
       hideReady();
       beginRunning();
     }
-  }, 700);
+  }, BEAT);
 }
 
 function beginRunning(){
@@ -589,13 +708,13 @@ function startTimer(){
 function renderTimer(){
   const el=$("#pClock"), bar=$("#pBar");
   if(!G.sec){
-    el.textContent="∞"; el.className="clock"; bar.className="bar"; $("#pBar > i").style.width="100%";
+    el.textContent="∞"; el.className="clock"; bar.className="bar"; $("#pBar > i").style.transform="scaleX(1)";
     return;
   }
   el.textContent = Math.ceil(G.remaining);
   el.className = "clock" + (G.remaining<=5 ? " dead" : G.remaining<=15 ? " warn" : "");
   const pct = Math.max(0, Math.min(1, G.remaining / G.sec));
-  $("#pBar > i").style.width = (pct*100).toFixed(1)+"%";
+  $("#pBar > i").style.transform = `scaleX(${pct.toFixed(3)})`;
   bar.className = "bar" + (G.remaining<=5 ? " dead" : G.remaining<=15 ? " warn" : "");
 }
 
@@ -604,7 +723,7 @@ function renderPlay(){
   $("#pTurn").textContent = "輪到 " + G.teams[G.turn].name;
   $("#pLeft").textContent = `池剩 ${G.pool.length}`;
 
-  const it = G.cur || {t:"—", deck:""};   // ready 階段未有題目
+  const it = G.cur || {t:"", deck:""};   // ready 階段未有題目
   $("#pText").textContent = it.t;
   $("#pDeck").textContent = it.deck || "";
   $("#pHint").textContent = HINT.replace("{who}", G.teams[G.turn].name);
@@ -623,7 +742,8 @@ function judge(kind){
   const delta = kind==="ok" ? 1 : 0;
   G.log.push({item:G.cur, kind, team:G.turn, delta});
   t.score += delta;
-  if(kind==="ok"){ t.ok++; beep(980,0.07,0.14); } else { t.skip++; }
+  if(kind==="ok"){ t.ok++; beep(980,0.07,0.14); fxOk(); }
+  else { t.skip++; beep(420,0.09,0.10); fxSkip(); }
   G.cur = drawItem();
   renderPlay();
 }
@@ -704,7 +824,7 @@ async function openLb(){
       <div class="lbrow">
         <div class="nm">${esc((s.finished_at||"").replace("T"," ").slice(0,16))}
           <span class="st"> · ${s.players} 人</span>
-          <div class="st">冠軍 ${esc(s.winner||"—")}（${s.winner_score??0} 分）</div>
+          <div class="st">冠軍 ${esc(s.winner||"未有")}（${s.winner_score??0} 分）</div>
         </div>
       </div>`).join("") || `<p class="sub">未有場次</p>`;
   }catch(e){
@@ -718,7 +838,17 @@ $("#teamMinus").onclick = ()=>{ cfg.teams=Math.max(1,cfg.teams-1); saveCfg(); re
 $("#teamPlus").onclick  = ()=>{ cfg.teams=Math.min(8,cfg.teams+1); saveCfg(); renderHome(); };
 $("#secInput").onchange  = e=>{ cfg.sec=Math.max(0,Math.min(600,+e.target.value||0)); saveCfg(); };
 $("#roundInput").onchange= e=>{ cfg.rounds=Math.max(1,Math.min(20,+e.target.value||1)); saveCfg(); };
-$("#soundChk").onchange  = e=>{ cfg.sound=e.target.checked; saveCfg(); };
+$("#bgmChk").onchange = e=>{
+  cfg.bgm = e.target.checked; saveCfg();
+  if(cfg.bgm) BGM.start(); else BGM.stop();
+};
+$("#vfxChk").onchange = e=>{
+  cfg.vfx = e.target.checked; saveCfg();
+  if(!cfg.vfx){                       // 關咗就即刻清走殘留效果
+    document.querySelectorAll(".question").forEach(q=>q.classList.remove("fx-ok","fx-skip"));
+    document.querySelectorAll(".fx-plus").forEach(el=>el.remove());
+  }
+};
 $("#btnAll").onclick  = ()=>{ cfg.decks=bank.decks.map(d=>d.id); saveCfg(); renderHome(); };
 $("#btnNone").onclick = ()=>{ cfg.decks=[]; saveCfg(); renderHome(); };
 $("#btnStart").onclick = startGame;
@@ -820,6 +950,13 @@ document.addEventListener("keydown", e=>{
   else if(k==="s" || k==="arrowdown"){ e.preventDefault(); judge("skip"); }
   else if(k==="z"){ undo(); }
   else if(k==="escape" || k==="p"){ e.preventDefault(); $("#btnPause").click(); }
+});
+
+document.addEventListener("pointerdown", ()=>{ if(cfg.bgm && !BGM.on) BGM.start(); }, {passive:true});
+
+document.addEventListener("visibilitychange", ()=>{
+  if(document.hidden) BGM.stop();
+  else if(cfg.bgm && G && G.phase !== "done") BGM.start();
 });
 
 /* ================= 啟動 ================= */
