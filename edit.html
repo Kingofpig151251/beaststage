@@ -79,7 +79,6 @@
     <span class="dot" id="state">載入中…</span>
     <span class="grow"></span>
     <button id="btnRaw">進階（純文字）</button>
-    <button id="btnReload" style="display:none">重試連線</button>
   </header>
 
   <section class="addbar" id="addbar">
@@ -252,30 +251,35 @@ async function load(){
     render();
     setState("ok", "已連接");
     connected = true;
-    $("#btnReload").style.display = "none";
+    $("#btnAdd").disabled = !$("#bulk").value.trim();
   }catch(e){
-    setState("bad", "未連線");
+    setState("bad", "未連線，自動重試中…");
     connected = false;
-    $("#btnReload").style.display = "";
-    $("#btnReload").textContent = "重試連線";
+    $("#btnAdd").disabled = true;
   }
 }
 
 /* ---- 自動更新：其他人改咗就自己拉 ---- */
 async function poll(){
-  if(!connected) return;
   if($("#rawWrap").classList.contains("on")) return;   // 進階模式唔干擾打字
   try{
     const r = await fetch("/api/bank", { cache:"no-store" });
     if(!r.ok) throw new Error("bad");
     const b = await r.json();
+    connected = true;
+    setState("ok", "已連接");
+    $("#btnAdd").disabled = !$("#bulk").value.trim();
     const incoming = fromText(textFromBank(b)).model;
-    if(JSON.stringify(incoming) === JSON.stringify(model)) return;
+    if(JSON.stringify(incoming) === JSON.stringify(model)) return;   // 冇變就唔重畫
     setIds = (b.sets || []).map(s=>({ id:s.id, name:s.name }));
     model = incoming;
     render();
     setState("ok", "已更新");
-  }catch(e){ /* 靜默失敗，下次再試 */ }
+  }catch(e){
+    connected = false;
+    setState("bad", "未連線，自動重試中…");
+    $("#btnAdd").disabled = true;
+  }
 }
 setInterval(poll, POLL_MS);
 document.addEventListener("visibilitychange", ()=>{ if(!document.hidden) poll(); });
@@ -357,7 +361,6 @@ $("#btnSave").onclick = ()=>{
   model = parsed.model;
   save().then(render);
 };
-$("#btnReload").onclick = ()=> load();
 document.addEventListener("keydown", e=>{
   if((e.metaKey || e.ctrlKey) && e.key.toLowerCase() === "s"){ e.preventDefault(); save(); }
 });
