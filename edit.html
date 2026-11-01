@@ -3,11 +3,11 @@
 <head>
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
-<meta name="description" content="大電視題庫編輯：一行一題，# 開類別，[組合] 開組合。多人共用同一份，儲存即同步。">
+<meta name="description" content="大電視題庫：揀類別、貼題目、加入。任何人改得，唔使識編程。">
 <title>題庫 · 大電視</title>
 <style>
   /* Hallmark · redesign: utility screen · genre: functional · theme: Arcade (ember / grille) · scope: app · v2.0.0
-     critique · it is a text file with a save button: one field, one action, nothing to learn
+     critique · two jobs only: add a batch, remove a line. Everything else hides behind 進階.
      waive type · no webfonts: the page must load instantly on a party iPad */
   :root{
     --paper:oklch(0.16 0.03 310); --paper-2:oklch(0.20 0.035 310); --paper-3:oklch(0.24 0.04 310);
@@ -21,8 +21,8 @@
   *{box-sizing:border-box}
   html,body{margin:0; height:100%; overflow-x:clip}
   body{background:var(--paper); color:var(--ink); font-family:var(--font-body); font-size:15px;
-    display:flex; flex-direction:column; padding:14px 16px; gap:12px}
-  header{display:flex; align-items:center; gap:12px; flex-wrap:wrap}
+    display:flex; flex-direction:column; gap:12px; padding:14px 16px}
+  header{display:flex; align-items:center; gap:10px; flex-wrap:wrap}
   h1{margin:0; font-size:28px; line-height:1; text-wrap:balance}
   .kv{font-size:12px; color:var(--muted)}
   .dot{display:inline-flex; align-items:center; gap:6px; font-size:12px; color:var(--ink-2)}
@@ -30,6 +30,7 @@
   .dot.ok{color:var(--accent-2)} .dot.ok::before{background:var(--accent-2)}
   .dot.bad{color:var(--accent)} .dot.bad::before{background:var(--accent)}
   .grow{margin-left:auto}
+  a{text-decoration:none}
   button{font-family:inherit; font-size:15px; min-height:44px; padding:0 16px; cursor:pointer;
     background:transparent; color:var(--ink); border:var(--bar) solid var(--rule); border-radius:var(--radius)}
   button:hover{border-color:var(--ink-2)}
@@ -37,151 +38,266 @@
   button:focus-visible{outline:2px solid var(--focus); outline-offset:2px}
   button.primary{background:var(--accent); border-color:var(--accent); color:var(--accent-ink); font-weight:700}
   button:disabled{opacity:.35; cursor:not-allowed; transform:none}
-  main{flex:1; min-height:0; display:flex}
-  textarea{flex:1; width:100%; resize:none; padding:14px 16px; background:var(--paper-2); color:var(--ink);
-    border:var(--bar) solid var(--rule); border-radius:var(--radius); font-family:var(--font-mono);
-    font-size:15px; line-height:1.7; tab-size:2}
-  textarea:focus-visible{outline:2px solid var(--focus); outline-offset:-2px}
-  footer{display:flex; align-items:center; gap:12px; flex-wrap:wrap}
+  select,textarea{font-family:inherit; font-size:15px; color:var(--ink); background:var(--paper-2);
+    border:var(--bar) solid var(--rule); border-radius:var(--radius); padding:10px 12px; min-height:44px}
+  select:focus-visible,textarea:focus-visible{outline:2px solid var(--focus); outline-offset:-2px}
+
+  .field{display:flex; flex-direction:column; gap:4px}
+  .addbar{display:grid; grid-template-columns:200px minmax(0,1fr) auto; gap:10px; align-items:start;
+    padding:12px; border:var(--bar) solid var(--rule); background:var(--paper-2)}
+  .addbar textarea{resize:vertical; min-height:76px; line-height:1.6}
+  @media (max-width:760px){ .addbar{grid-template-columns:1fr} }
+
+  .list{flex:1; min-height:0; overflow-y:auto; border:var(--bar) solid var(--rule)}
+  .deck-h{position:sticky; top:0; z-index:1; background:var(--paper-3); padding:9px 12px;
+    font-family:var(--font-mono); font-size:12px; color:var(--ink-2); display:flex; gap:8px}
+  .qrow{display:grid; grid-template-columns:minmax(0,1fr) auto auto; align-items:center;
+    border-bottom:var(--bar) solid var(--rule)}
+  .qrow span{padding:10px 12px; font-size:15px}
+  .qrow button{height:44px; padding:0 12px; border:0; border-left:var(--bar) solid var(--rule);
+    color:var(--muted); font-size:12px; line-height:1}
+  .qrow button:hover{background:var(--accent); color:var(--accent-ink)}
+  .empty{padding:14px 12px; color:var(--muted); font-size:12px}
+
+  #rawWrap{display:none; flex:1; min-height:0; flex-direction:column; gap:10px}
+  #rawWrap.on{display:flex}
+  #rawWrap textarea{flex:1; min-height:0; resize:none; font-family:var(--font-mono); line-height:1.7}
+  .rawbar{display:flex; gap:10px; align-items:center; flex-wrap:wrap}
   code{font-family:var(--font-mono); font-size:12px; color:var(--accent-2)}
 </style>
 </head>
 <body>
   <header>
-    <a href="/" style="text-decoration:none"><button>← 主持台</button></a>
+    <a href="/"><button>← 主持台</button></a>
     <h1>題庫</h1>
     <span class="kv" id="meta"></span>
-    <span class="dot" id="state">讀取中…</span>
+    <span class="dot" id="state">載入中…</span>
     <span class="grow"></span>
+    <button id="btnRaw">進階（純文字）</button>
     <button id="btnReload">重新載入</button>
-    <button class="primary" id="btnSave">儲存</button>
   </header>
 
-  <main>
-    <textarea id="text" spellcheck="false" autocomplete="off" autocapitalize="off"
-      aria-label="題庫內容"></textarea>
-  </main>
+  <section class="addbar" id="addbar">
+    <label class="field"><span class="kv">加入至分類</span>
+      <select id="deck" aria-label="加入至類別"></select>
+    </label>
+    <textarea id="bulk" rows="2" placeholder="貼題目，一行一題&#10;可以一次貼幾十題" aria-label="新題目"></textarea>
+    <button class="primary" id="btnAdd" disabled>加入題目</button>
+  </section>
 
-  <footer>
-    <span class="kv"><code># 類別名</code> 開新類別　<code>[組合] 名</code> 開新組合（下面幾行填題目）　空白行分隔</span>
-  </footer>
+  <section class="list" id="list" aria-label="題目清單"></section>
+
+  <section id="rawWrap">
+    <div class="rawbar">
+      <span class="kv"><code># 類別名</code> 開類別　<code>[組合] 名</code> 開組合　空白行結束組合</span>
+      <span class="grow"></span>
+      <button id="btnSave">儲存</button>
+    </div>
+    <textarea id="text" spellcheck="false" autocomplete="off" autocapitalize="off" aria-label="題庫純文字"></textarea>
+  </section>
 
 <script>
 "use strict";
 const $ = s => document.querySelector(s);
+const $$ = s => Array.from(document.querySelectorAll(s));
 const NL = String.fromCharCode(10);
-let setsMeta = [];          // 保留組合 id，避免每次儲存都換 id
-let dirty = false;
+let model = { name:"題庫", decks:[], sets:[] };
+let setIds = [];
+let saveTimer = null;
 
+function escHtml(s){ return String(s).replace(/[&<>"']/g, c=>({"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;","'":"&#39;"}[c])); }
 function setState(kind, text){
   const el = $("#state");
   el.className = "dot " + (kind || "");
   el.textContent = text;
 }
-function bankToText(b){
+
+/* ---- 文字 ↔ 模型 ---- */
+function toText(m){
   const out = [];
-  (b.decks || []).forEach(d=>{
-    out.push("# " + d.name);
-    (d.items || []).forEach(it=> out.push(typeof it === "string" ? it : it.t));
-    out.push("");
-  });
-  (b.sets || []).forEach(s=>{
-    out.push("[組合] " + s.name);
-    (s.items || []).forEach(t=> out.push(typeof t === "string" ? t : t.t));
-    out.push("");
-  });
+  m.decks.forEach(d=>{ out.push("# " + d.name); d.items.forEach(t=> out.push(t)); out.push(""); });
+  m.sets.forEach(s=>{ out.push("[組合] " + s.name); s.items.forEach(t=> out.push(t)); out.push(""); });
   return out.join(NL).replace(/\s+$/,"");
 }
-function textToBank(text){
+function fromText(text){
   const decks = [], sets = [];
-  let cur = null, curSet = null, lastDeck = null;
+  let curDeck = null, lastDeck = null, curSet = null;
   const pushDeck = name => {
-    const d = { id:"d"+(decks.length+1), name:(name||"未分類").slice(0,20), items:[] };
-    decks.push(d); cur = d; lastDeck = d; curSet = null; return d;
+    const d = { name:(name||"未分類").slice(0,20), items:[] };
+    decks.push(d); curDeck = d; lastDeck = d; curSet = null; return d;
   };
   const pushSet = name => {
-    const s = { id:"s"+(sets.length+1), name:(name||"組合").slice(0,20), items:[] };
+    const s = { name:(name||"組合").slice(0,20), items:[] };
     sets.push(s); curSet = s; return s;
   };
   text.split(/\r?\n/).forEach(raw=>{
     const line = raw.trim();
-    if(!line){ curSet = null; return; }        // 空白行 = 組合結束，後面嘅題目返去上一個類別
+    if(!line){ curSet = null; return; }
     if(line.startsWith("[組合]")){ pushSet(line.replace(/^\[組合\]\s*/,"")); return; }
     if(line.startsWith("#")){ pushDeck(line.replace(/^#+\s*/,"")); return; }
     if(curSet){ if(!curSet.items.includes(line)) curSet.items.push(line); return; }
-    const d = cur || lastDeck || pushDeck("未分類");
-    if(!d.items.some(x=>x.t === line)) d.items.push({ t: line.slice(0,60) });
+    const d = curDeck || lastDeck || pushDeck("未分類");
+    if(!d.items.includes(line)) d.items.push(line.slice(0,60));
   });
-  // 組合引用唔存在嘅題目 → 丟棄，避免斷鏈
-  const all = new Set(decks.flatMap(d=>d.items.map(i=>i.t)));
+  const all = new Set(decks.flatMap(d=>d.items));
   const dropped = [];
-  sets.forEach(s=>{
-    s.items = s.items.filter(t=>{ if(!all.has(t)){ dropped.push(s.name + " / " + t); return false; } return true; });
-  });
-  // 沿用舊 id（同名）
-  sets.forEach(s=>{
-    const old = setsMeta.find(o=>o.name === s.name);
-    if(old) s.id = old.id;
-  });
-  const bank = { name:"題庫", decks: decks.filter(d=>d.items.length), sets: sets.filter(s=>s.items.length) };
-  bank.dropped = dropped;
-  return bank;
+  sets.forEach(s=> s.items = s.items.filter(t=>{ if(!all.has(t)){ dropped.push(s.name+" / "+t); return false; } return true; }));
+  sets.forEach(s=>{ const old = setIds.find(o=>o.name === s.name); if(old) s.id = old.id; });
+  return { model:{ name:"題庫", decks:decks.filter(d=>d.items.length), sets:sets.filter(s=>s.items.length) }, dropped };
 }
 
+/* ---- 渲染 ---- */
+function render(){
+  const total = model.decks.reduce((n,d)=>n+d.items.length,0);
+  $("#meta").textContent = `${model.decks.length} 類 · ${total} 題 · ${model.sets.length} 組合`;
+
+  const sel = $("#deck");
+  const keep = sel.value;
+  sel.innerHTML = model.decks.map(d=>`<option value="${escHtml(d.name)}">${escHtml(d.name)}（${d.items.length}）</option>`).join("")
+    + `<option value="__new__">＋ 新類別…</option>`;
+  if(keep && [...sel.options].some(o=>o.value === keep)) sel.value = keep;
+
+  $("#list").innerHTML = model.decks.map(d=>`
+    <div class="deck-h">${escHtml(d.name)}<span>${d.items.length}</span></div>
+    ${d.items.map(t=>`
+      <div class="qrow"><span>${escHtml(t)}</span>
+        <button data-act="edit" data-deck="${escHtml(d.name)}" data-t="${escHtml(t)}">編輯</button>
+        <button data-act="del" data-deck="${escHtml(d.name)}" data-t="${escHtml(t)}">刪除</button>
+      </div>`).join("")}
+  `).join("") || `<div class="empty">未有題目。上面揀類別、貼題目，撳「加入」。</div>`;
+
+  $$("#list .qrow button").forEach(b=>{
+    b.onclick = ()=>{
+      const d = model.decks.find(x=>x.name === b.dataset.deck);
+      if(!d) return;
+      if(b.dataset.act === "edit"){
+        const next = (prompt("改題目", b.dataset.t) || "").trim().slice(0,60);
+        if(!next || next === b.dataset.t) return;
+        const i = d.items.indexOf(b.dataset.t);
+        if(i < 0) return;
+        d.items[i] = next;
+        model.sets.forEach(s=> s.items = s.items.map(t=> t === b.dataset.t ? next : t));
+      }else{
+        d.items = d.items.filter(t=>t !== b.dataset.t);
+        model.sets.forEach(s=> s.items = s.items.filter(t=>t !== b.dataset.t));
+      }
+      render(); scheduleSave();
+    };
+  });
+  $("#text").value = toText(model);
+}
+
+/* ---- 儲存 ---- */
+function scheduleSave(){
+  setState("", "未儲存…");
+  clearTimeout(saveTimer);
+  saveTimer = setTimeout(save, 500);
+}
+async function save(){
+  clearTimeout(saveTimer);
+  setState("", "儲存中…");
+  try{
+    const r = await fetch("/api/bank", {
+      method:"PUT", headers:{ "Content-Type":"application/json" },
+      body: JSON.stringify({
+        name:"題庫",
+        decks: model.decks.map(d=>({ name:d.name, items:d.items.map(t=>({ t })) })),
+        sets: model.sets.map(s=>({ id:s.id, name:s.name, items:s.items }))
+      })
+    });
+    if(!r.ok) throw new Error("put");
+    setState("ok", "已儲存");
+  }catch(e){
+    setState("bad", "儲存失敗");
+  }
+}
+
+/* ---- 載入 ---- */
+function textFromBank(b){
+  const out = [];
+  (b.decks||[]).forEach(d=>{
+    out.push("# " + d.name);
+    (d.items||[]).forEach(it=> out.push(typeof it === "string" ? it : it.t));
+    out.push("");
+  });
+  (b.sets||[]).forEach(s=>{
+    out.push("[組合] " + s.name);
+    (s.items||[]).forEach(t=> out.push(typeof t === "string" ? t : (t.t || "")));
+    out.push("");
+  });
+  return out.join(NL);
+}
 async function load(){
-  setState("", "讀取中…");
+  setState("", "載入中…");
   try{
     const r = await fetch("/api/bank", { cache:"no-store" });
     if(!r.ok) throw new Error("bad");
     const b = await r.json();
-    setsMeta = (b.sets || []).map(s=>({ id:s.id, name:s.name }));
-    $("#text").value = bankToText(b);
-    const total = (b.decks||[]).reduce((n,d)=>n+(d.items||[]).length,0);
-    $("#meta").textContent = `${(b.decks||[]).length} 類 · ${total} 題 · ${(b.sets||[]).length} 組合`;
-    setState("ok", "已同步");
-    dirty = false;
+    setIds = (b.sets || []).map(s=>({ id:s.id, name:s.name }));
+    model = fromText(textFromBank(b)).model;
+    render();
+    setState("ok", "已儲存");
   }catch(e){
     setState("bad", "未連線");
   }
 }
 
-async function save(){
-  const bank = textToBank($("#text").value);
-  const total = bank.decks.reduce((n,d)=>n+d.items.length,0);
-  if(!total) return alert("題庫係空，唔會儲存");
-  if(bank.dropped.length && !confirm(
-      "有 " + bank.dropped.length + " 條組合題目喺題庫搵唔到，會略過：\n" +
-      bank.dropped.slice(0,6).join("\n") + (bank.dropped.length>6 ? "\n…" : "") + "\n\n照儲存？")) return;
-  $("#btnSave").disabled = true;
-  setState("", "儲存中…");
-  try{
-    const r = await fetch("/api/bank", {
-      method:"PUT", headers:{ "Content-Type":"application/json" },
-      body: JSON.stringify({ name:"題庫", decks: bank.decks, sets: bank.sets })
-    });
-    if(!r.ok) throw new Error("put");
-    setsMeta = bank.sets.map(s=>({ id:s.id, name:s.name }));
-    $("#meta").textContent = `${bank.decks.length} 類 · ${total} 題 · ${bank.sets.length} 組合`;
-    setState("ok", "已同步");
-    dirty = false;
-  }catch(e){
-    setState("bad", "儲存失敗");
-    alert("儲存失敗，檢查連線後再試");
-  }finally{
-    $("#btnSave").disabled = false;
+/* ---- 加入題目 ---- */
+$("#bulk").oninput = ()=>{
+  const n = $("#bulk").value.split(/\r?\n/).filter(l=>l.trim()).length;
+  $("#btnAdd").disabled = !n;
+};
+$("#btnAdd").onclick = ()=>{
+  let name = $("#deck").value;
+  if(name === "__new__"){
+    name = (prompt("新類別名（最多 20 字）") || "").trim().slice(0,20);
+    if(!name) return;
   }
-}
+  let deck = model.decks.find(d=>d.name === name);
+  if(!deck){ deck = { name, items:[] }; model.decks.push(deck); }
+  const exist = new Set(model.decks.flatMap(d=>d.items).map(t=>t.replace(/\s+/g,"").toLowerCase()));
+  let added = 0, dup = 0;
+  $("#bulk").value.split(/\r?\n/).forEach(raw=>{
+    const line = raw.trim(); if(!line) return;
+    const k = line.replace(/\s+/g,"").toLowerCase();
+    if(exist.has(k)){ dup++; return; }
+    exist.add(k); deck.items.push(line.slice(0,60)); added++;
+  });
+  $("#bulk").value = "";
+  $("#btnAdd").disabled = true;
+  if(!added) return setState("", dup ? `全部重複（${dup} 題）` : "冇內容");
+  render(); save();
+  $("#deck").value = deck.name;
+  setState("ok", `已加入 ${added} 題${dup ? `，跳過 ${dup} 重複` : ""}`);
+};
 
-$("#text").oninput = ()=>{ dirty = true; setState("", "未儲存"); };
-$("#btnSave").onclick = save;
+/* ---- 進階 ---- */
+$("#btnRaw").onclick = ()=>{
+  const w = $("#rawWrap");
+  const on = !w.classList.contains("on");
+  w.classList.toggle("on", on);
+  $("#addbar").style.display = on ? "none" : "grid";
+  $("#list").style.display = on ? "none" : "";
+  $("#btnRaw").textContent = on ? "返回簡單模式" : "進階（純文字）";
+  if(!on) render();
+};
+$("#text").oninput = ()=> setState("", "未儲存…");
+$("#btnSave").onclick = ()=>{
+  const parsed = fromText($("#text").value);
+  if(!parsed.model.decks.length) return alert("題庫係空，唔會儲存");
+  if(parsed.dropped.length && !confirm(
+      `有 ${parsed.dropped.length} 條組合題目喺題庫搵唔到，會略過：${NL}` +
+      parsed.dropped.slice(0,6).join(NL) + (parsed.dropped.length>6 ? NL+"…" : "") + `${NL}${NL}照儲存？`)) return;
+  model = parsed.model;
+  save().then(render);
+};
 $("#btnReload").onclick = ()=>{
-  if(dirty && !confirm("有未儲存嘅改動，重新載入會失去，繼續？")) return;
+  if(!confirm("重新載入會覆蓋未儲存嘅改動，繼續？")) return;
   load();
 };
 document.addEventListener("keydown", e=>{
   if((e.metaKey || e.ctrlKey) && e.key.toLowerCase() === "s"){ e.preventDefault(); save(); }
 });
-window.addEventListener("beforeunload", e=>{ if(dirty){ e.preventDefault(); e.returnValue = ""; } });
 load();
 </script>
 </body>
