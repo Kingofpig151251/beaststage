@@ -64,6 +64,11 @@
   #rawWrap textarea{flex:1; min-height:0; resize:none; font-family:var(--font-mono); line-height:1.7}
   .rawbar{display:flex; gap:10px; align-items:center; flex-wrap:wrap}
   code{font-family:var(--font-mono); font-size:12px; color:var(--accent-2)}
+  .undo{position:fixed; left:50%; transform:translateX(-50%); bottom:18px; z-index:20;
+    display:none; align-items:center; gap:12px; padding:10px 14px;
+    background:var(--paper-3); border:var(--bar) solid var(--rule); color:var(--ink); font-size:12px}
+  .undo.on{display:flex}
+  .undo button{min-height:36px; padding:0 12px; font-size:12px}
 </style>
 </head>
 <body>
@@ -95,6 +100,8 @@
     </div>
     <textarea id="text" spellcheck="false" autocomplete="off" autocapitalize="off" aria-label="題庫純文字"></textarea>
   </section>
+
+<div class="undo" id="undoBar"><span id="undoText"></span><button id="undoBtn">復原</button></div>
 
 <script>
 "use strict";
@@ -178,8 +185,13 @@ function render(){
         d.items[i] = next;
         model.sets.forEach(s=> s.items = s.items.map(t=> t === b.dataset.t ? next : t));
       }else{
-        d.items = d.items.filter(t=>t !== b.dataset.t);
-        model.sets.forEach(s=> s.items = s.items.filter(t=>t !== b.dataset.t));
+        const idx = d.items.indexOf(b.dataset.t);
+        if(idx < 0) return;
+        const removed = d.items[idx];
+        const setHits = model.sets.map(s=> s.items.includes(removed) ? s.name : "").filter(Boolean);
+        d.items.splice(idx, 1);
+        model.sets.forEach(s=> s.items = s.items.filter(t=>t !== removed));
+        offerUndo(d.name, removed, idx, setHits);
       }
       render(); scheduleSave();
     };
@@ -269,6 +281,33 @@ $("#btnAdd").onclick = ()=>{
   render(); save();
   $("#deck").value = deck.name;
   setState("ok", `已加入 ${added} 題${dup ? `，跳過 ${dup} 重複` : ""}`);
+};
+
+/* ---- 刪除復原 ---- */
+let undoData = null, undoTimer = null;
+function offerUndo(deckName, text, index, setNames){
+  undoData = { deckName, text, index, setNames };
+  $("#undoText").textContent = `已刪除「${text}」`;
+  $("#undoBar").classList.add("on");
+  clearTimeout(undoTimer);
+  undoTimer = setTimeout(hideUndo, 6000);
+}
+function hideUndo(){
+  $("#undoBar").classList.remove("on");
+  undoData = null;
+}
+$("#undoBtn").onclick = ()=>{
+  if(!undoData) return;
+  const d = model.decks.find(x=>x.name === undoData.deckName);
+  if(d){
+    d.items.splice(Math.min(undoData.index, d.items.length), 0, undoData.text);
+    undoData.setNames.forEach(n=>{
+      const st = model.sets.find(s=>s.name === n);
+      if(st && !st.items.includes(undoData.text)) st.items.push(undoData.text);
+    });
+    render(); scheduleSave();
+  }
+  hideUndo();
 };
 
 /* ---- 進階 ---- */
