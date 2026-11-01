@@ -61,22 +61,11 @@ def ensure_schema():
             deck_id TEXT NOT NULL REFERENCES decks(id) ON DELETE CASCADE,
             text TEXT NOT NULL, sort INTEGER DEFAULT 0)""",
         "CREATE INDEX IF NOT EXISTS idx_items_deck ON items(deck_id)",
-        """CREATE TABLE IF NOT EXISTS sessions (
-            id SERIAL PRIMARY KEY, finished_at TEXT NOT NULL, mode TEXT,
-            rounds INTEGER, questions INTEGER DEFAULT 0)""",
-        """CREATE TABLE IF NOT EXISTS results (
-            id SERIAL PRIMARY KEY,
-            session_id INTEGER NOT NULL REFERENCES sessions(id) ON DELETE CASCADE,
-            player TEXT NOT NULL, score INTEGER DEFAULT 0,
-            ok INTEGER DEFAULT 0, skip INTEGER DEFAULT 0)""",
-        "CREATE INDEX IF NOT EXISTS idx_results_session ON results(session_id)",
         "CREATE TABLE IF NOT EXISTS meta (key TEXT PRIMARY KEY, value TEXT)",
     ]
     with conn() as c, c.cursor() as cur:
         for sql in statements:
             cur.execute(sql)
-        # 舊 DB 仲有 miss 欄（已無用途）
-        cur.execute("ALTER TABLE results DROP COLUMN IF EXISTS miss")
         cur.execute("SELECT COUNT(*) AS c FROM decks")
         if cur.fetchone()["c"] == 0 and os.path.exists(SEED):
             with open(SEED, encoding="utf-8") as f:
@@ -179,48 +168,6 @@ def bank_get():
     schema()
     with conn() as c:
         return read_bank(c)
-
-
-@app.get("/api/leaderboard")
-def leaderboard(limit: int = 10):
-    schema()
-    limit = max(1, min(100, limit))
-    with conn() as c, c.cursor() as cur:
-        cur.execute("""
-            SELECT r.player AS name, SUM(r.score) AS total, MAX(r.score) AS best,
-                   COUNT(*) AS games, SUM(r.ok) AS ok, SUM(r.skip) AS skips
-            FROM results r GROUP BY r.player
-            ORDER BY total DESC, best DESC, games DESC LIMIT %s""", (limit,))
-        players = cur.fetchall()
-        cur.execute("""
-            SELECT s.id, s.finished_at, s.mode, s.rounds, s.questions,
-                   (SELECT player FROM results WHERE session_id=s.id ORDER BY score DESC, ok DESC LIMIT 1) AS winner,
-                   (SELECT score  FROM results WHERE session_id=s.id ORDER BY score DESC, ok DESC LIMIT 1) AS winner_score,
-                   (SELECT COUNT(*) FROM results WHERE session_id=s.id) AS players
-            FROM sessions s ORDER BY s.id DESC LIMIT %s""", (limit,))
-        recent = cur.fetchall()
-        cur.execute("SELECT COUNT(*) AS c FROM sessions")
-        total = cur.fetchone()["c"]
-    return {"players": players, "recent": recent, "sessions_total": total}
-
-
-@app.post("/api/sessions")
-async def session_add(request: Request):
-    schema()
-    body = await request.json()
-    teams = body.get("teams") or []
-    if not isinstance(teams, list) or not teams:
-        return JSONResponse({"error": "teams 唔可以空"}, status_code=400)
-    with conn() as c, c.cursor() as cur:
-        cur.execute("INSERT INTO sessions(finished_at,mode,rounds,questions) VALUES(%s,%s,%s,%s) RETURNING id",
-                    (now(), str(body.get("mode", ""))[:40], int(body.get("rounds") or 0),
-                     int(body.get("questions") or 0)))
-        sid = cur.fetchone()["id"]
-        for t in teams[:16]:
-            cur.execute("INSERT INTO results(session_id,player,score,ok,skip) VALUES(%s,%s,%s,%s,%s)",
-                        (sid, str(t.get("name", "?"))[:40] or "?", int(t.get("score") or 0),
-                         int(t.get("ok") or 0), int(t.get("skip") or 0)))
-    return {"id": sid, "ok": True}
 
 
 @app.put("/api/bank")

@@ -69,7 +69,6 @@
   /* ---- home ---- */
   .top{display:flex; justify-content:space-between; align-items:baseline; gap:12px; flex-wrap:wrap; margin-bottom:18px}
   .top .sub{color:var(--muted); font-size:12px; margin-top:6px}
-  .pill{font-size:12px; font-weight:700; color:var(--muted); white-space:nowrap; display:inline-flex; align-items:center; gap:7px}
   .pill::before{content:""; width:7px; height:7px; background:var(--muted); border-radius:var(--radius)}
   .pill.on{color:var(--accent-2)}
   .pill.on::before{background:var(--accent-2)}
@@ -329,14 +328,6 @@
   .rk.first .pt{color:var(--accent)}
 
   /* ---- leaderboard ---- */
-  .lbrow{display:flex; align-items:center; gap:12px; padding:12px 4px; border-bottom:var(--bar) solid var(--rule)}
-  .lbrow:last-child{border-bottom:0}
-  .lbrow .no{width:28px; font-family:var(--font-mono); color:var(--muted); font-size:12px}
-  .lbrow .nm{flex:1; font-weight:700}
-  .lbrow .nm .st{font-size:12px; color:var(--muted); font-weight:400; margin-top:2px}
-  .lbrow .pt{font-family:var(--font-mono); font-size:22px; font-weight:700; color:var(--ink)}
-  .lbrow:first-child .pt{color:var(--accent)}
-  .lbrow:first-child .nm{font-weight:900}
 
   /* ---- 題庫：一份純文字 ---- */
   .bank-head{display:flex; align-items:center; gap:10px; flex-wrap:wrap; margin-bottom:6px;
@@ -435,7 +426,6 @@
         <h1>大電視</h1>
         <p class="sub">一人背向屏幕猜，全隊描述。主持按對或跳過，對錯由人拍板。</p>
       </div>
-      <span class="pill" id="srcPill">題庫來源：本機</span>
     </header>
 
     <div class="setup">
@@ -507,22 +497,7 @@
     </div>
   </section>
 
-  <!-- ========== 排行榜 ========== -->
-  <section class="view" id="v-lb">
-    <h1>排行榜</h1>
-    <p class="kv" id="lbSub" style="margin:6px 0 18px">全部場次累計</p>
-    <div class="well" style="margin-bottom:12px">
-      <h2>累計</h2>
-      <div id="lbPlayers"></div>
-    </div>
-    <div class="well">
-      <h2>最近場次</h2>
-      <div id="lbRecent"></div>
-    </div>
-    <div class="row" style="justify-content:center;margin-top:18px">
-      <button class="btn-quiet" id="btnLbBack">返主頁</button>
-    </div>
-  </section>
+  
 
   <!-- ========== 結果 ========== -->
   <section class="view" id="v-result">
@@ -532,7 +507,6 @@
     <div class="rank" id="rankList"></div>
     <div class="result-actions">
       <button class="btn-primary btn-big" id="btnAgain">再玩一次</button>
-      <button class="btn-quiet" id="btnLbFromResult">排行榜</button>
       <button class="btn-quiet" id="btnBackHome">返主頁</button>
     </div>
   </section>
@@ -567,7 +541,6 @@
       <div class="picker">
         <div class="pickcol">
           <div class="pickhead"><h2>題庫</h2><span class="kv" id="bankLibCount"></span></div>
-          <input id="libSearch" placeholder="搜尋題目" autocomplete="off">
           <div class="picklist" id="libList"></div>
         </div>
         <div class="pickcol">
@@ -594,7 +567,6 @@
     <button class="btn-primary" id="btnStart">開始遊戲</button>
     <div class="rail">
       <button class="btn-quiet" id="btnBankHome">題庫</button>
-      <button class="btn-quiet" id="btnLb">排行榜</button>
     </div>
   </div>
 </div>
@@ -671,7 +643,7 @@ function pushBank(delay){
       const r = await fetch("/api/bank", {method:"PUT", headers:{"Content-Type":"application/json"},
         body: JSON.stringify({name: bank.name, decks: bank.decks, sets: bank.sets})});
       if(!r.ok) throw new Error("put");
-      REMOTE.ok = true; updateSrc(); setSyncState("ok");
+      REMOTE.ok = true; setSyncState("ok");
     }catch(e){ setSyncState("error"); }
   }, delay ?? 400);
 }
@@ -701,14 +673,8 @@ async function pullRemoteBank(){
     if(cfg.setId && !bank.sets.some(st=>st.id===cfg.setId)) cfg.setId = "";
     saveCfg();
     REMOTE.ok = true;
-    renderHome(); updateSrc();
-  }catch(e){ REMOTE.ok = false; updateSrc(); renderHome(); setSyncState("offline"); }
-}
-function updateSrc(){
-  const el = $("#srcPill");
-  if(!el) return;
-  el.textContent = REMOTE.ok ? "題庫：已連線" : "題庫：未連線";
-  el.className = "pill" + (REMOTE.ok ? " on" : "");
+    renderHome();
+  }catch(e){ REMOTE.ok = false; renderHome(); setSyncState("offline"); }
 }
 
 /* ================= VFX ================= */
@@ -814,10 +780,8 @@ function renderSetPicker(){
   $$("#bankSetChips button").forEach(b=>b.onclick=()=>{ bankSetId=b.dataset.set; renderSetPicker(); });
 
   const set = bank.sets.find(st=>st.id===bankSetId);
-  const q = ($("#libSearch")?.value || "").trim().toLowerCase();
   const libItems = [];
   bank.decks.forEach(d=>d.items.forEach(it=>{
-    if(q && !it.t.toLowerCase().includes(q)) return;
     libItems.push({t: it.t, deck: d.name});
   }));
   $("#bankLibCount").textContent = `${libItems.length} 題`;
@@ -1065,43 +1029,6 @@ function endGame(){
       <div class="pt">${t.score}</div>
     </div>`).join("") : "";
   showView("v-result");
-  if(REMOTE.ok){
-    fetch("/api/sessions", {method:"POST", headers:{"Content-Type":"application/json"},
-      body: JSON.stringify({
-        mode:"大電視", rounds:1, questions:G.log.length,
-        teams: G.teams.map(t=>({name:t.name, score:t.score, ok:t.ok, skip:t.skip}))
-      })
-    }).catch(()=>{ toast("成績上傳失敗（server 斷線？）"); });
-  }
-}
-
-/* ================= 排行榜 ================= */
-async function openLb(){
-  showView("v-lb");
-  $("#lbPlayers").innerHTML = `<p class="sub">載入中…</p>`;
-  $("#lbRecent").innerHTML = "";
-  try{
-    const r = await fetch("/api/leaderboard?limit=20", {cache:"no-store"});
-    if(!r.ok) throw new Error("bad status");
-    const d = await r.json();
-    $("#lbSub").textContent = `共 ${d.sessions_total} 場`;
-    $("#lbPlayers").innerHTML = (d.players||[]).map((pl,i)=>`
-      <div class="lbrow">
-        <div class="no">${i+1}</div>
-        <div class="nm">${esc(pl.name)}<div class="st">${pl.games} 場 · 最佳 ${pl.best} 分 · 對 ${pl.ok} · 跳 ${pl.skips}</div></div>
-        <div class="pt">${pl.total}</div>
-      </div>`).join("") || `<p class="sub">未有紀錄</p>`;
-    $("#lbRecent").innerHTML = (d.recent||[]).map(s=>`
-      <div class="lbrow">
-        <div class="nm">${esc((s.finished_at||"").replace("T"," ").slice(0,16))}
-          <span class="st"> · ${s.players} 隊</span>
-          <div class="st">冠軍 ${esc(s.winner||"未有")}（${s.winner_score??0} 分）</div>
-        </div>
-      </div>`).join("") || `<p class="sub">未有場次</p>`;
-  }catch(e){
-    $("#lbSub").textContent = "未連線";
-    $("#lbPlayers").innerHTML = `<p class="sub">未有 server 連線，排行榜只喺連後端時可用。<br>用 <code>python3 server.py</code> 開後端，或者部署去 NAS。</p>`;
-  }
 }
 
 /* ================= 事件 ================= */
@@ -1141,11 +1068,8 @@ $("#btnPause").onclick = ()=>{
 
 $("#btnAgain").onclick = startGame;
 $("#btnBackHome").onclick = ()=>{ showView("v-home"); renderHome(); };
-$("#btnLbFromResult").onclick = openLb;
 
 $("#btnBankHome").onclick = ()=>{ showView("v-bank"); renderBank(); };
-$("#btnLb").onclick = openLb;
-$("#btnLbBack").onclick = ()=>{ showView("v-home"); renderHome(); };
 $("#btnBankBack").onclick = ()=>{ showView("v-home"); renderHome(); };
 $$(".banktabs button").forEach(b=>b.onclick=()=>{
   $$(".banktabs button").forEach(x=>x.classList.toggle("on", x===b));
@@ -1167,7 +1091,6 @@ $("#btnDelSet").onclick = ()=>{
   if(cfg.setId === set.id) cfg.setId = "";
   saveCfg(); saveBank(); pushBank(); renderSetPicker(); renderHome(); toast("已刪除組合");
 };
-$("#libSearch").oninput = ()=> renderSetPicker();
 $("#btnSyncNow").onclick = async ()=>{
   setSyncState("syncing");
   await pullRemoteBank();
@@ -1219,7 +1142,6 @@ document.addEventListener("visibilitychange", ()=>{
 /* ================= 啟動 ================= */
 document.body.dataset.view = "home";
 renderHome();
-updateSrc();
 pullRemoteBank();
 window.__bigtv = { get G(){return G}, get bank(){return bank}, get cfg(){return cfg},
   startGame, startRound, enterReady, judge, undo, endTurn, endGame, renderHome, renderPlay, renderBank, showView };
