@@ -332,89 +332,6 @@
 
   /* ---- leaderboard ---- */
 
-  /* ---- 題庫：一份純文字 ---- */
-  .bank-head{display:flex; align-items:center; gap:10px; flex-wrap:wrap; margin-bottom:6px;
-    position:sticky; top:0; z-index:5; background:var(--paper); padding:6px 0 8px}
-  .bank-head h1{margin:0; font-size:28px; line-height:1}
-  .bank-head .back{padding:10px 12px; min-height:44px; font-size:12px}
-  .bank-head #btnSyncNow{padding:10px 12px; min-height:44px; font-size:12px; margin-left:auto}
-  .sync-dot{display:inline-flex; align-items:center; gap:6px; font-size:12px; color:var(--ink-2)}
-  .sync-dot::before{content:""; width:7px; height:7px; border-radius:50%; background:var(--muted)}
-  .sync-dot.ok{color:var(--accent-2)}
-  .sync-dot.ok::before{background:var(--accent-2)}
-  .sync-dot.bad{color:var(--accent)}
-  .sync-dot.bad::before{background:var(--accent)}
-  .banktabs{display:flex; gap:4px; margin-bottom:10px; border-bottom:var(--bar) solid var(--rule)}
-  .banktabs button{padding:10px 14px; min-height:44px; border:0; border-bottom:2px solid transparent; border-radius:0;
-    background:transparent; color:var(--muted); font-size:12px}
-  .banktabs button.on{color:var(--ink); border-bottom-color:var(--accent); font-weight:700}
-  .bank-hint{margin:0 0 10px; font-size:12px}
-  .bank-hint code{font-family:var(--font-mono); font-size:12px; color:var(--accent-2)}
-  /* 題庫：表格 */
-  .bankbar{display:flex; gap:10px; align-items:center; flex-wrap:wrap; margin-bottom:12px}
-  .bankbar .search{flex:1 1 200px; max-width:320px}
-  .bankbar select,.qdeck{appearance:none; -webkit-appearance:none; background-color:transparent;
-    background-image:url("data:image/svg+xml;utf8,<svg xmlns='http://www.w3.org/2000/svg' width='12' height='8'><path d='M1 1l5 5 5-5' fill='none' stroke='%23999' stroke-width='2'/></svg>");
-    background-repeat:no-repeat; background-position:right 10px center; padding-right:28px}
-  .bankbar select{min-height:44px; min-width:150px; font-size:12px; border:var(--bar) solid var(--rule); padding-left:12px}
-  .bankbar .count{font-family:var(--font-mono); font-size:12px; color:var(--muted); margin-left:auto}
-  .qtable{border:var(--bar) solid var(--rule); border-radius:var(--radius); max-width:920px}
-  .qhead-row{background:var(--paper-3)}
-  .qhead-row .qno,.qhead-row .qh{font-family:var(--font-mono); font-size:12px; color:var(--muted); padding:9px 12px}
-  .qhead-row .qh-deck{padding-left:10px}
-  .qrow{display:grid; grid-template-columns:44px minmax(0,1fr) 150px 44px; align-items:center;
-    border-bottom:var(--bar) solid var(--rule)}
-  .qrow:last-child{border-bottom:0}
-  .qno{font-family:var(--font-mono); font-size:12px; color:var(--muted); text-align:center}
-  .qtext{border:0; min-height:44px; padding:0 12px; background:transparent; font-size:15px; width:100%}
-  .qtext:focus-visible{outline:2px solid var(--focus); outline-offset:-2px}
-  .qdeck{border:0; border-left:var(--bar) solid var(--rule); height:44px; padding:0 10px;
-    background:transparent; font-size:12px; color:var(--muted); width:100%}
-  .qdel{width:44px; height:44px; padding:0; border:0; border-left:var(--bar) solid var(--rule);
-    background:transparent; color:var(--muted); font-size:18px; line-height:1}
-  .qdel:hover{background:var(--accent); color:var(--accent-ink)}
-  .qdel:focus-visible{outline:2px solid var(--focus); outline-offset:-2px}
-  button:disabled{opacity:.35; cursor:not-allowed}
-  .qrow-new{background:color-mix(in oklab, var(--paper-3) 60%, transparent)}
-  .qrow-new .qno{color:var(--accent); font-size:15px}
-  @media (max-width:700px){
-    .qrow{grid-template-columns:36px minmax(0,1fr) 44px;
-      grid-template-areas:"no text del" "no deck del"}
-    .qno{grid-area:no} .qtext{grid-area:text} .qdel{grid-area:del}
-    .qdeck{grid-area:deck; border-left:0; border-top:var(--bar) solid var(--rule); height:40px}
-  }
-  /* 批次貼上 */
-  .sheet{position:fixed; inset:0; background:var(--scrim); display:grid; place-items:center; padding:20px; z-index:60}
-  .sheet[hidden]{display:none}
-  .sheet-card{width:min(620px,100%); background:var(--paper-2); color:var(--ink); border:var(--bar) solid var(--rule);
-    border-radius:var(--radius); padding:18px; display:flex; flex-direction:column; gap:12px}
-  .sheet-card h2{margin:0; font-size:28px}
-  .sheet-card textarea{min-height:220px; resize:vertical; font-size:15px; line-height:1.6}
-
-  /* 組合：左題庫右已選 */
-  .setbar{display:flex; gap:6px; flex-wrap:wrap; margin-bottom:8px}
-  .setbar button{padding:7px 12px; font-size:12px; border:var(--bar) solid var(--rule); background:transparent;
-    color:var(--ink-2); border-radius:var(--radius)}
-  .setbar button.on{background:var(--accent); border-color:var(--accent); color:var(--accent-ink)}
-  .setbar button i{font-family:var(--font-mono); font-style:normal; font-size:12px; opacity:.7; margin-left:6px}
-  .setnew{display:flex; gap:8px; align-items:center; flex-wrap:wrap; margin-bottom:12px}
-  .setnew input{width:170px; padding:7px 10px; font-size:12px}
-  .setnew button{padding:7px 12px; font-size:12px}
-  .setnew .danger{margin-left:auto; color:var(--muted)}
-  .picker{display:grid; grid-template-columns:1fr 1fr; gap:14px; align-items:start}
-  @media (max-width:760px){ .picker{grid-template-columns:1fr} }
-  .pickcol{display:flex; flex-direction:column; gap:8px; min-width:0}
-  .pickhead{display:flex; align-items:baseline; gap:8px}
-  .pickhead h2{font-size:15px; margin:0}
-  .pickcol input{padding:8px 10px; font-size:12px}
-  .picklist{display:flex; flex-direction:column; gap:2px; max-height:calc(100dvh - 340px); overflow-y:auto;
-    border:var(--bar) solid var(--rule); border-radius:var(--radius); padding:4px}
-  .picklist button{display:flex; justify-content:space-between; gap:8px; text-align:left; padding:7px 9px;
-    border:0; background:transparent; color:var(--ink-2); font-size:12px; border-radius:var(--radius)}
-  .picklist button:hover{background:var(--paper-3); color:var(--ink)}
-  .picklist button.on{color:var(--accent-2)}
-  .picklist .empty{padding:10px; font-size:12px; color:var(--muted)}
-
   .toast{position:fixed; right:16px; bottom:16px; background:var(--paper-3); color:var(--ink);
     font-weight:600; font-size:12px; padding:8px 14px; border:var(--bar) solid var(--rule);
     border-radius:var(--radius); opacity:0; pointer-events:none; transition:opacity .2s; z-index:99}
@@ -555,70 +472,9 @@
   </section>
 
   <!-- ========== 題庫（雲端共用） ========== -->
-  <section class="view" id="v-bank">
-    <div class="bank-head">
-      <button class="btn-quiet back" id="btnBankBack">← 主頁</button>
-      <h1>題庫</h1>
-      <span class="kv" id="bankMeta"></span>
-      <span class="sync-dot" id="syncState">已同步</span>
-      <button class="btn-quiet" id="btnSyncNow">重新載入</button>
-    </div>
+  
 
-    <div class="banktabs">
-      <button data-tab="lib" class="on">題目庫</button>
-      <button data-tab="set">組合</button>
-    </div>
-
-    <div id="paneLib">
-      <div class="bankbar">
-        <input id="bankSearch" class="search" type="search" placeholder="搜尋題目" autocomplete="off">
-        <select id="bankFilter" aria-label="類別篩選"></select>
-        <button class="btn-quiet" id="btnAddDeck">＋ 類別</button>
-        <button class="btn-quiet" id="btnBulk">批次貼上</button>
-        <button class="btn-quiet" id="btnDedupe">去重</button>
-        <button class="btn-quiet" id="btnUndo">還原</button>
-        <span class="count" id="bankCount"></span>
-      </div>
-      <div class="qtable" id="qTable"></div>
-    </div>
-
-    <div id="paneSet" hidden>
-      <div class="setbar" id="bankSetChips"></div>
-      <div class="setnew">
-        <input id="newSetName" placeholder="新組合名" maxlength="16">
-        <button class="btn-quiet" id="btnAddSet">新增組合</button>
-        <button class="btn-quiet danger" id="btnDelSet">刪除本組合</button>
-      </div>
-      <div class="picker">
-        <div class="pickcol">
-          <div class="pickhead"><h2>題庫</h2><span class="kv" id="bankLibCount"></span></div>
-          <div class="picklist" id="libList"></div>
-        </div>
-        <div class="pickcol">
-          <div class="pickhead"><h2>本組合</h2><span class="kv" id="bankSetCount"></span></div>
-          <div class="picklist" id="setList"></div>
-        </div>
-      </div>
-    </div>
-  </section>
-
-  <div class="sheet" id="bulkSheet" hidden>
-    <div class="sheet-card">
-      <h2>批次貼上</h2>
-      <p class="kv">一行一題；<code># 類別名</code> 開新類別。重複題目自動跳過。</p>
-      <textarea id="bulkText" spellcheck="false" autocomplete="off" autocapitalize="off"
-        placeholder="#港式小食&#10;西多士&#10;檸檬茶&#10;&#10;#新類別&#10;車仔麵"></textarea>
-      <div class="row">
-        <label class="kv">加入至類別</label>
-        <select id="bulkDeck" aria-label="加入至類別"></select>
-      </div>
-      <div class="row" style="justify-content:flex-end">
-        <span class="kv" id="bulkCount" style="margin-right:auto"></span>
-        <button class="btn-quiet" id="bulkCancel">取消</button>
-        <button class="btn-primary" id="bulkAdd" disabled>加入</button>
-      </div>
-    </div>
-  </div>
+  
 
 
 
@@ -696,30 +552,6 @@ function normalizeBank(b){
   });
   return { name: b.name || "題庫", decks, sets };
 }
-function saveBank(){ /* 題庫只存雲端，本機唔留副本 */ }
-
-/* ---- 題庫同步：題庫只存雲端，開放寫入（冇寫入碼） ---- */
-function setSyncState(kind){
-  const el = $("#syncState"); if(!el) return;
-  const map = {syncing:["", "同步中…"], ok:["ok", "已同步"], error:["bad", "寫入失敗"],
-    offline:["bad", "未連線"]};
-  const [cls, text] = map[kind] || ["", ""];
-  el.className = "sync-dot" + (cls ? " " + cls : "");
-  el.textContent = text;
-}
-let pushTimer = null;
-function pushBank(delay){
-  clearTimeout(pushTimer);
-  setSyncState("syncing");
-  pushTimer = setTimeout(async ()=>{
-    try{
-      const r = await fetch("/api/bank", {method:"PUT", headers:{"Content-Type":"application/json"},
-        body: JSON.stringify({name: bank.name, decks: bank.decks, sets: bank.sets})});
-      if(!r.ok) throw new Error("put");
-      REMOTE.ok = true; setSyncState("ok");
-    }catch(e){ setSyncState("error"); }
-  }, delay ?? 400);
-}
 function saveCfg(){ store.set(K_CFG, cfg); }
 
 function showView(id){
@@ -742,12 +574,11 @@ async function pullRemoteBank(){
     const b = await r.json();
     if(!b.decks || !b.decks.length) throw new Error("empty");
     bank = normalizeBank(b);
-    saveBank();
     if(cfg.setId && !bank.sets.some(st=>st.id===cfg.setId)) cfg.setId = "";
     saveCfg();
     REMOTE.ok = true;
     renderHome();
-  }catch(e){ REMOTE.ok = false; renderHome(); setSyncState("offline"); }
+  }catch(e){ REMOTE.ok = false; renderHome(); }
 }
 
 /* ================= VFX ================= */
@@ -806,8 +637,7 @@ function renderHome(){
 
 /* ================= 題庫管理（離線用） ================= */
 /* 題庫＝一份純文字：`# 類別名` 開新類別，其餘非空行＝題目 */
-let bankSetId = null, bankQ = "", bankFilter = "", HIST = [];
-
+/* 題庫由 /edit 維護；主持台只讀 */
 function allItems(){
   const out = [];
   bank.decks.forEach(d=>d.items.forEach(it=>out.push({ id:it.id, t:it.t, deckId:d.id, deckName:d.name })));
@@ -816,184 +646,6 @@ function allItems(){
 function findItem(id){
   for(const d of bank.decks){ const it = d.items.find(x=>x.id===id); if(it) return { it, deck:d }; }
   return null;
-}
-function snap(){ HIST.push(JSON.stringify({ decks:bank.decks, sets:bank.sets })); if(HIST.length>20) HIST.shift(); }
-function ensureDeck(name){
-  let d = bank.decks.find(x=>x.name===name);
-  if(!d){ d = { id:"u"+Date.now().toString(36), name:(name||"未分類").slice(0,20), items:[] }; bank.decks.push(d); }
-  return d;
-}
-function commit(msg){
-  if(cfg.setId && !bank.sets.some(st=>st.id===cfg.setId)) cfg.setId = "";
-  saveCfg(); pushBank(); renderBank(); renderHome();
-  if(msg) toast(msg);
-}
-function deckOptions(sel){
-  return bank.decks.map(d=>`<option value="${esc(d.id)}"${d.id===sel?" selected":""}>${esc(d.name)}（${d.items.length}）</option>`).join("");
-}
-function renderBank(){
-  setSyncState(REMOTE.ok ? "ok" : "offline");
-  const total = bank.decks.reduce((n,d)=>n+d.items.length,0);
-  $("#bankMeta").textContent = bank.decks.length ? `${bank.decks.length} 類 · ${total} 題` : "未有題庫";
-  $("#btnUndo").disabled = !HIST.length;
-  renderQTable();
-  if(!bank.sets.some(st=>st.id===bankSetId)) bankSetId = bank.sets[0] ? bank.sets[0].id : null;
-  renderSetPicker();
-}
-
-function renderQTable(){
-  const total = bank.decks.reduce((n,d)=>n+d.items.length,0);
-  const filter = $("#bankFilter");
-  filter.innerHTML = `<option value="">全部類別</option>` +
-    bank.decks.map(d=>`<option value="${esc(d.id)}">${esc(d.name)}（${d.items.length}）</option>`).join("");
-  filter.value = bankFilter;
-
-  const q = bankQ.trim().toLowerCase();
-  const rows = allItems().filter(r=> (!bankFilter || r.deckId===bankFilter) && (!q || r.t.toLowerCase().includes(q)));
-  $("#bankCount").textContent = `${rows.length} 題`;
-
-  const head = `<div class="qrow qhead-row"><span class="qno">#</span><span class="qh">題目</span><span class="qh qh-deck">類別</span><span class="qh"></span></div>`;
-  const body = rows.map((r,i)=>`
-    <div class="qrow" data-id="${esc(r.id)}">
-      <span class="qno">${i+1}</span>
-      <input class="qtext" value="${esc(r.t)}" maxlength="60" aria-label="題目">
-      <select class="qdeck" aria-label="類別">${deckOptions(r.deckId)}</select>
-      <button class="qdel" aria-label="刪除題目">×</button>
-    </div>`).join("");
-
-  const newDeck = bankFilter || (bank.decks[0] && bank.decks[0].id) || "";
-  $("#qTable").innerHTML = head + body + `
-    <div class="qrow qrow-new">
-      <span class="qno">＋</span>
-      <input class="qtext" id="qNew" placeholder="輸入新題目，Enter 加入" maxlength="60" aria-label="新題目">
-      <select class="qdeck" id="qNewDeck" aria-label="新題目類別">${deckOptions(newDeck)}</select>
-      <span class="qdel"></span>
-    </div>`;
-
-  $$("#qTable .qrow[data-id]").forEach(row=>{
-    const id = row.dataset.id;
-    row.querySelector(".qtext").onchange = e=>{
-      const f = findItem(id); if(!f) return;
-      const v = e.target.value.trim();
-      if(!v || v === f.it.t){ e.target.value = f.it.t; return; }
-      snap(); f.it.t = v.slice(0,60); commit("已更新");
-    };
-    row.querySelector(".qdeck").onchange = e=>{
-      const f = findItem(id); if(!f) return;
-      const to = bank.decks.find(d=>d.id===e.target.value);
-      if(!to || to === f.deck) return;
-      snap();
-      f.deck.items = f.deck.items.filter(x=>x.id!==id);
-      to.items.push({ id, t:f.it.t });
-      commit(`已搬去「${to.name}」`);
-    };
-    row.querySelector(".qdel").onclick = ()=>{
-      const f = findItem(id); if(!f) return;
-      snap();
-      f.deck.items = f.deck.items.filter(x=>x.id!==id);
-      bank.sets.forEach(st=> st.items = st.items.filter(x=>x!==id));
-      commit("已刪除");
-    };
-  });
-
-  $("#qNew").onkeydown = e=>{
-    if(e.key !== "Enter") return;
-    e.preventDefault();
-    const v = e.target.value.trim(); if(!v) return;
-    const k = v.replace(/\s+/g,"").toLowerCase();
-    if(allItems().some(r=>r.t.replace(/\s+/g,"").toLowerCase()===k)){ toast("已經有呢題"); e.target.value=""; return; }
-    const deck = bank.decks.find(d=>d.id===$("#qNewDeck").value) || ensureDeck("未分類");
-    snap();
-    deck.items.push({ id:itemId(), t:v.slice(0,60) });
-    commit();
-    $("#qNew").focus();
-  };
-}
-
-function renderSetPicker(){
-  const chips = $("#bankSetChips");
-  if(!chips) return;
-  chips.innerHTML = bank.sets.map(st=>`
-    <button class="${st.id===bankSetId?"on":""}" data-set="${esc(st.id)}">
-      ${esc(st.name)}<i>${st.items.length}</i></button>`).join("")
-    || `<span class="kv">未有組合</span>`;
-  $$("#bankSetChips button").forEach(b=>b.onclick=()=>{ bankSetId=b.dataset.set; renderSetPicker(); });
-
-  const set = bank.sets.find(st=>st.id===bankSetId);
-  const items = allItems();
-  $("#bankLibCount").textContent = `${items.length} 題`;
-  $("#libList").innerHTML = items.map(it=>{
-    const inSet = set && set.items.includes(it.id);
-    return `<button data-add="${esc(it.id)}" class="${inSet?"on":""}">
-      <span>${esc(it.t)}</span><span class="kv">${inSet?"✓":esc(it.deckName)}</span></button>`;
-  }).join("") || `<div class="empty">冇題目</div>`;
-  $$("#libList button").forEach(b=>b.onclick=()=>{
-    if(!set) return toast("先新增一個組合");
-    const id = b.dataset.add;
-    if(!set.items.includes(id)) set.items.push(id);
-    commit("已加入組合");
-  });
-
-  $("#bankSetCount").textContent = set ? `${set.items.length} 題` : "";
-  $("#setList").innerHTML = set
-    ? (set.items.map((id,i)=>{
-        const f = findItem(id);
-        return `<button data-del="${i}"><span>${esc(f?f.it.t:"（已刪）")}</span><span class="kv">✕</span></button>`;
-      }).join("") || `<div class="empty">未有題目，左邊揀</div>`)
-    : `<div class="empty">先新增一個組合</div>`;
-  $$("#setList button").forEach(b=>b.onclick=()=>{
-    set.items.splice(+b.dataset.del,1);
-    commit("已移除");
-  });
-}
-
-/* ---- 批次貼上 / 去重 / 還原 ---- */
-function openBulk(){
-  $("#bulkDeck").innerHTML = deckOptions(bankFilter || (bank.decks[0] && bank.decks[0].id) || "");
-  $("#bulkText").value = "";
-  $("#bulkSheet").hidden = false;
-  $("#bulkText").focus();
-  $("#bulkCount").textContent = "";
-  $("#bulkAdd").disabled = true;
-}
-function closeBulk(){ $("#bulkSheet").hidden = true; }
-function bulkAdd(){
-  const lines = $("#bulkText").value.split(/\r?\n/);
-  let deck = bank.decks.find(d=>d.id===$("#bulkDeck").value) || ensureDeck("未分類");
-  const seen = new Set(allItems().map(r=>r.t.replace(/\s+/g,"").toLowerCase()));
-  let added = 0, dup = 0;
-  snap();
-  lines.forEach(raw=>{
-    const line = raw.trim(); if(!line) return;
-    if(line.startsWith("#")){ deck = ensureDeck(line.replace(/^#+\s*/,"") || "類別"); return; }
-    const k = line.replace(/\s+/g,"").toLowerCase();
-    if(seen.has(k)){ dup++; return; }
-    seen.add(k); deck.items.push({ id:itemId(), t:line.slice(0,60) }); added++;
-  });
-  if(!added){ HIST.pop(); return toast(dup ? `全部重複（${dup} 題）` : "冇內容"); }
-  commit(`加入 ${added} 題${dup ? `，跳過 ${dup} 重複` : ""}`);
-  closeBulk();
-}
-function dedupe(){
-  const seen = new Set(); let removed = 0;
-  snap();
-  bank.decks.forEach(d=>{
-    d.items = d.items.filter(it=>{
-      const k = it.t.replace(/\s+/g,"").toLowerCase();
-      if(seen.has(k)){ removed++; return false; }
-      seen.add(k); return true;
-    });
-  });
-  if(!removed){ HIST.pop(); return toast("冇重複"); }
-  const alive = new Set(allItems().map(r=>r.id));
-  bank.sets.forEach(st=> st.items = st.items.filter(id=>alive.has(id)));
-  commit(`已清走 ${removed} 條重複`);
-}
-function undo(){
-  if(!HIST.length) return toast("冇得還原");
-  const snapData = JSON.parse(HIST.pop());
-  bank.decks = snapData.decks; bank.sets = snapData.sets;
-  commit("已還原");
 }
 
 /* ================= 遊戲流程 ================= */
@@ -1258,58 +910,7 @@ $("#btnPause").onclick = ()=>{
 $("#btnAgain").onclick = startGame;
 $("#btnBackHome").onclick = ()=>{ showView("v-home"); renderHome(); };
 
-$("#btnBankHome").onclick = ()=>{ showView("v-bank"); renderBank(); };
-$("#btnBankBack").onclick = ()=>{ showView("v-home"); renderHome(); };
-$$(".banktabs button").forEach(b=>b.onclick=()=>{
-  $$(".banktabs button").forEach(x=>x.classList.toggle("on", x===b));
-  $("#paneLib").hidden = b.dataset.tab !== "lib";
-  $("#paneSet").hidden = b.dataset.tab !== "set";
-  if(b.dataset.tab === "set") renderSetPicker(); else renderQTable();
-});
-$("#btnAddSet").onclick = ()=>{
-  const n = $("#newSetName").value.trim(); if(!n) return;
-  const st = { id:"s"+Date.now().toString(36), name:n.slice(0,16), items:[] };
-  bank.sets.push(st); bankSetId = st.id; $("#newSetName").value = "";
-  saveBank(); pushBank(); renderSetPicker(); renderHome(); toast("已新增組合");
-};
-$("#btnDelSet").onclick = ()=>{
-  const set = bank.sets.find(st=>st.id===bankSetId); if(!set) return;
-  if(!confirm(`刪除組合「${set.name}」？題目仍然留喺題庫。`)) return;
-  bank.sets = bank.sets.filter(st=>st.id!==bankSetId);
-  bankSetId = bank.sets[0] ? bank.sets[0].id : null;
-  if(cfg.setId === set.id) cfg.setId = "";
-  saveCfg(); saveBank(); pushBank(); renderSetPicker(); renderHome(); toast("已刪除組合");
-};
-$("#btnSyncNow").onclick = async ()=>{
-  setSyncState("syncing");
-  await pullRemoteBank();
-  if(REMOTE.ok){ renderBank(); setSyncState("ok"); toast("已重新載入題庫"); }
-  else setSyncState("offline");
-};
-
-$("#bankSearch").oninput = e=>{ bankQ = e.target.value; renderQTable(); };
-$("#bankFilter").onchange = e=>{ bankFilter = e.target.value; renderQTable(); };
-$("#btnAddDeck").onclick = ()=>{
-  const n = (prompt("新類別名（最多 20 字）") || "").trim().slice(0,20);
-  if(!n) return;
-  if(bank.decks.some(d=>d.name===n)) return toast("已經有呢個類別");
-  snap(); ensureDeck(n); commit(`已新增類別「${n}」`);
-};
-$("#btnBulk").onclick = openBulk;
-$("#bulkCancel").onclick = closeBulk;
-$("#bulkText").oninput = e=>{
-  const n = e.target.value.split(/\r?\n/).filter(l=>l.trim() && !l.trim().startsWith("#")).length;
-  $("#bulkCount").textContent = n ? `將加入 ${n} 題` : "";
-  $("#bulkAdd").disabled = !n;
-};
-document.addEventListener("keydown", e=>{
-  if(e.key === "Escape" && !$("#bulkSheet").hidden){ e.preventDefault(); closeBulk(); }
-});
-$("#bulkAdd").onclick = bulkAdd;
-$("#bulkSheet").onclick = e=>{ if(e.target.id === "bulkSheet") closeBulk(); };
-$("#btnDedupe").onclick = dedupe;
-$("#btnUndo").onclick = undo;
-$("#btnBankBack").onclick = ()=>{ showView("v-home"); renderHome(); };
+$("#btnBankHome").onclick = ()=>{ window.location.href = "/edit"; };
 /* 鍵盤控場 */
 document.addEventListener("keydown", e=>{
   if(!$("#v-play").classList.contains("active")) return;
@@ -1337,7 +938,7 @@ document.body.dataset.view = "home";
 renderHome();
 pullRemoteBank();
 window.__bigtv = { get G(){return G}, get bank(){return bank}, get cfg(){return cfg},
-  startGame, startRound, enterReady, judge, undo, endTurn, endGame, renderHome, renderPlay, renderBank, showView };
+  startGame, startRound, enterReady, judge, undo, endTurn, endGame, renderHome, renderPlay, showView };
 </script>
 </body>
 </html>
