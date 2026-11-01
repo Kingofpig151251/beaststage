@@ -61,6 +61,7 @@ def ensure_schema():
             deck_id TEXT NOT NULL REFERENCES decks(id) ON DELETE CASCADE,
             text TEXT NOT NULL, sort INTEGER DEFAULT 0)""",
         "CREATE INDEX IF NOT EXISTS idx_items_deck ON items(deck_id)",
+        "ALTER TABLE items ADD COLUMN IF NOT EXISTS uid TEXT",
         "CREATE TABLE IF NOT EXISTS meta (key TEXT PRIMARY KEY, value TEXT)",
     ]
     with conn() as c, c.cursor() as cur:
@@ -97,9 +98,9 @@ def read_bank(c):
         cur.execute("SELECT id, name FROM decks ORDER BY sort, name")
         decks = []
         for d in cur.fetchall():
-            cur.execute("SELECT id, text FROM items WHERE deck_id=%s ORDER BY sort, id", (d["id"],))
+            cur.execute("SELECT id, uid, text FROM items WHERE deck_id=%s ORDER BY sort, id", (d["id"],))
             decks.append({"id": d["id"], "name": d["name"],
-                          "items": [{"id": r["id"], "t": r["text"]} for r in cur.fetchall()]})
+                          "items": [{"id": (r["uid"] or str(r["id"])), "t": r["text"]} for r in cur.fetchall()]})
         cur.execute("SELECT MAX(updated_at) AS u FROM decks")
         upd = cur.fetchone()["u"]
         cur.execute("SELECT value FROM meta WHERE key='sets'")
@@ -190,10 +191,14 @@ async def bank_replace(request: Request):
             cur.execute("INSERT INTO decks(id,name,sort,updated_at) VALUES(%s,%s,%s,%s)",
                         (did, str(d.get("name", did))[:40], i, now()))
             for j, it in enumerate(d.get("items", [])[:800]):
-                t = (it if isinstance(it, str) else it.get("t", "")).strip()
+                if isinstance(it, str):
+                    t, uid = it.strip(), None
+                else:
+                    t, uid = str(it.get("t", "")).strip(), (str(it.get("id") or "")[:40] or None)
                 if not t:
                     continue
-                cur.execute("INSERT INTO items(deck_id,text,sort) VALUES(%s,%s,%s)", (did, t[:200], j))
+                cur.execute("INSERT INTO items(deck_id,uid,text,sort) VALUES(%s,%s,%s,%s)",
+                            (did, uid, t[:200], j))
     sets = body.get("sets")
     if isinstance(sets, list):
         clean = []
