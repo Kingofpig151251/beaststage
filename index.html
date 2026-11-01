@@ -91,12 +91,18 @@
 
   .row{display:flex; gap:10px; align-items:center; flex-wrap:wrap}
   .row > label{font-size:12px; color:var(--muted); min-width:64px}
-  #teamInput{width:76px; font-family:var(--font-mono); font-size:15px; text-align:center}
+  .stepper{display:flex; align-items:center}
+  .step-btn{width:44px; height:44px; padding:0; display:grid; place-items:center;
+    background:transparent; border:var(--bar) solid var(--rule); border-radius:var(--radius); color:var(--ink)}
+  .step-btn svg{width:20px; height:20px; fill:none; stroke:currentColor; stroke-width:2.6; stroke-linecap:round}
+  .step-btn:hover{border-color:var(--ink-2); color:var(--ink)}
+  .step-btn:active{transform:translateY(1px)}
+  .step-btn:focus-visible{outline:2px solid var(--focus); outline-offset:2px}
+  .step-btn:disabled{opacity:.3; cursor:not-allowed; transform:none}
+  #teamInput{width:64px; height:44px; font-family:var(--font-mono); font-size:15px; text-align:center;
+    border-left-width:0; border-right-width:0}
   .kv{font-size:12px; color:var(--muted)}
   .names{display:grid; grid-template-columns:repeat(auto-fit,minmax(120px,1fr)); gap:8px; margin-top:12px}
-  .stepper{display:flex; align-items:center; gap:8px}
-  .stepper button{width:44px; height:44px; padding:0; font-size:15px; border-color:var(--rule); color:var(--ink)}
-  .stepper b{font-family:var(--font-mono); font-variant-numeric:tabular-nums; min-width:20px; text-align:center; font-size:17px}
 
   .chips{display:flex; flex-wrap:wrap; gap:8px}
   .chip{background:transparent; border:var(--bar) solid var(--rule); border-radius:var(--radius);
@@ -380,7 +386,6 @@
 
   /* 觸控裝置（iPad 直度同橫度都算）：加大觸控目標 */
   @media (min-width:700px){
-    .stepper button{width:44px; height:44px}
     .judge button{padding:26px 12px}
     .chip{min-height:46px; padding:11px 14px}
     .decklist button{min-height:42px; padding:10px 12px}
@@ -429,10 +434,16 @@
         <h2>隊伍名單</h2>
         <div class="row" style="margin-bottom:10px">
           <span class="kv">隊伍數</span>
-          <div class="row" style="gap:8px">
-            <input id="teamInput" type="number" inputmode="numeric" min="2" max="8" step="1" value="2">
-            <span class="kv">隊</span>
+          <div class="stepper">
+            <button class="step-btn" id="teamMinus" aria-label="減少一隊">
+              <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M6 12h12"/></svg>
+            </button>
+            <input id="teamInput" type="number" inputmode="numeric" min="2" max="8" step="1" value="2" aria-label="隊伍數">
+            <button class="step-btn" id="teamPlus" aria-label="增加一隊">
+              <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M6 12h12"/><path d="M12 6v12"/></svg>
+            </button>
           </div>
+          <span class="kv">隊</span>
         </div>
         <div class="names" id="nameList"></div>
       </section>
@@ -696,6 +707,8 @@ function renderHome(){
     <label class="name-row"><span>${i+1}</span>
       <input data-name="${i}" value="${esc(cfg.names[i]||("隊 "+(i+1)))}" maxlength="12"></label>`).join("");
   $("#teamInput").value = cfg.teams;
+  $("#teamMinus").disabled = cfg.teams <= 2;
+  $("#teamPlus").disabled  = cfg.teams >= 8;
   $$("#nameList input").forEach(inp=>inp.onchange=()=>{
     cfg.names[+inp.dataset.name] = inp.value.trim() || ("隊 "+(+inp.dataset.name+1));
     inp.value = cfg.names[+inp.dataset.name]; saveCfg();
@@ -1027,10 +1040,13 @@ function endGame(){
 }
 
 /* ================= 事件 ================= */
-$("#teamInput").onchange = e=>{
-  cfg.teams = Math.max(2, Math.min(8, Math.round(+e.target.value || 2)));
-  e.target.value = cfg.teams; saveCfg(); renderHome();
-};
+function setTeams(n){
+  cfg.teams = Math.max(2, Math.min(8, Math.round(+n || 2)));
+  saveCfg(); renderHome();
+}
+$("#teamInput").onchange = e=> setTeams(e.target.value);
+$("#teamMinus").onclick = ()=> setTeams(cfg.teams - 1);
+$("#teamPlus").onclick  = ()=> setTeams(cfg.teams + 1);
 $("#secInput").onchange  = e=>{ cfg.sec=Math.max(5,Math.min(600,+e.target.value||60)); saveCfg(); };
 $("#btnStart").onclick = startGame;
 
