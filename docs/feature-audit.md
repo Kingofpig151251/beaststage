@@ -5,7 +5,7 @@
 
 ---
 
-## A · 多餘（建議直接刪）
+## A · 多餘（✅ 2026-10-31 已全部刪除）
 
 | # | 功能 | 證據 | 影響 |
 |---|---|---|---|
@@ -16,7 +16,9 @@
 | A5 | **隊伍數有兩套控件**：`−/＋` stepper ＋ `2/4/6/8` presets | 兩個都寫 `cfg.teams`；stepper 容許 1 隊（呢個遊戲 1 隊冇意義），presets 最小 2 | 一屏兩個控件講同一件事；派對現場 presets 一撳到位，stepper 係多餘 |
 | A6 | **「畫面動效」checkbox ＋ 兩行說明** | 主頁 `#vfxChk`，下面仲有一句「動效係答對閃光、跳過震動同倒數彈跳」 | 派對現場冇人會入去關動效；同 BGM 一樣屬設定噪音，而且食咗兩行版面 |
 
-**A 合計**：約 750 行可刪（`_app.py` 180 ＋ `server.py` 489 ＋ tests 130），主頁少一組控件。
+**A 合計**：刪咗 `_app.py` 183 行（448 → 265）、`server.py` 489 行、`tests/test_api_local.py` 130 行、`Dockerfile`、`docker-compose.yml`、`skills-lock.json`、11 個空註解區塊；主頁少一組控件。
+
+刪後 API 只剩 5 個：`GET /api/ping`、`GET /api/bank`、`PUT /api/bank`、`GET /api/leaderboard`、`POST /api/sessions`。
 
 ---
 

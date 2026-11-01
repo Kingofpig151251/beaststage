@@ -174,9 +174,10 @@
     .setup .teams{position:sticky; top:16px}
   }
   .stack{display:grid; gap:12px; align-content:start}
-  .presets{display:flex; gap:6px}
-  .presets button{width:44px; height:44px; padding:0; font-family:var(--font-mono); font-size:12px;
-    border-color:var(--rule); color:var(--muted)}
+  .presets{display:grid; grid-template-columns:repeat(4,1fr); flex:1; min-width:200px}
+  .presets button{height:44px; padding:0; font-family:var(--font-mono); font-size:12px;
+    border-color:var(--rule); color:var(--muted); border-left-width:0}
+  .presets button:first-child{border-left-width:var(--bar)}
   .presets button.on{background:var(--accent); border-color:var(--accent); color:var(--accent-ink)}
 
   /* 名單：一行一隊，號碼 + 名 */
@@ -441,9 +442,7 @@
       <section class="well teams">
         <h2>隊伍名單</h2>
         <div class="row" style="justify-content:space-between">
-          <div class="stepper">
-            <button id="teamMinus" aria-label="減少隊伍">−</button><b id="teamCount">2</b><button id="teamPlus" aria-label="增加隊伍">＋</button>
-          </div>
+          <span class="kv">隊伍數</span>
           <div class="presets">
             <button data-teams="2">2</button><button data-teams="4">4</button>
             <button data-teams="6">6</button><button data-teams="8">8</button>
@@ -460,10 +459,6 @@
           <input id="secInput" type="number" min="5" max="600" step="5" style="width:88px">
           <span class="kv">秒</span>
         </div>
-        <div class="row">
-          <label class="kv"><input type="checkbox" id="vfxChk" style="margin-right:6px">畫面動效</label>
-        </div>
-        <p class="kv" style="margin-top:8px">動效係答對閃光、跳過震動同倒數彈跳。</p>
       </section>
 
       <section class="well">
@@ -583,24 +578,13 @@
     </div>
   </section>
 
-  <!-- ========== 排行榜 ========== -->
 
-  <!-- ========== 結果 ========== -->
 
-  <!-- ========== 題庫（雲端共用） ========== -->
-  <!-- ========== 排行榜 ========== -->
 
-  <!-- ========== 結果 ========== -->
 
-  <!-- ========== 題庫（雲端共用） ========== -->
-  <!-- ========== 排行榜 ========== -->
 
-  <!-- ========== 結果 ========== -->
 
-  <!-- ========== 題庫（雲端共用） ========== -->
-  <!-- ========== 排行榜 ========== -->
 
-  <!-- ========== 結果 ========== -->
 
 
 </div>
@@ -611,7 +595,6 @@
     <div class="rail">
       <button class="btn-quiet" id="btnBankHome">題庫</button>
       <button class="btn-quiet" id="btnLb">排行榜</button>
-      <button class="btn-quiet" id="btnFull">全螢幕</button>
     </div>
   </div>
 </div>
@@ -632,8 +615,11 @@ const store = {
 let bank = { name:"題庫", decks:[], sets:[] };   // 開機由雲端載入
 let cfg  = Object.assign({
   teams:2, names:["A 隊","B 隊","C 隊","D 隊","E 隊","F 隊","G 隊","H 隊"],
-  sec:60, setId:"", vfx:true
+  sec:60, setId:""
 }, store.get(K_CFG, {}));
+
+// 隊數只有 2/4/6/8 四個預設；舊設定如果係 1/3/5/7 就貼近取整
+if(![2,4,6,8].includes(cfg.teams)) cfg.teams = [2,4,6,8].reduce((a,b)=>Math.abs(b-cfg.teams)<Math.abs(a-cfg.teams)?b:a, 2);
 
 let G = null;
 let bankDeck = bank.decks[0] ? bank.decks[0].id : null;
@@ -727,7 +713,6 @@ function updateSrc(){
 
 /* ================= VFX ================= */
 function fxOk(){
-  if(!cfg.vfx) return;
   const q = document.querySelector(".question");
   q.classList.remove("fx-ok","fx-skip"); void q.offsetWidth; q.classList.add("fx-ok");
   const plus = document.createElement("span");
@@ -736,18 +721,16 @@ function fxOk(){
   setTimeout(()=>plus.remove(), 900);
 }
 function fxSkip(){
-  if(!cfg.vfx) return;
   const q = document.querySelector(".question");
   q.classList.remove("fx-ok","fx-skip"); void q.offsetWidth; q.classList.add("fx-skip");
 }
 function fxPop(el){
-  if(!cfg.vfx || !el) return;
+  if(!el) return;
   el.classList.remove("pop"); void el.offsetWidth; el.classList.add("pop");
 }
 
 /* ================= 主頁 ================= */
 function renderHome(){
-  $("#teamCount").textContent = cfg.teams;
   $("#nameList").innerHTML = Array.from({length:cfg.teams},(_,i)=>`
     <label class="name-row"><span>${i+1}</span>
       <input data-name="${i}" value="${esc(cfg.names[i]||("隊 "+(i+1)))}" maxlength="12"></label>`).join("");
@@ -758,7 +741,6 @@ function renderHome(){
   });
 
   $("#secInput").value = cfg.sec;
-    $("#vfxChk").checked = !!cfg.vfx;
 
   // 題目組合：全部（預設）或自訂組合
   const allCount = bank.decks.reduce((n,d)=>n+d.items.length, 0);
@@ -777,8 +759,6 @@ function renderHome(){
     ? (cur ? `已選：${cur.name} · ${playCount} 題` : `已選：全部題目 · ${playCount} 題`)
     : "未連線：題庫讀唔到";
 
-  $("#teamMinus").disabled = cfg.teams <= 1;
-  $("#teamPlus").disabled = cfg.teams >= 8;
   $("#btnStart").disabled = !playCount;
   $("#btnStart").textContent = !bank.decks.length ? "題庫未連線" : (playCount ? "開始遊戲" : "呢個組合未有題目");
 }
@@ -1125,20 +1105,9 @@ async function openLb(){
 }
 
 /* ================= 事件 ================= */
-$("#teamMinus").onclick = ()=>{ cfg.teams=Math.max(1,cfg.teams-1); saveCfg(); renderHome(); };
-$("#teamPlus").onclick  = ()=>{ cfg.teams=Math.min(8,cfg.teams+1); saveCfg(); renderHome(); };
 $$(".presets button").forEach(b=>b.onclick=()=>{ cfg.teams=+b.dataset.teams; saveCfg(); renderHome(); });
 $("#secInput").onchange  = e=>{ cfg.sec=Math.max(5,Math.min(600,+e.target.value||60)); saveCfg(); };
-$("#vfxChk").onchange = e=>{
-  cfg.vfx = e.target.checked; saveCfg();
-  if(!cfg.vfx){                       // 關咗就即刻清走殘留效果
-    document.querySelectorAll(".question").forEach(q=>q.classList.remove("fx-ok","fx-skip"));
-    document.querySelectorAll(".fx-plus").forEach(el=>el.remove());
-  }
-};
 $("#btnStart").onclick = startGame;
-if(!document.documentElement.requestFullscreen){ $("#btnFull").style.display = "none"; }
-$("#btnFull").onclick = ()=>{ if(!document.fullscreenElement){ document.documentElement.requestFullscreen&&document.documentElement.requestFullscreen(); } else { document.exitFullscreen&&document.exitFullscreen(); } };
 
 $$("[data-judge]").forEach(b=>b.onclick=()=>judge(b.dataset.judge));
 $("#btnReady").onclick = startRound;

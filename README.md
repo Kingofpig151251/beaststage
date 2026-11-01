@@ -1,161 +1,94 @@
 # 大電視 · 破冰主持台
 
-一個遊戲：**大電視**。主持一部機控場，對錯由人手拍板——冇語音辨識、冇自動判定。
+一個遊戲：**大電視**。主持一部 iPad 控場，對錯由人手拍板——冇語音辨識、冇自動判定。
 
-玩法：一隊派一人背向屏幕，屏幕出題，全隊用講嘢／做動作提示（唔准講出題目上面任何一隻字），主持按「對／跳過」，限時內猜得多就贏。
+玩法：一隊派一人背向屏幕，屏幕出一個詞，全隊用講嘢／做動作提示（唔准講出題目上面任何一隻字），主持按「對／跳過」，限時內猜得多就贏。
 
-兩種用法：
-
-| 模式 | 點用 | 題庫 | 排行榜 |
-|---|---|---|---|
-| **雲端**（預設） | 開 `https://bigtv.vercel.app` | 只存雲端 | 需要連線 |
-| **自架**（建議） | `python3 server.py` 或 Docker | 存 SQLite，多部機共用 | 有，累計＋場次紀錄 |
+- 主持台：`https://bigtv.vercel.app`
+- 題庫：只存雲端，所有機共用同一份
 
 ---
 
-## 一、快速開始
+## 一、主持流程
 
-### 題庫只存雲端
-App 唔會喺本機留題庫副本：每次開啟都由 `/api/bank` 讀，改完直接寫返雲端。
-所有機（iPad、電話、電腦）共用同一份，唔使匯出匯入。
+1. 主頁揀隊數（2 / 4 / 6 / 8）、打隊名、設每回合秒數
+2. 撳「開始遊戲」
+3. 每隊出場前有**準備畫面**：大字隊名＋全隊分數＋「派一個人背向屏幕」
+4. 撳「開始」→ 3、2、1 倒數（每格 1.15 秒）→ 出題兼起錶
+5. 時間到自動停，跳去下一隊嘅準備畫面
 
-⚠️ 冇連線就讀唔到題庫，主頁「開始遊戲」會停用並顯示「題庫未連線」。
+出題畫面只有一個大字，冇分數、冇類別名、冇剩題數。
 
-### 自架（有共用題庫 + 排行榜）
-```bash
-BIGTV_PIN=2468 python3 server.py
-```
-- 主持台：`http://localhost:8080`
-- 題庫跨機共享：喺主持台「題庫」頁輸入同步碼（= `BIGTV_PIN`），改題自動上傳
+## 二、主持台控件
 
-或者 Docker：
-```bash
-docker compose up -d          # 預設 8080，資料喺 ./data
-```
+| 位置 | 控件 | 作用 |
+|---|---|---|
+| 左上 | 退出 icon | 確認後結束遊戲，返主頁 |
+| 右上 | 計時環 | 顯示剩餘秒數兼進度弧；**撳環 = 暫停**，再撳繼續 |
+| 底部 | 跳過 | 唔計分，下一題 |
+| 底部 | 對 | +1 分，下一題 |
 
-只用 Python 標準庫 + SQLite，**冇 pip install、冇 database server**。
-首次啟動自動載入 `samples/hk-icebreaker.json` 做預設題庫。
+鍵盤：`Space`／`Enter` = 對（準備畫面時 = 開始）　`S`／`↓` = 跳過　`Esc`／`P` = 暫停
 
-環境變數：`BIGTV_PORT`（8080）、`BIGTV_PIN`（2468，正式一定要改）、`BIGTV_DB`（`./data/bigtv.db`）
+## 三、題庫
 
----
+- 只存雲端，冇本機副本、冇內建題庫、**冇寫入碼**
+- 開 App 由 `GET /api/bank` 載入；題庫頁改完 400ms debounce `PUT /api/bank`
+- 一行一題；`# 類別名` 開新類別
+- 後端每次覆寫前留 3 份快照（`meta` 表 `snap1`–`snap3`）
+- 主頁「題目組合」可以將題庫部分題目組成一份當回合用嘅組合
 
-## 二、介面
+⚠️ 寫入係開放嘅：知道網址嘅人就可以改題庫。防手誤清空靠 `snap1`–`snap3`。
 
-介面由 Hallmark（Together AI 嘅設計 skill）做過一次 redesign：深紫黑 CRT 底、ember 橙做主持動作、acid 綠做答方、按鍵有硬陰影（press physics）；玩法同接線全部唔變。
-
-- 主頁：設定分兩欄，開始鍵固定喺底欄
-- 遊戲：題目佔大版面，分數板同判定鍵喺下面，投影距離都睇得清
-- 準備畫面：ember 卡，3、2、1 倒數每格 1.15 秒
-- 字型用系統字（唔載 webfont），因為要單檔離線用得
-
-**iPad 適配**：已按 iPad 實際 CSS 尺寸調過（mini 744×1133、Air 820×1180、Pro 11" 834×1194、Pro 13" 1024×1366，橫度對調）
-
-- 1024 闊以上兩欄設定，iPad 直度單欄；所有 iPad 尺寸遊戲畫面唔使捲
-- 觸控目標：判定鍵 69–87px、加減掣 44×44、分類 chip 46px 高、輸入框 16px 字（iOS 唔會自動放大）
-- 支援 `viewport-fit=cover` + `safe-area-inset`，圓角／Home Indicator 唔會蓋住內容
-- hover 效果只在有滑鼠嘅裝置生效，iPad 唔會「黏住」上一個 hover
-- 加咗 `apple-mobile-web-app-capable`：iPad Safari「加到主畫面」後以全屏 App 方式開，冇瀏覽器工具列（推薦主持用）
-- `color-mix` / `dvh` 有 fallback，舊 iPadOS 唔會爛色或爆高度
-
-## 三、設定
-
-- **組別／玩家**：1–8 個，可以打玩家名（唔一定要分隊）
-- **每回合時限**：預設 60 秒，最少 5 秒；時間到自動轉下一隊
-- **題庫**：多選類別，即場組合；題目用晒會自動重新洗牌
-
-計分：對 +1、跳過 0。判定只有兩個掣：**對**同**跳過**。
-
-**回合流程**：每隊出場前有個「準備畫面」（大字隊名＋提示），撳「開始」後 **3、2、1 倒數（每格 1.15 秒）** 才出題兼計時；時間到或者撳「結束本回合」之後會停返喺下一隊嘅準備畫面，唔會即刻幫佢開錶。
-
-**兩個全域開關**：
-- **畫面動效**：答對綠色閃光＋「+1」、跳過震動、倒數彈跳、最後 5 秒鐘脈動；關咗純靜態
-
-兩個設定都存喺瀏覽器，跟機跟人。
-
-## 三、主持快捷鍵
-
-`Space`／`Enter` = 對　`S` = 跳過　`Z` = 撤銷　`Esc`／`P` = 暫停
-
-主持台只有 跳過／撤銷／對 三個掣；回合由時間到自動結束，冇「結束回合／結束遊戲」。
-
-配平板或者 notebook 用最順手；「全螢幕」可以將部機變純題目屏。
-
-## 四、題庫（雲端共用）
-
-題庫只存雲端，冇本機副本，亦**冇寫入碼**：
-
-- 開 App 由 `GET /api/bank` 載入（所有機共用同一份）
-- 題庫頁改完即刻 `PUT /api/bank`（400ms debounce），唔使登入
-- 狀態顯示：`未連線` / `同步中…` / `已同步` / `寫入失敗（檢查連線）`
-- 「重新載入」＝由雲端再拉一次
-- 本機只記住偏好（隊數、秒數、揀邊幾個類別），唔會存題目
-
-⚠️ 寫入係開放嘅：知道網址嘅人就可以改題庫。為防手誤清空，後端每次覆寫前會留一份快照（`meta` 表 `snap1`–`snap3`，最近 3 版），要還原可以撈返。
-
-## 五、API
+## 四、API
 
 ```
 GET    /api/ping
-GET    /api/bank                    題庫（公開讀取）
-PUT    /api/bank                    整份取代（要登入）
-POST   /api/login {pin} → {token}    token 放 X-Admin-Token header
-GET    /api/leaderboard?limit=10    累計榜 + 最近場次
-POST   /api/sessions                完場上報（免登入）
-GET    /api/sessions?limit=20
-DELETE /api/sessions/{id}           要登入
-POST   /api/decks {name}            要登入
-PATCH  /api/decks/{id} {name}
-DELETE /api/decks/{id}
-POST   /api/decks/{id}/items {items}  批量加題（自動去重）
-PATCH  /api/items/{id} {t}
-DELETE /api/items/{id}
-POST   /api/reset {what:"sessions"|"bank"}
+GET    /api/bank                    題庫（讀）
+PUT    /api/bank                    整份取代（開放寫入）
+GET    /api/leaderboard?limit=20    累計榜 + 最近場次
+POST   /api/sessions                完場上報
 ```
 
-## 六、題庫格式
+## 五、題庫格式
 
 ```json
 { "name": "我嘅題庫",
-  "decks": [
-    { "id": "food", "name": "港式小食", "items": ["雞蛋仔", "菠蘿包"] }
-  ] }
+  "decks": [ { "id": "food", "name": "港式小食", "items": ["雞蛋仔", "菠蘿包"] } ],
+  "sets":  [ { "id": "s1", "name": "第一回合", "items": ["food:0", "food:3"] } ] }
 ```
-`items` 亦接受 `{"t":"雞蛋仔"}` 格式；舊嘅 `ban` 欄位會被忽略（呢個 app 只做大電視，唔使禁字）。
 
-## 七、雲端部署（Vercel）
+## 六、設計
 
-雲端版用 `api/`（FastAPI + Postgres），因為 serverless 冇持久磁碟，SQLite 用唔到。
+- 視覺語言：Brutalism（2px 邊、圓角 0、單一硬陰影、4 級字階）
+- 色角色：ember 橙 = 當前動作；acid 綠 = 時間／成功／連線；其餘灰階
+- 規範：`docs/design-spec.md`；審查：`docs/design-audit.md`；功能取捨：`docs/feature-audit.md`
+- 量度腳本：`tests/audit.js`（觸控目標、字級、圓角、邊框、對比）
 
-1. GitHub repo：`Kingofpig151251/bigtv`（private）
-2. Vercel 專案 `bigtv` 已連 GitHub：**push 上 main 就自動部署去 production**
-3. 環境變數（Vercel → Settings → Environment Variables）
-   - `DATABASE_URL`：Neon Postgres（由 Vercel Marketplace 的 Neon integration 自動注入）
-   - `BIGTV_PIN`：登入 token 用（`/api/login`），題庫寫入唔需要
-   - `BIGTV_SECRET`：簽登入 token 用（serverless 冇共享記憶體，改用 HMAC 簽名）
-4. 本地開發：`vercel dev`（會用 `.env.local`），或者照用 `python3 server.py`
+## 七、部署
 
-兩套後端共用同一份前端同同一套 `/api/*` 介面，揀邊個跑睇部署環境。
+- GitHub：`Kingofpig151251/bigtv`（private）
+- Vercel 專案 `bigtv` 已連 GitHub：**push 上 main 自動部署 production**
+- 環境變數：`DATABASE_URL`（Neon Postgres，Marketplace 自動注入）
+- 本地開發：`vercel dev`
 
 ## 八、檔案
 
 ```
-index.html                 主持台（單檔，可獨立用）
-server.py                  自架版後端（Python 標準庫 + SQLite）
-api/_app.py                Vercel 版後端（FastAPI + Postgres）
-api/[...path].py           Vercel catch-all 入口
+index.html                 主持台（單檔）
+api/_app.py                Vercel 後端（FastAPI + Postgres）
+api/[...path].py           catch-all 入口
+api/index.py               深路徑入口
 vercel.json / requirements.txt
-tests/test_api_local.py    API smoke test（sqlite shim）
-Dockerfile / docker-compose.yml
-samples/hk-icebreaker.json 內建香港題庫（6 類共 62 題）
-data/bigtv.db              SQLite（首次啟動自動建立）
+docs/                      設計規範、設計審查、功能審查、版面方案
+tests/audit.js             DOM 量度腳本
+tests/mock_sync_server.py  本地 mock 後端（開發用）
+samples/hk-icebreaker.json 新 DB 首次 seed 題庫（6 類 62 題）
 ```
 
-## 八、注意
+## 九、注意
 
-- 排行榜身份係**名字**：兩個唔同人打同一個名會累計埋。想分清楚就各自改花名。
-- 備份就備 `data/`（SQLite 單檔），其餘嘢無狀態。
-- 冇帳號系統，只有一條 PIN；只適合屋企／內網，唔好直接掛上公網。
-- 主持台連唔到後端就冇題可玩（題庫只存雲端，冇本機 fallback）。
-- 題庫改動即時寫入 DB，冇 undo；誤刪要自己重新輸入。
-- 經典擺位：猜嗰個要**背向**屏幕（唔係閉眼），一隊 4–8 人最順。
+- 排行榜身份係**名字**：隊名跨場重複（永遠「A 隊」），累計數字只可以睇「玩咗幾多場」
+- 冇帳號系統；題庫寫入開放
+- 主持台連唔到後端就冇題可玩（冇本機 fallback）
+- 經典擺位：猜嗰個要**背向**屏幕（唔係閉眼），一隊 4–8 人最順
