@@ -934,6 +934,14 @@ document.addEventListener("visibilitychange", ()=>{
 });
 
 /* ================= 啟動 ================= */
+/* 回到 App（或者切返嚟）就靜靜拉一次題庫，唔使重開 */
+document.addEventListener("visibilitychange", ()=>{
+  if(!document.hidden && !G && document.body.dataset.view === "home") pullRemoteBank();
+});
+window.addEventListener("focus", ()=>{
+  if(!G && document.body.dataset.view === "home") pullRemoteBank();
+});
+
 document.body.dataset.view = "home";
 renderHome();
 pullRemoteBank();
