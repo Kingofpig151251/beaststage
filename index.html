@@ -91,6 +91,7 @@
 
   .row{display:flex; gap:10px; align-items:center; flex-wrap:wrap}
   .row > label{font-size:12px; color:var(--muted); min-width:64px}
+  #teamInput{width:76px; font-family:var(--font-mono); font-size:15px; text-align:center}
   .kv{font-size:12px; color:var(--muted)}
   .names{display:grid; grid-template-columns:repeat(auto-fit,minmax(120px,1fr)); gap:8px; margin-top:12px}
   .stepper{display:flex; align-items:center; gap:8px}
@@ -173,11 +174,6 @@
     .setup .teams{position:sticky; top:16px}
   }
   .stack{display:grid; gap:12px; align-content:start}
-  .presets{display:grid; grid-template-columns:repeat(4,1fr); flex:1; min-width:200px}
-  .presets button{height:44px; padding:0; font-family:var(--font-mono); font-size:12px;
-    border-color:var(--rule); color:var(--muted); border-left-width:0}
-  .presets button:first-child{border-left-width:var(--bar)}
-  .presets button.on{background:var(--accent); border-color:var(--accent); color:var(--accent-ink)}
 
   /* 名單：一行一隊，號碼 + 名 */
   .names{display:flex; flex-direction:column; gap:6px; margin-top:12px; max-height:48vh; overflow-y:auto}
@@ -431,11 +427,11 @@
     <div class="setup">
       <section class="well teams">
         <h2>隊伍名單</h2>
-        <div class="row" style="justify-content:space-between">
+        <div class="row" style="margin-bottom:10px">
           <span class="kv">隊伍數</span>
-          <div class="presets">
-            <button data-teams="2">2</button><button data-teams="4">4</button>
-            <button data-teams="6">6</button><button data-teams="8">8</button>
+          <div class="row" style="gap:8px">
+            <input id="teamInput" type="number" inputmode="numeric" min="2" max="8" step="1" value="2">
+            <span class="kv">隊</span>
           </div>
         </div>
         <div class="names" id="nameList"></div>
@@ -590,8 +586,7 @@ let cfg  = Object.assign({
   sec:60, setId:""
 }, store.get(K_CFG, {}));
 
-// 隊數只有 2/4/6/8 四個預設；舊設定如果係 1/3/5/7 就貼近取整
-if(![2,4,6,8].includes(cfg.teams)) cfg.teams = [2,4,6,8].reduce((a,b)=>Math.abs(b-cfg.teams)<Math.abs(a-cfg.teams)?b:a, 2);
+cfg.teams = Math.max(2, Math.min(8, Math.round(+cfg.teams || 2)));
 
 let G = null;
 let bankDeck = bank.decks[0] ? bank.decks[0].id : null;
@@ -700,7 +695,7 @@ function renderHome(){
   $("#nameList").innerHTML = Array.from({length:cfg.teams},(_,i)=>`
     <label class="name-row"><span>${i+1}</span>
       <input data-name="${i}" value="${esc(cfg.names[i]||("隊 "+(i+1)))}" maxlength="12"></label>`).join("");
-  $$(".presets button").forEach(b=>b.classList.toggle("on", +b.dataset.teams === cfg.teams));
+  $("#teamInput").value = cfg.teams;
   $$("#nameList input").forEach(inp=>inp.onchange=()=>{
     cfg.names[+inp.dataset.name] = inp.value.trim() || ("隊 "+(+inp.dataset.name+1));
     inp.value = cfg.names[+inp.dataset.name]; saveCfg();
@@ -1032,7 +1027,10 @@ function endGame(){
 }
 
 /* ================= 事件 ================= */
-$$(".presets button").forEach(b=>b.onclick=()=>{ cfg.teams=+b.dataset.teams; saveCfg(); renderHome(); });
+$("#teamInput").onchange = e=>{
+  cfg.teams = Math.max(2, Math.min(8, Math.round(+e.target.value || 2)));
+  e.target.value = cfg.teams; saveCfg(); renderHome();
+};
 $("#secInput").onchange  = e=>{ cfg.sec=Math.max(5,Math.min(600,+e.target.value||60)); saveCfg(); };
 $("#btnStart").onclick = startGame;
 
