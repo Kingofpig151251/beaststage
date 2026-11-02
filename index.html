@@ -42,7 +42,7 @@
 
   *{box-sizing:border-box}
   html,body{margin:0; min-height:100%; background:var(--bg); overflow-x:clip}
-  body{color:var(--ink); font-family:var(--font-body); font-size:17px; line-height:1.45;
+  body{color:var(--ink); font-family:var(--font-body); font-size:17px; line-height:1.5;
     -webkit-font-smoothing:antialiased; text-rendering:optimizeLegibility}
 
   /* ---------- layout ---------- */
@@ -54,25 +54,25 @@
 
   h1{margin:0; font-family:var(--font-display); font-weight:700; font-size:34px;
     letter-spacing:-.02em; line-height:1.12; text-wrap:balance}
-  h2{margin:0; font-size:13px; font-weight:600; color:var(--ink-2); letter-spacing:.01em}
-  .sub{margin:6px 0 0; font-size:15px; color:var(--ink-2)}
-  .kv{font-size:13px; color:var(--ink-2)}
+  h2{margin:0; font-size:22px; font-weight:600; color:var(--ink); letter-spacing:-.01em}
+  .sub{margin:8px 0 0; font-size:15px; color:var(--ink-2); max-width:60ch}
+  .kv{font-size:15px; color:var(--ink-2)}
   .kbd{font-family:var(--font-mono); font-size:12px; padding:2px 7px; border-radius:6px;
     background:var(--fill); color:var(--ink-2)}
 
   /* ---------- home ---------- */
   #v-home .top{display:flex; justify-content:space-between; align-items:flex-start;
-    gap:12px; flex-wrap:wrap; margin-bottom:22px}
-  .setup{display:grid; grid-template-columns:minmax(0,1fr); gap:16px; align-items:stretch}
+    gap:12px; flex-wrap:wrap; margin-bottom:24px}
+  .setup{display:grid; grid-template-columns:minmax(0,1fr); gap:20px; align-items:stretch}
   @media (min-width:900px){ .setup{grid-template-columns:repeat(2,minmax(0,1fr))} }
-  .stack{display:flex; flex-direction:column; gap:16px}
+  .stack{display:flex; flex-direction:column; gap:20px}
   .stack > .well{flex:1}
 
-  .well{background:var(--surface); border-radius:var(--r-xl); padding:18px 18px 20px}
-  .well h2{margin-bottom:14px}
+  .well{background:var(--surface); border-radius:var(--r-xl); padding:24px}
+  .well h2{margin-bottom:16px}
   .well.teams{display:flex; flex-direction:column}
 
-  .row{display:flex; align-items:center; gap:10px; flex-wrap:wrap; min-height:48px}
+  .row{display:flex; align-items:center; gap:12px; flex-wrap:wrap; min-height:48px}
   .row > label{font-size:15px; color:var(--ink-2)}
 
   /* stepper：capsule */
@@ -88,7 +88,7 @@
     -moz-appearance:textfield}
   #teamInput::-webkit-outer-spin-button,#teamInput::-webkit-inner-spin-button{-webkit-appearance:none; margin:0}
 
-  .names{display:flex; flex-direction:column; gap:8px; margin-top:16px; max-height:46vh; overflow-y:auto}
+  .names{display:flex; flex-direction:column; gap:12px; margin-top:20px; max-height:46vh; overflow-y:auto}
   .name-row{display:grid; grid-template-columns:26px minmax(0,1fr); gap:10px; align-items:center}
   .name-row span{display:flex; align-items:center; justify-content:center; width:26px; height:26px;
     font-size:13px; font-weight:600; color:var(--ink-2); font-variant-numeric:tabular-nums}
@@ -104,9 +104,11 @@
     font-size:20px; font-weight:600; background:var(--fill); -moz-appearance:textfield}
   #secInput::-webkit-outer-spin-button,#secInput::-webkit-inner-spin-button{-webkit-appearance:none; margin:0}
 
-  .qhead{display:flex; align-items:baseline; justify-content:space-between; gap:10px; margin-bottom:14px}
+  .qhead{display:flex; align-items:baseline; justify-content:space-between; gap:12px; margin-bottom:20px}
   .qhead h2{margin:0}
-  .qcount{font-family:var(--font-display); font-size:30px; font-weight:700; letter-spacing:-.02em; color:var(--ink)}
+  .qcount{display:inline-flex; align-items:baseline; gap:6px; font-family:var(--font-display);
+    font-size:20px; font-weight:700; letter-spacing:-.02em; color:var(--ink)}
+  .qcount .unit{font-size:15px; font-weight:500; color:var(--ink-2); letter-spacing:0}
   .qedit{display:flex; align-items:center; justify-content:center; margin-top:auto; min-height:46px;
     border-radius:var(--r-md); background:var(--fill); color:var(--ink); text-decoration:none;
     font-size:17px; font-weight:500}
@@ -196,17 +198,17 @@
     justify-content:center; text-align:center; padding:clamp(24px,6vh,56px) clamp(20px,4vw,48px); gap:6px}
   .readyRound{font-size:15px; color:var(--ink-2); letter-spacing:.02em}
   .readyTeam{font-family:var(--font-display); font-weight:700; font-size:clamp(52px,13vh,140px);
-    letter-spacing:-.03em; line-height:1.02; margin:8px 0 12px}
-  .readyHint{font-size:17px; color:var(--ink-2); line-height:1.5; max-width:34ch; text-wrap:balance}
+    letter-spacing:-.03em; line-height:1.02; margin:10px 0 16px}
+  .readyHint{font-size:17px; color:var(--ink-2); line-height:1.6; max-width:34ch; text-wrap:balance}
   .readyHint span{display:block}
-  .readyScores{display:flex; gap:10px; flex-wrap:wrap; justify-content:center; margin-top:clamp(18px,3vh,28px)}
+  .readyScores{display:flex; gap:12px; flex-wrap:wrap; justify-content:center; margin-top:clamp(20px,3.4vh,32px)}
   .readyScores span{display:inline-flex; align-items:baseline; gap:8px; padding:9px 16px;
     border-radius:var(--pill); background:var(--fill); font-size:15px; color:var(--ink-2)}
   .readyScores b{font-family:var(--font-display); font-size:17px; font-weight:600; color:var(--ink);
     font-variant-numeric:tabular-nums}
   .readyScores .cur{background:var(--blue); color:var(--on-accent)}
   .readyScores .cur b{color:var(--on-accent)}
-  .readyCard button{margin-top:clamp(20px,3.4vh,32px); min-height:56px; padding:0 40px;
+  .readyCard button{margin-top:clamp(24px,4vh,36px); min-height:56px; padding:0 40px;
     background:var(--blue); color:var(--on-accent); font-size:19px; font-weight:600; border-radius:var(--r-lg)}
   .readyKbd{margin-top:14px; font-size:13px; color:var(--ink-3)}
   .readyCount{display:none; font-family:var(--font-display); font-size:clamp(72px,15vw,132px);
@@ -218,21 +220,21 @@
   /* ---------- result ---------- */
   #v-result h1{margin-bottom:4px}
   #rSub{margin:0 0 20px}
-  .champ{background:var(--surface); border-radius:var(--r-xl); padding:24px;
+  .champ{background:var(--surface); border-radius:var(--r-xl); padding:24px 24px 22px;
     display:grid; grid-template-columns:minmax(0,1fr) auto; align-items:end; gap:4px 16px}
   .champ.tied{background:var(--surface-2)}
-  .champ-label{grid-column:1; font-size:13px; font-weight:600; color:var(--blue); letter-spacing:.01em}
+  .champ-label{grid-column:1; font-size:15px; font-weight:600; color:var(--blue); letter-spacing:.01em}
   .champ-name{grid-column:1; font-family:var(--font-display); font-size:clamp(30px,5vh,46px);
     font-weight:700; letter-spacing:-.02em; line-height:1.05}
-  .champ-meta{grid-column:1; font-size:15px; color:var(--ink-2); margin-top:2px}
+  .champ-meta{grid-column:1; font-size:15px; color:var(--ink-2); margin-top:4px}
   .champ-score{grid-column:2; grid-row:1 / span 3; align-self:center; font-family:var(--font-display);
     font-size:clamp(40px,7vh,64px); font-weight:700; letter-spacing:-.03em; font-variant-numeric:tabular-nums}
   .champ-score em{display:block; font-size:13px; font-style:normal; font-weight:500; color:var(--ink-2);
     letter-spacing:0; text-align:right; margin-bottom:4px}
   .champ-score span{font-size:20px; font-weight:600; color:var(--ink-2); margin-left:4px}
 
-  .rank{margin-top:22px; padding:0 24px}
-  .rank-h{font-size:13px; font-weight:600; color:var(--ink-2); margin:0 0 4px}
+  .rank{margin-top:24px; padding:0 24px}
+  .rank-h{font-size:15px; font-weight:600; color:var(--ink-2); margin:0 0 4px}
   .rk{position:relative; display:grid; grid-template-columns:34px minmax(0,1fr) auto; align-items:center;
     gap:12px; padding:14px 0}
   .rk::after{content:""; position:absolute; left:46px; right:0; bottom:0; height:var(--hair);
@@ -240,11 +242,11 @@
   .rk:last-child::after{display:none}
   .rk .no{font-size:15px; color:var(--ink-3); font-variant-numeric:tabular-nums}
   .rk .nm{font-size:17px; font-weight:500}
-  .rk .st{font-size:13px; color:var(--ink-2); margin-top:2px}
+  .rk .st{font-size:15px; color:var(--ink-2); margin-top:4px}
   .rk .pt{font-family:var(--font-display); font-size:22px; font-weight:600; font-variant-numeric:tabular-nums}
   .rk.first .pt{color:var(--blue)}
 
-  .result-actions{display:flex; gap:10px; margin-top:26px; flex-wrap:wrap}
+  .result-actions{display:flex; gap:12px; margin-top:32px; flex-wrap:wrap}
   .result-actions .btn-big{flex:2 1 240px; max-width:none; min-height:52px; padding:0 22px; font-size:17px}
   .result-actions .btn-quiet{flex:1 1 120px; min-height:52px; padding:0 22px}
 
@@ -498,7 +500,9 @@ function renderHome(){
 
   $("#secInput").value = cfg.sec;
 
-  $("#qCount").textContent = lines.length ? `${lines.length} 題` : "未連接：無法讀取題目";
+  $("#qCount").innerHTML = lines.length
+    ? `${lines.length}<span class="unit">題</span>`
+    : `<span class="unit">未連接：無法讀取題目</span>`;
   $("#btnStart").disabled = !lines.length;
   $("#btnStart").textContent = lines.length ? "開始遊戲" : "題目未連線";
 }
