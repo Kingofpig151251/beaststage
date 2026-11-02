@@ -72,7 +72,7 @@
   .well h2{margin-bottom:14px}
   .well.teams{display:flex; flex-direction:column}
 
-  .row{display:flex; align-items:center; gap:10px; flex-wrap:wrap}
+  .row{display:flex; align-items:center; gap:10px; flex-wrap:wrap; min-height:48px}
   .row > label{font-size:15px; color:var(--ink-2)}
 
   /* stepper：capsule */
@@ -90,7 +90,8 @@
 
   .names{display:flex; flex-direction:column; gap:8px; margin-top:16px; max-height:46vh; overflow-y:auto}
   .name-row{display:grid; grid-template-columns:26px minmax(0,1fr); gap:10px; align-items:center}
-  .name-row span{font-size:13px; font-weight:600; color:var(--ink-2); text-align:center}
+  .name-row span{display:flex; align-items:center; justify-content:center; width:26px; height:26px;
+    font-size:13px; font-weight:600; color:var(--ink-2); font-variant-numeric:tabular-nums}
 
   /* inputs */
   input,textarea,select{font-family:inherit; font-size:17px; color:var(--ink);
@@ -99,8 +100,8 @@
   input:focus-visible,textarea:focus-visible,select:focus-visible,button:focus-visible,a:focus-visible{
     outline:3px solid var(--focus-ring); outline-offset:2px}
 
-  #secInput{width:88px; text-align:center; font-family:var(--font-display); font-size:20px; font-weight:600;
-    background:var(--fill); -moz-appearance:textfield}
+  #secInput{width:88px; min-height:48px; text-align:center; font-family:var(--font-display);
+    font-size:20px; font-weight:600; background:var(--fill); -moz-appearance:textfield}
   #secInput::-webkit-outer-spin-button,#secInput::-webkit-inner-spin-button{-webkit-appearance:none; margin:0}
 
   .qhead{display:flex; align-items:baseline; justify-content:space-between; gap:10px; margin-bottom:14px}
@@ -196,7 +197,8 @@
   .readyRound{font-size:15px; color:var(--ink-2); letter-spacing:.02em}
   .readyTeam{font-family:var(--font-display); font-weight:700; font-size:clamp(52px,13vh,140px);
     letter-spacing:-.03em; line-height:1.02; margin:8px 0 12px}
-  .readyHint{font-size:17px; color:var(--ink-2); line-height:1.5; max-width:30ch}
+  .readyHint{font-size:17px; color:var(--ink-2); line-height:1.5; max-width:34ch; text-wrap:balance}
+  .readyHint span{display:block}
   .readyScores{display:flex; gap:10px; flex-wrap:wrap; justify-content:center; margin-top:clamp(18px,3vh,28px)}
   .readyScores span{display:inline-flex; align-items:baseline; gap:8px; padding:9px 16px;
     border-radius:var(--pill); background:var(--fill); font-size:15px; color:var(--ink-2)}
@@ -229,8 +231,8 @@
     letter-spacing:0; text-align:right; margin-bottom:4px}
   .champ-score span{font-size:20px; font-weight:600; color:var(--ink-2); margin-left:4px}
 
-  .rank{margin-top:22px}
-  .rank-h{font-size:13px; font-weight:600; color:var(--ink-2); margin-bottom:4px}
+  .rank{margin-top:22px; padding:0 24px}
+  .rank-h{font-size:13px; font-weight:600; color:var(--ink-2); margin:0 0 4px}
   .rk{position:relative; display:grid; grid-template-columns:34px minmax(0,1fr) auto; align-items:center;
     gap:12px; padding:14px 0}
   .rk::after{content:""; position:absolute; left:46px; right:0; bottom:0; height:var(--hair);
@@ -243,8 +245,8 @@
   .rk.first .pt{color:var(--blue)}
 
   .result-actions{display:flex; gap:10px; margin-top:26px; flex-wrap:wrap}
-  .result-actions .btn-big{flex:1 1 240px; max-width:none}
-  .result-actions .btn-quiet{flex:0 0 auto; min-height:52px; padding:0 22px}
+  .result-actions .btn-big{flex:2 1 240px; max-width:none; min-height:52px; padding:0 22px; font-size:17px}
+  .result-actions .btn-quiet{flex:1 1 120px; min-height:52px; padding:0 22px}
 
   /* ---------- toast ---------- */
   .toast{position:fixed; left:50%; bottom:calc(24px + env(safe-area-inset-bottom)); z-index:90;
@@ -278,7 +280,7 @@
     <header class="top">
       <div>
         <h1>大電視</h1>
-        <p class="sub">一人背向屏幕猜，全隊描述。主持按對或跳過，對錯由人拍板。</p>
+        <p class="sub">一人背向屏幕猜詞，全隊負責描述。主持人按「對」或「跳過」判定結果。</p>
       </div>
     </header>
 
@@ -286,12 +288,12 @@
       <section class="well teams">
         <h2>隊伍名單</h2>
         <div class="row" style="margin-bottom:10px">
-          <span class="kv">隊伍數</span>
+          <span class="kv">隊伍數量</span>
           <div class="stepper">
             <button class="step-btn" id="teamMinus" aria-label="減少一隊">
               <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M6 12h12"/></svg>
             </button>
-            <input id="teamInput" type="number" inputmode="numeric" min="2" max="8" step="1" value="2" aria-label="隊伍數">
+            <input id="teamInput" type="number" inputmode="numeric" min="2" max="8" step="1" value="2" aria-label="隊伍數量">
             <button class="step-btn" id="teamPlus" aria-label="增加一隊">
               <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M6 12h12"/><path d="M12 6v12"/></svg>
             </button>
@@ -305,7 +307,7 @@
       <section class="well">
         <h2>計時</h2>
         <div class="row" style="margin-bottom:12px">
-          <label>每回合</label>
+          <label>每回合時間</label>
           <input id="secInput" type="number" min="5" max="600" step="5" style="width:88px">
           <span class="kv">秒</span>
         </div>
@@ -314,7 +316,7 @@
       <section class="well">
         <div class="qhead">
           <h2>題目</h2>
-          <b class="qcount" id="qCount">載入中…</b>
+          <b class="qcount" id="qCount">正在載入…</b>
         </div>
         <a class="btn-quiet qedit" href="/edit">編輯題目</a>
       </div>
@@ -350,10 +352,10 @@
       <div class="readyCard">
         <div class="readyRound" id="rdRound"></div>
         <div class="readyTeam" id="rdTeam"></div>
-        <div class="readyHint" id="rdHint">派一個人背向屏幕，隊友準備好就撳開始</div>
+        <div class="readyHint" id="rdHint"><span>請派一名隊員背向屏幕，</span><span>其餘隊友準備完成後即可開始</span></div>
         <div class="readyScores" id="rdScores"></div>
         <button id="btnReady">開始</button>
-        <div class="readyKbd">或者撳 <span class="kbd">Space</span></div>
+        <div class="readyKbd">或按 <span class="kbd">空白鍵</span></div>
         <div class="readyCount" id="rdCount"></div>
       </div>
     </div>
@@ -369,7 +371,7 @@
     <div class="rank" id="rankList"></div>
     <div class="result-actions">
       <button class="btn-primary btn-big" id="btnAgain">再玩一次</button>
-      <button class="btn-quiet" id="btnBackHome">返主頁</button>
+      <button class="btn-quiet" id="btnBackHome">返回主頁</button>
     </div>
   </section>
 
@@ -399,10 +401,9 @@
 <script>
 "use strict";
 
-const HINT = "由 {who} 派一個人背向屏幕。隊友描述或做動作，唔准講出題目上面任何一隻字。";
 
 /* ================= 狀態 ================= */
-const K_CFG="bigtv.cfg.v3";   // 題庫唔再存本機，只存雲端
+const K_CFG="bigtv.cfg.v3";   // 題目不存本機，只存雲端
 const store = {
   get(k,d){ try{ const v=localStorage.getItem(k); return v?JSON.parse(v):d; }catch(e){ return d; } },
   set(k,v){ try{ localStorage.setItem(k,JSON.stringify(v)); }catch(e){} }
@@ -452,7 +453,7 @@ function toast(msg){
 }
 function shuffle(a){ for(let i=a.length-1;i>0;i--){ const j=Math.floor(Math.random()*(i+1)); [a[i],a[j]]=[a[j],a[i]]; } return a; }
 
-/* ================= 後端（有就用，冇就本機） ================= */
+/* ================= 後端 ================= */
 async function pullText(){
   try{
     const r = await fetch("/api/text", {cache:"no-store"});
@@ -497,7 +498,7 @@ function renderHome(){
 
   $("#secInput").value = cfg.sec;
 
-  $("#qCount").textContent = lines.length ? `${lines.length} 題` : "未連線：題目讀唔到";
+  $("#qCount").textContent = lines.length ? `${lines.length} 題` : "未連接：無法讀取題目";
   $("#btnStart").disabled = !lines.length;
   $("#btnStart").textContent = lines.length ? "開始遊戲" : "題目未連線";
 }
@@ -505,10 +506,10 @@ function renderHome(){
 /* ================= 題庫管理（離線用） ================= */
 /* ================= 遊戲流程 ================= */
 function startGame(){
-  if(G){ clearInterval(G.timerId); G.timerToken++; }   // 清走上一局殘留嘅倒數
+  if(G){ clearInterval(G.timerId); G.timerToken++; }   // 清除上一局殘留的計時器
   const names = Array.from({length:cfg.teams},(_,i)=> cfg.names[i] || ("隊 "+(i+1)));
   const pool = lines.map(t=>({ t }));
-  if(!pool.length){ toast("題目未載入"); return; }
+  if(!pool.length){ toast("題目尚未載入"); return; }
 
   G = {
     sec: Math.max(5, Number(cfg.sec)||60),
@@ -522,7 +523,7 @@ function startGame(){
   enterReady();
 }
 
-/* 每隊出場前停一停：唔計時、唔出題，等佢哋準備 */
+/* 每隊出場前先停頓：不計時、不出題，待隊伍準備完成 */
 function enterReady(){
   clearInterval(G.timerId);
   G.timerToken++;
@@ -531,7 +532,7 @@ function enterReady(){
   G.remaining = G.sec;
   G.paused = false;
   setPauseIcon(false);
-  $("#rdRound").textContent = `第 ${G.turn+1} / ${G.teams.length} 隊`;
+  $("#rdRound").textContent = `第 ${G.turn+1} 隊，共 ${G.teams.length} 隊`;
   const sn = $("#sideNum"); if(sn) sn.textContent = String(G.turn+1).padStart(2,"0");
   $("#rdTeam").textContent = G.teams[G.turn].name;
   $("#rdScores").innerHTML = G.teams.map((t,i)=>
@@ -549,7 +550,7 @@ function hideReady(){
   document.body.classList.remove("is-ready");
 }
 
-/* 撳「開始」→ 3、2、1 → 真正出題計時 */
+/* 按「開始」→ 3、2、1 → 正式出題並開始計時 */
 function startRound(){
   if(!G || G.phase !== "ready") return;
   G.phase = "countdown";
@@ -581,7 +582,7 @@ function beginRunning(){
 }
 
 function drawItem(){
-  if(!G.pool.length){ G.pool = shuffle(G.used.slice()); G.used = []; toast("題目用晒，重新洗牌"); }
+  if(!G.pool.length){ G.pool = shuffle(G.used.slice()); G.used = []; toast("題目已用完，正在重新洗牌"); }
   const it = G.pool.pop();
   G.used.push(it);
   return it;
@@ -592,7 +593,7 @@ function startTimer(){
   if(!G.sec){ renderTimer(); return; }
   const token = ++G.timerToken;
   const id = setInterval(()=>{
-    if(token !== G.timerToken){ clearInterval(id); return; }   // 舊局嘅表，唔准再影響新局
+    if(token !== G.timerToken){ clearInterval(id); return; }   // 舊局的計時器不得影響新局
     if(G.paused) return;
     G.remaining = Math.max(0, G.remaining - 0.1);
     renderTimer();
@@ -602,7 +603,7 @@ function startTimer(){
   G.timerId = id;
 }
 
-const RING_LEN = 2 * Math.PI * 16;   // r=16（留返邊同弧之間嘅空隙）
+const RING_LEN = 2 * Math.PI * 16;   // r=16（與邊框之間留出空隙）
 function renderTimer(){
   const el=$("#pClock"), ring=$("#btnPause"), prog=$("#ringProg");
   if(!ring) return;
@@ -614,7 +615,7 @@ function renderTimer(){
   ring.classList.toggle("paused", !!G.paused);
 }
 
-// 題目字自動撐滿字卡：優先一行（唔好把「演唱會」劈開），字太細才容許斷行
+// 題目字自動撐滿字卡：優先單行（避免詞語被切開），字體過小時才容許斷行
 function fitWord(text){
   const el=$("#pText"), card=el.parentElement;
   const boxW=card.clientWidth-36, boxH=card.clientHeight-72;
@@ -670,7 +671,7 @@ function undo(){
 
 function endTurn(){
   if(!G) return;
-  if(G.phase === "ready"){ enterReady(); return; }   // 未開始就撳，當重整
+  if(G.phase === "ready"){ enterReady(); return; }   // 尚未開始即按下，視為重新整理
   clearInterval(G.timerId);
   G.timerToken++;
   G.phase = "ready";
@@ -731,7 +732,7 @@ $$("[data-judge]").forEach(b=>b.onclick=()=>judge(b.dataset.judge));
 $("#btnReady").onclick = startRound;
 $("#btnExit").onclick = ()=>{
   if(!G) { showView("v-home"); renderHome(); return; }
-  if(!confirm("退出遊戲？今場唔會計成績。")) return;
+  if(!confirm("確定退出遊戲？本局成績將不會記錄。")) return;
   clearInterval(G.timerId);
   G.timerToken++;
   G = null;
@@ -783,10 +784,10 @@ document.addEventListener("visibilitychange", ()=>{
 });
 
 /* ================= 啟動 ================= */
-/* 連唔到就自己重試（每 15 秒），唔使撳掣 */
+/* 無法連接時每 15 秒自動重試，無需手動操作 */
 setInterval(()=>{ if(!REMOTE.ok && !G) pullText(); }, 15000);
 
-/* 回到 App（或者切返嚟）就靜靜拉一次題庫，唔使重開 */
+/* 返回 App 或切換回前景時自動重新載入題目，無需重新開啟 */
 document.addEventListener("visibilitychange", ()=>{
   if(!document.hidden && !G && document.body.dataset.view === "home") pullText();
 });

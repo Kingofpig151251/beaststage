@@ -43,14 +43,14 @@
 </head>
 <body>
   <header>
-    <a href="/"><button>← 主持台</button></a>
+    <a href="/"><button>← 返回主持台</button></a>
     <h1>題目</h1>
-    <span class="kv" id="meta">載入中…</span>
-    <span class="dot" id="state">載入中…</span>
+    <span class="kv" id="meta">正在載入…</span>
+    <span class="dot" id="state">正在載入…</span>
   </header>
 
   <textarea id="text" spellcheck="false" autocomplete="off" autocapitalize="off"
-    placeholder="一行一題&#10;雞蛋仔&#10;菠蘿包&#10;絲襪奶茶" aria-label="題目"></textarea>
+    placeholder="請貼上題目，一行一題&#10;雞蛋仔&#10;菠蘿包&#10;絲襪奶茶" aria-label="題目"></textarea>
 
 <script>
 "use strict";
@@ -71,7 +71,7 @@ function paintMeta(){
 }
 
 async function load(){
-  setState("", "載入中…");
+  setState("", "正在載入…");
   try{
     const r = await fetch("/api/text", { cache:"no-store" });
     if(!r.ok) throw new Error("bad");
@@ -81,7 +81,7 @@ async function load(){
     paintMeta();
     setState("ok", "已連接");
   }catch(e){
-    setState("bad", "未連線，自動重試中…");
+    setState("bad", "未連接，正在自動重試…");
   }
 }
 
@@ -89,7 +89,7 @@ async function save(){
   clearTimeout(saveTimer);
   const text = $("#text").value;
   if(text === lastSaved) return;
-  setState("", "儲存中…");
+  setState("", "正在儲存…");
   try{
     const r = await fetch("/api/text", {
       method:"PUT", headers:{ "Content-Type":"application/json" },
@@ -99,11 +99,11 @@ async function save(){
     lastSaved = text;
     setState("ok", "已儲存");
   }catch(e){
-    setState("bad", "儲存失敗，稍後自動重試");
+    setState("bad", "儲存失敗，稍後將自動重試");
   }
 }
 function scheduleSave(){
-  setState("", "未儲存…");
+  setState("", "尚未儲存…");
   clearTimeout(saveTimer);
   saveTimer = setTimeout(save, 800);
 }
@@ -116,7 +116,7 @@ window.addEventListener("beforeunload", e=>{
   if($("#text").value !== lastSaved){ e.preventDefault(); e.returnValue = ""; }
 });
 
-/* 斷線自己重試；亦會拉其他人嘅改動（有未存改動就唔覆蓋） */
+/* 斷線時自動重試；同時取得其他使用者的修改（若有未儲存內容則不覆蓋） */
 async function poll(){
   if($("#text").value !== lastSaved) return;
   try{
@@ -130,7 +130,7 @@ async function poll(){
     paintMeta();
     setState("ok", "已更新");
   }catch(e){
-    setState("bad", "未連線，自動重試中…");
+    setState("bad", "未連接，正在自動重試…");
   }
 }
 setInterval(poll, 15000);
