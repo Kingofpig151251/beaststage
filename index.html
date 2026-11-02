@@ -14,14 +14,15 @@
      critique · it is a host console hammered in a dark room: ember carries the live action, acid answers it, press physics on the one control the host hits
      waive type · Bungee / Chivo / Silkscreen are not loaded: the tool has to run offline from one file, so system faces carry the weights and mono carries figures */
   :root{
-    /* ground */
-    --paper:oklch(14% 0.04 312); --paper-2:oklch(18.5% 0.042 312); --paper-3:oklch(23% 0.045 312);
+    /* ground — Persona 3 Reload 藍：深藍底、電藍面板 */
+    --paper:#031F64; --paper-2:#0A3A8F; --paper-3:#015FCC;
     /* ink */
-    --ink:oklch(95% 0.014 315); --ink-2:oklch(87% 0.018 315); --muted:oklch(71% 0.024 315);
-    --rule:oklch(34% 0.05 312); --shade:oklch(8% 0.02 315);
-    /* the two players */
-    --accent:oklch(66% 0.215 40); --accent-2:oklch(88% 0.195 115); --accent-ink:oklch(14% 0.04 312);
-    --focus:oklch(88% 0.195 115);
+    --ink:#FFFFFF; --ink-2:#D8E6FF; --muted:#A9BFE8;
+    --rule:#5D6A88; --shade:#02133F;
+    /* the two players：青藍做動作、紅做時間同偏移陰影 */
+    --accent:#16CFFB; --accent-2:#FF3B3B; --accent-ink:#04224D;
+    --focus:#77FEFC;
+    --pop:#FD77D9;
     /* type */
     --font-display:ui-sans-serif,system-ui,"PingFang HK","Noto Sans HK","Microsoft JhengHei",sans-serif;
     --font-body:ui-sans-serif,system-ui,"PingFang HK","Noto Sans HK","Microsoft JhengHei",sans-serif;
@@ -288,11 +289,12 @@
   .ready{position:fixed; inset:0; background:var(--paper); display:flex; align-items:stretch; justify-content:center;
     padding:0; z-index:60}
   .readyCard{width:100%; height:100%; display:flex; flex-direction:column; align-items:center; justify-content:center;
-    text-align:center; background:var(--accent); color:var(--accent-ink);
+    text-align:center; background:var(--paper); color:var(--ink);
     border:0; border-radius:0; box-shadow:none;
     padding:clamp(24px,6vh,56px) clamp(20px,4vw,48px)}
   .readyRound{font-family:var(--font-mono); font-size:clamp(12px,1.6vh,15px); opacity:.8; letter-spacing:.06em}
-  .readyTeam{font-family:var(--font-display); font-weight:900; font-size:clamp(56px,15vh,168px); line-height:1; margin:10px 0 14px}
+  .readyTeam{font-family:var(--font-display); font-weight:900; font-size:clamp(56px,15vh,168px); line-height:1;
+    margin:10px 0 14px; text-shadow:5px 5px 0 color-mix(in oklab, var(--accent-2) 88%, transparent)}
   .readyHint{font-size:clamp(15px,2.2vh,20px); line-height:1.6; opacity:.88; max-width:34ch}
   .readyCard button{margin-top:clamp(24px,5vh,56px); background:var(--accent-ink); color:var(--accent);
     border-color:var(--accent-ink); font-family:var(--font-display); font-weight:900;
@@ -406,6 +408,33 @@
   .card-word{animation:wordIn .18s ease-out}
   @keyframes wordIn{from{transform:scale(.94); opacity:.35} to{transform:scale(1); opacity:1}}
   @media (prefers-reduced-motion: reduce){ .card-word{animation:none} }
+
+  /* ---- Persona 3 Reload 語言層：斜切、紅色偏移、大字、半調網點 ---- */
+  body[data-view="home"],body[data-view="play"]{
+    background-image:repeating-linear-gradient(112deg,
+      color-mix(in oklab, var(--paper-3) 18%, transparent) 0 2px, transparent 2px 28px)}
+  .well{position:relative; background:color-mix(in oklab, var(--paper-2) 88%, var(--paper));
+    border:0; box-shadow:inset 0 0 0 var(--bar) var(--rule);
+    clip-path:polygon(0 0, calc(100% - 26px) 0, 100% 26px, 100% 100%, 0 100%)}
+  .well h2{position:relative; isolation:isolate; display:inline-block;
+    padding:3px 12px 4px 10px; color:var(--ink)}
+  .well h2::before{content:""; position:absolute; inset:0; z-index:-1;
+    background:var(--paper-3); transform:skew(-10deg)}
+  .qcount{color:var(--accent)}
+  .name-row span{clip-path:polygon(20% 0, 100% 0, 80% 100%, 0 100%); color:var(--accent-ink);
+    width:26px; background:var(--accent)}
+  #secInput{color:var(--accent)}
+  .startbar #btnStart{box-shadow:6px 6px 0 var(--accent-2)}
+  #stage::after{content:""; position:absolute; inset:0; pointer-events:none; opacity:.05;
+    background-image:radial-gradient(var(--ink) 1px, transparent 1px); background-size:12px 12px}
+  .card-word{text-shadow:5px 5px 0 color-mix(in oklab, var(--accent-2) 85%, transparent)}
+  #v-play{position:relative; overflow:hidden}
+  .sidenum{position:absolute; left:6px; top:50%; z-index:6; pointer-events:none;
+    transform:translateY(-50%) rotate(-90deg); transform-origin:center;
+    font-family:var(--font-display); font-weight:900; font-size:22vh; line-height:1;
+    letter-spacing:-.06em; color:var(--ink); opacity:.12; font-style:italic; white-space:nowrap}
+  body[data-view="play"] .flash-hud .j-ok{box-shadow:6px 6px 0 var(--accent-2)}
+  @media (prefers-reduced-motion: reduce){ .sidenum{transition:none} }
 </style>
 </head>
 <body>
@@ -461,6 +490,7 @@
 
   <!-- ========== 遊戲 ========== -->
   <section class="view" id="v-play">
+    <div class="sidenum" id="sideNum" aria-hidden="true">01</div>
     <div class="flash-top">
       <button class="icon-btn stroke" id="btnExit" aria-label="退出遊戲" title="退出遊戲">
         <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M15 4h3.2A1.8 1.8 0 0 1 20 5.8v12.4A1.8 1.8 0 0 1 18.2 20H15"/><path d="M10.5 8.2 6.7 12l3.8 3.8"/><path d="M6.9 12h8.3"/></svg>
@@ -669,6 +699,7 @@ function enterReady(){
   G.paused = false;
   setPauseIcon(false);
   $("#rdRound").textContent = `第 ${G.turn+1} / ${G.teams.length} 隊`;
+  const sn = $("#sideNum"); if(sn) sn.textContent = String(G.turn+1).padStart(2,"0");
   $("#rdTeam").textContent = G.teams[G.turn].name;
   $("#rdScores").innerHTML = G.teams.map((t,i)=>
     `<span class="${i===G.turn?"cur":""}">${esc(t.name)}<b>${t.score}</b></span>`).join("");
