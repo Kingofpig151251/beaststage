@@ -159,10 +159,13 @@
     transition:clip-path .46s cubic-bezier(.55,0,.25,1), opacity .32s var(--ease)}
   .js .launch.on{clip-path:circle(152% at 50% 78%)}
   .launch.out{opacity:0}
+  .launch.done{transition:none}
   .launch-mark{position:absolute; inset:0; display:grid; place-items:center; color:var(--on-accent);
     font-family:var(--font-display); font-size:clamp(40px,7.4vh,76px); font-weight:700; letter-spacing:-.03em;
-    opacity:0; transform:scale(.94); transition:opacity .3s var(--ease), transform .55s var(--ease)}
+    transition:opacity .3s var(--ease), transform .55s var(--ease)}
+  .js .launch-mark{opacity:0; transform:scale(.94)}
   .js .launch.on .launch-mark{opacity:1; transform:none; transition-delay:.14s}
+  .js .launch:not(.on) .launch-mark{transition-delay:0s}
   body.is-launch .stage{opacity:0; transform:translateY(-28px) scale(.97);
     transition:opacity .38s var(--ease), transform .48s var(--ease)}
   body.is-launch .setup-foot{opacity:0; transform:translateY(18px); transition:opacity .3s, transform .38s var(--ease)}
@@ -644,8 +647,10 @@ function launchGame(){
     startGame();
   }, 700);
   setTimeout(()=>veil.classList.add("out"), 860);   // 4. 藍幕淡出
-  setTimeout(()=>{
+  setTimeout(()=>{                                  // 5. 即刻復位（避免幕反向縮回）
+    veil.classList.add("done");
     veil.classList.remove("on","out");
+    requestAnimationFrame(()=>veil.classList.remove("done"));
     SETUP.busy = false;
   }, 1240);
 }
