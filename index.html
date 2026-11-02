@@ -214,6 +214,9 @@
     background:var(--fill); color:var(--ink)}
   .icon-btn svg{width:22px; height:22px; fill:none; stroke:currentColor; stroke-width:2; stroke-linecap:round; stroke-linejoin:round}
   .icon-btn:active{background:var(--fill-2)}
+  .icon-btn .i-back{display:none}
+  .icon-btn[data-mode="back"] .i-exit{display:none}
+  .icon-btn[data-mode="back"] .i-back{display:block}
 
   .ring{position:relative; width:64px; height:64px; padding:0; display:grid; place-items:center;
     border:0; border-radius:50%; background:transparent; color:var(--ink)}
@@ -355,8 +358,8 @@
   <!-- ========== 設定（逐步） ========== -->
   <section class="view" id="v-setup">
     <div class="setup-top">
-      <button class="icon-btn" id="btnStepBack" aria-label="上一步">
-        <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M15 4h3.2A1.8 1.8 0 0 1 20 5.8v12.4A1.8 1.8 0 0 1 18.2 20H15"/><path d="M10.5 8.2 6.7 12l3.8 3.8"/><path d="M6.9 12h8.3"/></svg>
+      <button class="icon-btn" id="btnStepBack" aria-label="上一步" title="上一步（Esc）">
+        <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M14.5 5 7.5 12l7 7"/></svg>
       </button>
       <div class="dots" id="stepDots" aria-hidden="true"><i></i><i></i><i></i><i></i></div>
       <div class="step-count" id="stepCount">1 / 4</div>
@@ -410,8 +413,9 @@
   <section class="view" id="v-play">
     <div class="sidenum" id="sideNum" aria-hidden="true">01</div>
     <div class="flash-top">
-      <button class="icon-btn stroke" id="btnExit" aria-label="退出遊戲" title="退出遊戲">
-        <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M15 4h3.2A1.8 1.8 0 0 1 20 5.8v12.4A1.8 1.8 0 0 1 18.2 20H15"/><path d="M10.5 8.2 6.7 12l3.8 3.8"/><path d="M6.9 12h8.3"/></svg>
+      <button class="icon-btn stroke" id="btnExit" data-mode="exit" aria-label="退出遊戲" title="退出遊戲">
+        <svg class="i-exit" viewBox="0 0 24 24" aria-hidden="true"><path d="M15 4h3.2A1.8 1.8 0 0 1 20 5.8v12.4A1.8 1.8 0 0 1 18.2 20H15"/><path d="M10.5 8.2 6.7 12l3.8 3.8"/><path d="M6.9 12h8.3"/></svg>
+        <svg class="i-back" viewBox="0 0 24 24" aria-hidden="true"><path d="M14.5 5 7.5 12l7 7"/></svg>
       </button>
       <button class="ring" id="btnPause" aria-label="暫停" title="暫停（Esc）">
         <svg viewBox="0 0 44 44" aria-hidden="true">
@@ -676,6 +680,14 @@ function startGame(){
 }
 
 /* 每隊出場前先停頓：不計時、不出題，待隊伍準備完成 */
+function syncExitLabel(){
+  const b = $("#btnExit"); if(!b) return;
+  const back = isPristine();
+  b.dataset.mode = back ? "back" : "exit";
+  b.setAttribute("aria-label", back ? "上一步" : "退出遊戲");
+  b.setAttribute("title", back ? "上一步（Esc）" : "退出遊戲");
+}
+
 function enterReady(){
   clearInterval(G.timerId);
   G.timerToken++;
@@ -695,6 +707,7 @@ function enterReady(){
   $("#readyOverlay").style.display = "flex";
   document.body.classList.add("is-ready");
   renderPlay();
+  syncExitLabel();
 }
 
 function hideReady(){
@@ -791,6 +804,7 @@ function fitWord(text){
 addEventListener("resize", ()=>{ if(G && G.phase==="running") fitWord($("#pText").textContent); });
 
 function renderPlay(){
+  syncExitLabel();
   const it = G.cur || {t:"", deck:""};   // ready 階段未有題目
   $("#pText").textContent = it.t;
   fitWord(it.t);
@@ -894,8 +908,23 @@ $("#btnNext").onclick = ()=>{ if(SETUP.i < 3) goStep(SETUP.i + 1, 1); else launc
 
 $$("[data-judge]").forEach(b=>b.onclick=()=>judge(b.dataset.judge));
 $("#btnReady").onclick = startRound;
+function isPristine(){
+  return !!G && G.phase === "ready" && G.turn === 0 && !G.log.length
+    && G.teams.every(t=>t.score === 0 && !t.ok && !t.skip);
+}
+function backToSetup(){
+  clearInterval(G.timerId);
+  G.timerToken++;
+  G = null;
+  $("#readyOverlay").style.display = "none";
+  document.body.classList.remove("is-ready");
+  showView("v-setup");
+  goStep(3, -1);
+}
+
 $("#btnExit").onclick = ()=>{
   if(!G) { showView("v-home"); renderHome(); return; }
+  if(isPristine()){ backToSetup(); return; }   // 未開始過 → 上一步回設定
   if(!confirm("確定退出遊戲？本局成績將不會記錄。")) return;
   clearInterval(G.timerId);
   G.timerToken++;
