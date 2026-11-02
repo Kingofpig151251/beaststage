@@ -580,8 +580,6 @@ function renderHome(){
   $("#lMeta").textContent = lines.length
     ? `${cfg.teams} 隊 · ${cfg.sec} 秒`
     : `${cfg.teams} 隊 · ${cfg.sec} 秒 · 題目尚未連線`;
-  const eh = $("#btnEditHome");
-  if(eh) eh.textContent = lines.length ? `編輯題目 · ${lines.length} 題` : "編輯題目";
   renderSetup();
 }
 
