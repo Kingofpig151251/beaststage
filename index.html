@@ -412,10 +412,9 @@
       </section>
 
       <section class="well">
-        <h2>題目組合</h2>
-        <div class="chips" id="setChips"></div>
-        <p class="kv" id="setCount" style="margin-top:10px"></p>
-      </section>
+        <h2>題目</h2>
+        <p class="kv" id="qCount" style="margin:0 0 10px">載入中…</p>
+        <a class="kv" href="/edit" style="display:inline-flex; align-items:center; min-height:44px; padding:0 14px; border:var(--bar) solid var(--rule); color:var(--ink); text-decoration:none">編輯題目</a>
       </div>
     </div>
   </section>
@@ -509,16 +508,15 @@ const store = {
   set(k,v){ try{ localStorage.setItem(k,JSON.stringify(v)); }catch(e){} }
 };
 
-let bank = { name:"題庫", decks:[], sets:[] };   // 開機由雲端載入
+let lines = [];                                  // 題目：一行一題
 let cfg  = Object.assign({
   teams:2, names:["A 隊","B 隊","C 隊","D 隊","E 隊","F 隊","G 隊","H 隊"],
-  sec:60, setId:""
+  sec:60
 }, store.get(K_CFG, {}));
 
 cfg.teams = Math.max(2, Math.min(8, Math.round(+cfg.teams || 2)));
 
 let G = null;
-let bankDeck = bank.decks[0] ? bank.decks[0].id : null;
 let REMOTE = { ok:false };
 
 const $ = s => document.querySelector(s);
@@ -528,29 +526,17 @@ function clone(o){ return JSON.parse(JSON.stringify(o)); }
 function esc(s){ return String(s).replace(/[&<>"']/g, c=>({"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;","'":"&#39;"}[c])); }
 
 /* 題目一律以 {t:"..."} 存；舊格式（字串 / {t,ban}）都食得住 */
-function itemId(){ return "n"+Date.now().toString(36)+Math.random().toString(36).slice(2,6); }
-function normalizeBank(b){
-  if(!b || !Array.isArray(b.decks)) return { name:"題庫", decks:[], sets:[] };
-  const decks = b.decks.map((d,i)=>({
-    id: d.id || ("d"+i),
-    name: d.name || ("類別 "+(i+1)),
-    items: (d.items||[]).map(it=>{
-      if(typeof it === "string") return { id:itemId(), t: it.trim() };
-      const t = String((it && it.t) || "").trim();
-      const id = (it && it.id != null) ? String(it.id) : itemId();
-      return { id, t };
-    }).filter(x=>x.t)
-  }));
-  // 組合：舊版存文字 → 轉做 item id（同名取第一個）
-  const byText = new Map();
-  decks.forEach(d=>d.items.forEach(it=>{ if(!byText.has(it.t)) byText.set(it.t, it.id); }));
-  const allIds = new Set(decks.flatMap(d=>d.items.map(it=>it.id)));
-  const sets = (b.sets||[]).map((st,i)=>{
-    const raw = (st.items||[]).map(x=>String(x).trim()).filter(Boolean);
-    const ids = raw.map(x=> allIds.has(x) ? x : (byText.get(x) || "")).filter(Boolean);
-    return { id: st.id || ("s"+(i+1)), name:(st.name||("組合 "+(i+1))).slice(0,20), items:[...new Set(ids)] };
-  });
-  return { name: b.name || "題庫", decks, sets };
+function parseText(raw){
+  const seen = new Set();
+  return String(raw || "").split(/\r?\n/)
+    .map(l => l.trim())
+    .filter(l => l && !l.startsWith("#"))
+    .filter(l => {
+      const k = l.replace(/\s+/g,"").toLowerCase();
+      if(seen.has(k)) return false;
+      seen.add(k); return true;
+    })
+    .map(l => l.slice(0,60));
 }
 function saveCfg(){ store.set(K_CFG, cfg); }
 
@@ -567,15 +553,12 @@ function toast(msg){
 function shuffle(a){ for(let i=a.length-1;i>0;i--){ const j=Math.floor(Math.random()*(i+1)); [a[i],a[j]]=[a[j],a[i]]; } return a; }
 
 /* ================= 後端（有就用，冇就本機） ================= */
-async function pullRemoteBank(){
+async function pullText(){
   try{
-    const r = await fetch("/api/bank", {cache:"no-store"});
+    const r = await fetch("/api/text", {cache:"no-store"});
     if(!r.ok) throw new Error("bad status");
-    const b = await r.json();
-    if(!b.decks || !b.decks.length) throw new Error("empty");
-    bank = normalizeBank(b);
-    if(cfg.setId && !bank.sets.some(st=>st.id===cfg.setId)) cfg.setId = "";
-    saveCfg();
+    const d = await r.json();
+    lines = parseText(d.text);
     REMOTE.ok = true;
     renderHome();
   }catch(e){ REMOTE.ok = false; renderHome(); }
@@ -614,52 +597,18 @@ function renderHome(){
 
   $("#secInput").value = cfg.sec;
 
-  // 題目組合：全部（預設）或自訂組合
-  const allCount = bank.decks.reduce((n,d)=>n+d.items.length, 0);
-  const chip = (id, name, n) => `
-    <button class="chip ${cfg.setId===id?"on":""}" data-set="${esc(id)}">
-      ${esc(name)} <i style="opacity:.55;font-style:normal">${n}</i>
-    </button>`;
-  $("#setChips").innerHTML = bank.decks.length
-    ? chip("", "全部", allCount) + bank.sets.map(st=>chip(st.id, st.name, st.items.length)).join("")
-    : "";
-  $$("#setChips .chip").forEach(b=>b.onclick=()=>{ cfg.setId = b.dataset.set; saveCfg(); renderHome(); });
-
-  const cur = cfg.setId ? bank.sets.find(st=>st.id===cfg.setId) : null;
-  const playCount = cur ? cur.items.length : allCount;
-  $("#setCount").textContent = bank.decks.length
-    ? (cur ? `已選：${cur.name} · ${playCount} 題` : `已選：全部題目 · ${playCount} 題`)
-    : "未連線：題庫讀唔到";
-
-  $("#btnStart").disabled = !playCount;
-  $("#btnStart").textContent = !bank.decks.length ? "題庫未連線" : (playCount ? "開始遊戲" : "呢個組合未有題目");
+  $("#qCount").textContent = lines.length ? `${lines.length} 題` : "未連線：題目讀唔到";
+  $("#btnStart").disabled = !lines.length;
+  $("#btnStart").textContent = lines.length ? "開始遊戲" : "題目未連線";
 }
 
 /* ================= 題庫管理（離線用） ================= */
-/* 題庫＝一份純文字：`# 類別名` 開新類別，其餘非空行＝題目 */
-/* 題庫由 /edit 維護；主持台只讀 */
-function allItems(){
-  const out = [];
-  bank.decks.forEach(d=>d.items.forEach(it=>out.push({ id:it.id, t:it.t, deckId:d.id, deckName:d.name })));
-  return out;
-}
-function findItem(id){
-  for(const d of bank.decks){ const it = d.items.find(x=>x.id===id); if(it) return { it, deck:d }; }
-  return null;
-}
-
 /* ================= 遊戲流程 ================= */
 function startGame(){
   if(G){ clearInterval(G.timerId); G.timerToken++; }   // 清走上一局殘留嘅倒數
   const names = Array.from({length:cfg.teams},(_,i)=> cfg.names[i] || ("隊 "+(i+1)));
-  const set = cfg.setId ? bank.sets.find(st=>st.id===cfg.setId) : null;
-  const pool = [];
-  if(set){
-    set.items.forEach(id=>{ const f = findItem(id); if(f) pool.push({ t:f.it.t, deck:set.name }); });
-  }else{
-    bank.decks.forEach(d=> d.items.forEach(it=> pool.push({t:it.t, deck:d.name})));
-  }
-  if(!pool.length){ toast(set ? "呢個組合未有題目" : "題庫未有題目"); return; }
+  const pool = lines.map(t=>({ t }));
+  if(!pool.length){ toast("題目未載入"); return; }
 
   G = {
     sec: Math.max(5, Number(cfg.sec)||60),
@@ -935,20 +884,20 @@ document.addEventListener("visibilitychange", ()=>{
 
 /* ================= 啟動 ================= */
 /* 連唔到就自己重試（每 15 秒），唔使撳掣 */
-setInterval(()=>{ if(!REMOTE.ok && !G) pullRemoteBank(); }, 15000);
+setInterval(()=>{ if(!REMOTE.ok && !G) pullText(); }, 15000);
 
 /* 回到 App（或者切返嚟）就靜靜拉一次題庫，唔使重開 */
 document.addEventListener("visibilitychange", ()=>{
-  if(!document.hidden && !G && document.body.dataset.view === "home") pullRemoteBank();
+  if(!document.hidden && !G && document.body.dataset.view === "home") pullText();
 });
 window.addEventListener("focus", ()=>{
-  if(!G && document.body.dataset.view === "home") pullRemoteBank();
+  if(!G && document.body.dataset.view === "home") pullText();
 });
 
 document.body.dataset.view = "home";
 renderHome();
-pullRemoteBank();
-window.__bigtv = { get G(){return G}, get bank(){return bank}, get cfg(){return cfg},
+pullText();
+window.__bigtv = { get G(){return G}, get lines(){return lines}, get cfg(){return cfg},
   startGame, startRound, enterReady, judge, undo, endTurn, endGame, renderHome, renderPlay, showView };
 </script>
 </body>

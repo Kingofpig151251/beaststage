@@ -1,18 +1,13 @@
-"""本地 mock 後端：模擬 /api/login 同 /api/bank（GET/PUT），用嚟測題庫同步，唔使真 PIN。"""
+"""本地 mock 後端：模擬 /api/text（GET/PUT），用嚟開發前端。"""
 import json, os
 from http.server import ThreadingHTTPServer, SimpleHTTPRequestHandler
 
-PIN = "1234"
-TOK = "mock-token"
-BANK = {"name": "共用題庫", "decks": [
-    {"id": "food", "name": "港式小食", "items": [{"t": "雞蛋仔"}, {"t": "菠蘿包"}]},
-    {"id": "place", "name": "香港地標", "items": [{"t": "尖沙咀鐘樓"}]},
-], "sets": [{"id": "s1", "name": "組合 A", "items": ["雞蛋仔"]}]}
+TEXT = "雞蛋仔\n菠蘿包\n絲襪奶茶\n尖沙咀鐘樓\n山頂纜車"
 
 
 class H(SimpleHTTPRequestHandler):
     def _json(self, obj, code=200):
-        body = json.dumps(obj).encode()
+        body = json.dumps(obj, ensure_ascii=False).encode()
         self.send_response(code)
         self.send_header("Content-Type", "application/json")
         self.send_header("Content-Length", str(len(body)))
@@ -20,27 +15,18 @@ class H(SimpleHTTPRequestHandler):
         self.wfile.write(body)
 
     def do_GET(self):
-        if self.path.startswith("/api/bank"):
-            return self._json(BANK)
+        if self.path.startswith("/api/text"):
+            return self._json({"text": TEXT, "updated_at": "now"})
+        if self.path.startswith("/api/ping"):
+            return self._json({"ok": True})
         return super().do_GET()
 
-    def do_POST(self):
-        n = int(self.headers.get("Content-Length") or 0)
-        body = json.loads(self.rfile.read(n) or b"{}")
-        if self.path.startswith("/api/login"):
-            if body.get("pin") == PIN:
-                return self._json({"token": TOK, "expires_in": 3600})
-            return self._json({"error": "bad pin"}, 401)
-        return self._json({"error": "nope"}, 404)
-
     def do_PUT(self):
-        global BANK
-        # 開放寫入：唔檢查 token
+        global TEXT
         n = int(self.headers.get("Content-Length") or 0)
         body = json.loads(self.rfile.read(n) or b"{}")
-        BANK = {"name": body.get("name") or "共用題庫", "decks": body.get("decks") or [],
-                "sets": body.get("sets") or []}
-        return self._json({"ok": True, "decks": len(BANK["decks"])})
+        TEXT = body.get("text") or ""
+        return self._json({"ok": True, "chars": len(TEXT)})
 
 
 if __name__ == "__main__":
