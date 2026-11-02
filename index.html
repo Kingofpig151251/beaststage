@@ -18,14 +18,14 @@
     color-scheme:light;
     /* ground */
     --bg:#F2F2F7; --surface:#FFFFFF; --surface-2:#E9E9EE; --fill:rgba(118,118,128,.12);
-    --fill-2:rgba(118,118,128,.20);
+    --fill-2:rgba(118,118,128,.20); --fill-3:rgba(118,118,128,.10); --spot:rgba(0,113,227,.10);
     /* ink */
     --ink:#000000; --ink-2:rgba(60,60,67,.72); --ink-3:rgba(60,60,67,.40);
     --sep:rgba(60,60,67,.18);
     /* system colours */
     --blue:#0071E3; --blue-press:#005FBF;
     --blue-fill:var(--blue); --blue-fill-press:var(--blue-press); --green:#34C759; --red:#FF3B30; --amber:#FF9F0A;
-    --on-accent:#FFFFFF; --focus-ring:rgba(0,122,255,.45);
+    --on-accent:#FFFFFF; --focus-ring:rgba(0,113,227,.85);
     --bar-bg:rgba(255,255,255,.84); --flash-ok:rgba(52,199,89,.16); --toast-bg:rgba(28,28,30,.92);
     --toast-ink:#FFFFFF;
     /* geometry */
@@ -63,61 +63,97 @@
   .kbd{font-family:var(--font-mono); font-size:12px; padding:2px 7px; border-radius:6px;
     background:var(--fill); color:var(--ink-2)}
 
-  /* ---------- home：單一張 sheet（設定 + 隊名 + 主動作），內容高度、垂直居中 ---------- */
-  body[data-view="home"] .wrap{padding-bottom:28px}
-  #v-home{display:none; flex-direction:column; justify-content:center; min-height:calc(100dvh - 50px)}
-  #v-home.active{display:flex}
-  #v-home .top{margin-bottom:24px}
+  /* ---------- 主頁（入口） ---------- */
+  #v-home{display:none}
+  #v-home.active{display:flex; flex-direction:column; align-items:center; justify-content:center;
+    min-height:calc(100dvh - 50px)}
+  #v-home.active{position:relative; overflow:hidden}
+  #v-home.active::before{content:""; position:absolute; width:min(120vh,900px); aspect-ratio:1;
+    border-radius:50%; pointer-events:none; z-index:0;
+    background:radial-gradient(circle, var(--spot) 0%, transparent 62%);
+    animation:breathe 7s ease-in-out infinite}
+  @keyframes breathe{0%,100%{transform:scale(.92); opacity:.75} 50%{transform:scale(1.06); opacity:1}}
+  .landing{position:relative; z-index:1; display:flex; flex-direction:column; align-items:center; text-align:center; gap:0}
+  .landing-title{margin:14px 0 0; font-family:var(--font-display); font-weight:700;
+    font-size:clamp(76px,16vh,168px); letter-spacing:-.045em; line-height:.98;
+    animation:rise .62s .06s var(--ease) both}
+  .landing-sub{margin:22px 0 0; font-size:19px; line-height:1.6; color:var(--ink-2);
+    animation:rise .62s .12s var(--ease) both}
+  .landing-go{margin-top:44px; min-width:260px; min-height:60px; font-size:21px; border-radius:var(--pill);
+    animation:rise .62s .18s var(--ease) both}
+  .landing-meta{margin-top:20px; font-size:15px; color:var(--ink-3);
+    animation:rise .62s .24s var(--ease) both}
+  @keyframes rise{from{opacity:0; transform:translateY(14px)} to{opacity:1; transform:none}}
 
-  .sheet{display:flex; flex-direction:column; background:var(--surface);
-    border-radius:var(--r-xl); padding:0 24px}
+  /* ---------- 設定（逐步） ---------- */
+  #v-setup{display:none}
+  #v-setup.active{display:flex; flex-direction:column; min-height:calc(100dvh - 50px)}
+  .setup-top{display:grid; grid-template-columns:44px 1fr 44px; align-items:center; gap:12px}
+  .dots{display:flex; justify-content:center; gap:8px}
+  .dots i{width:9px; height:9px; border-radius:50%; background:var(--sep);
+    transition:background-color .3s var(--ease), transform .3s var(--ease)}
+  .dots i.on{background:var(--blue); transform:scale(1.55)}
+  .step-count{font-size:15px; color:var(--ink-3); text-align:right; font-variant-numeric:tabular-nums}
 
-  /* 兩條軌：label 起點 / 控件終點 */
-  .frow{display:grid; grid-template-columns:180px minmax(0,1fr); align-items:center;
-    gap:24px; padding:0; min-height:76px; position:relative}
-  .frow::before{content:""; position:absolute; top:0; left:0; right:0; height:var(--hair); background:var(--sep)}
-  .sheet > .frow:first-child::before{display:none}
-  .fnames::before{content:""; position:absolute; top:0; left:0; right:0; height:var(--hair); background:var(--sep)}
-  .flabel{font-size:17px; color:var(--ink)}
-  .funit{font-size:15px; color:var(--ink-2); font-variant-numeric:tabular-nums}
-  .ctl{display:flex; align-items:center; justify-content:flex-end; gap:12px}
+  .stage{position:relative; flex:1; min-height:0; margin:8px 0}
+  .js .sstep{opacity:0; transform:translateX(56px); pointer-events:none}
+  .sstep{position:absolute; inset:0; display:flex; flex-direction:column; align-items:center;
+    justify-content:center; gap:22px; text-align:center;
+    transition:opacity .42s var(--ease), transform .42s var(--ease)}
+  .js .sstep.on{opacity:1; transform:none; pointer-events:auto}
+  .js .sstep.back{transform:translateX(-56px)}
+  .sstep.on > *{animation:rise .5s var(--ease) both}
+  .sstep.on > *:nth-child(1){animation-delay:.04s}
+  .sstep.on > *:nth-child(2){animation-delay:.10s}
+  .sstep.on > *:nth-child(3){animation-delay:.16s}
+  .sstep.on > *:nth-child(4){animation-delay:.22s}
 
-  /* 隊名：自動欄數，每欄最少 210px */
-  .fnames{display:grid; grid-template-columns:180px minmax(0,1fr); gap:24px;
-    padding:20px 0; position:relative; align-items:start}
-  .fnames > .flabel{padding-top:11px}
-  .namegrid{display:grid; grid-template-columns:repeat(auto-fit,minmax(170px,1fr)); gap:12px 16px}
+  .sstep-title{margin:0; font-family:var(--font-display); font-size:clamp(32px,4.6vh,44px);
+    font-weight:700; letter-spacing:-.02em}
+  .sstep-hint{font-size:15px; color:var(--ink-2)}
+
+  .bignum{display:flex; align-items:baseline; gap:clamp(16px,3.4vw,40px)}
+  .bignum input{width:2ch; min-height:0; padding:0; background:transparent; border:0; text-align:center;
+    font-family:var(--font-display); font-size:clamp(84px,17vh,180px); font-weight:700;
+    letter-spacing:-.04em; line-height:1; -moz-appearance:textfield; font-variant-numeric:tabular-nums}
+  .bignum input::-webkit-outer-spin-button,.bignum input::-webkit-inner-spin-button{-webkit-appearance:none; margin:0}
+  .bignum-sec{justify-content:center; padding-left:clamp(24px,3vw,40px)}
+  .bignum-sec input{width:3ch}
+  .bignum-unit{font-family:var(--font-display); font-size:clamp(24px,3.4vh,34px); font-weight:600; color:var(--ink-2); margin-left:-6px}
+  .round-btn{width:clamp(56px,7vh,72px); height:clamp(56px,7vh,72px); border-radius:50%;
+    background:var(--fill); color:var(--ink); font-size:clamp(24px,3.2vh,32px); font-weight:400;
+    display:grid; place-items:center; line-height:1}
+  .round-btn:active{background:var(--fill-2)}
+  .round-btn:disabled{background:var(--fill-3); color:var(--ink-3); cursor:not-allowed; transform:none}
+
+  .chips{display:flex; gap:12px; flex-wrap:wrap; justify-content:center}
+  .chips button{min-height:48px; padding:0 26px; border-radius:var(--pill); background:var(--fill);
+    color:var(--ink); font-size:17px; font-weight:600; font-variant-numeric:tabular-nums}
+  .chips button[aria-pressed="true"]{background:var(--blue); color:var(--on-accent)}
+
+  .namegrid{display:grid; grid-template-columns:repeat(auto-fit,minmax(240px,1fr)); gap:12px 16px;
+    width:min(760px,100%)}
   .name-row{display:grid; grid-template-columns:28px minmax(0,1fr); gap:12px; align-items:center}
   .name-row span{display:flex; align-items:center; justify-content:center; width:28px; height:28px;
     font-size:15px; font-weight:600; color:var(--ink-2); font-variant-numeric:tabular-nums}
 
-  /* 主動作：卡內底部，同卡同寬 */
-  .faction{padding:20px 0 24px; border-top:var(--hair) solid var(--sep)}
-  .faction .btn-primary{width:100%; min-height:56px; font-size:19px; border-radius:var(--r-lg)}
+  .setup-foot{display:flex; flex-direction:column; align-items:center; gap:12px; padding:12px 0 8px}
+  .summary{font-size:15px; color:var(--ink-2); font-variant-numeric:tabular-nums; min-height:20px}
+  .setup-foot .btn-primary{min-width:260px; min-height:56px; font-size:19px; border-radius:var(--pill)}
 
-  /* stepper：capsule */
-  .stepper{display:flex; align-items:center; background:var(--fill); border-radius:var(--pill);
-    padding:2px; gap:2px}
-  .step-btn{width:44px; height:44px; padding:0; display:grid; place-items:center;
-    border:0; border-radius:50%; background:transparent; color:var(--ink)}
-  .step-btn svg{width:18px; height:18px; fill:none; stroke:currentColor; stroke-width:2.2; stroke-linecap:round}
-  .step-btn:active{background:var(--fill-2)}
-  .step-btn:disabled{opacity:.3; background:transparent; color:var(--ink-3); cursor:not-allowed}
-  #teamInput{width:56px; min-height:44px; padding:0; text-align:center; border:0; background:transparent;
-    color:var(--ink); font-family:var(--font-display); font-size:20px; font-weight:600;
-    -moz-appearance:textfield}
-  #teamInput::-webkit-outer-spin-button,#teamInput::-webkit-inner-spin-button{-webkit-appearance:none; margin:0}
+  /* 開始遊戲：白光過場 */
+  .launch{position:fixed; inset:0; z-index:80; background:var(--surface); pointer-events:none;
+    transition:opacity .22s ease, transform .32s var(--ease)}
+  .js .launch{opacity:0; transform:scale(.94)}
+  .js .launch.on{opacity:1; transform:scale(1)}
 
   /* inputs */
   input,textarea,select{font-family:inherit; font-size:17px; color:var(--ink);
     background:var(--fill); border:0; border-radius:var(--r-md); padding:11px 14px; min-height:48px; width:100%}
   input::placeholder,textarea::placeholder{color:var(--ink-3)}
   input:focus-visible,textarea:focus-visible,select:focus-visible,button:focus-visible,a:focus-visible{
-    outline:3px solid var(--focus-ring); outline-offset:2px}
+    outline:2px solid var(--focus-ring); outline-offset:3px}
 
-  #secInput{width:96px; min-height:48px; text-align:center; font-family:var(--font-display);
-    font-size:20px; font-weight:600; background:var(--fill); -moz-appearance:textfield}
-  #secInput::-webkit-outer-spin-button,#secInput::-webkit-inner-spin-button{-webkit-appearance:none; margin:0}
 
   .qcount{display:inline-flex; align-items:baseline; gap:6px; font-family:var(--font-display);
     font-size:20px; font-weight:700; letter-spacing:-.02em; color:var(--ink)}
@@ -279,59 +315,64 @@
 </style>
 </head>
 <body>
+<script>document.documentElement.classList.add("js");</script>
 <div class="wrap">
 
   <!-- ========== 主頁 ========== -->
   <section class="view active" id="v-home">
-    <header class="top">
-      <div>
-        <h1>大電視</h1>
-        <p class="sub">一人背向屏幕猜詞，全隊負責描述。主持人按「對」或「跳過」判定結果。</p>
-      </div>
-    </header>
+    <div class="landing">
+      <h1 class="landing-title">大電視</h1>
+      <p class="landing-sub">一人背向屏幕猜詞，全隊負責描述。<br>主持人按「對」或「跳過」判定結果。</p>
+      <button class="btn-primary landing-go" id="btnEnter">開始</button>
+      <div class="landing-meta" id="lMeta">2 隊 · 60 秒</div>
+    </div>
+  </section>
 
-    <section class="sheet">
-      <div class="frow">
-        <span class="flabel">隊伍數量</span>
-        <div class="ctl">
-          <div class="stepper">
-            <button class="step-btn" id="teamMinus" aria-label="減少一隊">
-              <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M6 12h12"/></svg>
-            </button>
-            <input id="teamInput" type="number" inputmode="numeric" min="2" max="8" step="1" value="2" aria-label="隊伍數量">
-            <button class="step-btn" id="teamPlus" aria-label="增加一隊">
-              <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M6 12h12"/><path d="M12 6v12"/></svg>
-            </button>
-          </div>
-          <span class="funit">隊</span>
+  <!-- ========== 設定（逐步） ========== -->
+  <section class="view" id="v-setup">
+    <div class="setup-top">
+      <button class="icon-btn" id="btnStepBack" aria-label="上一步">
+        <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M15 4h3.2A1.8 1.8 0 0 1 20 5.8v12.4A1.8 1.8 0 0 1 18.2 20H15"/><path d="M10.5 8.2 6.7 12l3.8 3.8"/><path d="M6.9 12h8.3"/></svg>
+      </button>
+      <div class="dots" id="stepDots" aria-hidden="true"><i></i><i></i><i></i></div>
+      <div class="step-count" id="stepCount">1 / 3</div>
+    </div>
+
+    <div class="stage" id="stepStage">
+      <section class="sstep" data-step="0">
+        <h2 class="sstep-title">有多少隊參賽？</h2>
+        <div class="bignum">
+          <button class="round-btn" id="teamMinus" aria-label="減少一隊">−</button>
+          <input id="teamInput" type="number" inputmode="numeric" min="2" max="8" step="1" value="2" aria-label="隊伍數量">
+          <button class="round-btn" id="teamPlus" aria-label="增加一隊">+</button>
         </div>
-      </div>
+        <div class="sstep-hint">最少 2 隊，最多 8 隊</div>
+      </section>
 
-      <div class="frow">
-        <span class="flabel">每回合時間</span>
-        <div class="ctl">
-          <input id="secInput" type="number" min="5" max="600" step="5">
-          <span class="funit">秒</span>
-        </div>
-      </div>
-
-      <div class="frow">
-        <span class="flabel">題目</span>
-        <div class="ctl">
-          <b class="qcount" id="qCount">正在載入…</b>
-          <a class="qedit" href="/edit">編輯題目</a>
-        </div>
-      </div>
-
-      <div class="fnames">
-        <span class="flabel">隊名</span>
+      <section class="sstep" data-step="1">
+        <h2 class="sstep-title">為每一隊命名</h2>
         <div class="namegrid" id="nameList"></div>
-      </div>
+      </section>
 
-      <div class="faction">
-        <button class="btn-primary" id="btnStart">開始遊戲</button>
-      </div>
-    </section>
+      <section class="sstep" data-step="2">
+        <h2 class="sstep-title">每回合時間</h2>
+        <div class="bignum bignum-sec">
+          <input id="secInput" type="number" min="5" max="600" step="5" aria-label="每回合秒數">
+          <span class="bignum-unit">秒</span>
+        </div>
+        <div class="chips" id="secChips">
+          <button type="button" data-sec="30">30</button>
+          <button type="button" data-sec="60">60</button>
+          <button type="button" data-sec="90">90</button>
+          <button type="button" data-sec="120">120</button>
+        </div>
+      </section>
+    </div>
+
+    <div class="setup-foot">
+      <div class="summary" id="setupSummary"></div>
+      <button class="btn-primary" id="btnNext">繼續</button>
+    </div>
   </section>
 
   <!-- ========== 遊戲 ========== -->
@@ -403,6 +444,7 @@
 </div>
 
 
+<div class="launch" id="launch"></div>
 <div class="toast" id="toast"></div>
 <script>
 "use strict";
@@ -489,26 +531,73 @@ function fxPop(el){
   el.classList.remove("pop"); void el.offsetWidth; el.classList.add("pop");
 }
 
-/* ================= 主頁 ================= */
+/* ================= 主頁 / 設定流程 ================= */
+const SETUP = { i:0 };
+
 function renderHome(){
-  $("#nameList").innerHTML = Array.from({length:cfg.teams},(_,i)=>`
-    <label class="name-row"><span>${i+1}</span>
-      <input data-name="${i}" value="${esc(cfg.names[i]||("隊 "+(i+1)))}" maxlength="12"></label>`).join("");
+  // 入口頁：一行現況
+  $("#lMeta").textContent = lines.length
+    ? `${cfg.teams} 隊 · ${cfg.sec} 秒 · ${lines.length} 題`
+    : `${cfg.teams} 隊 · ${cfg.sec} 秒 · 題目尚未連線`;
+  renderSetup();
+}
+
+function renderSetup(){
   $("#teamInput").value = cfg.teams;
   $("#teamMinus").disabled = cfg.teams <= 2;
   $("#teamPlus").disabled  = cfg.teams >= 8;
+
+  $("#nameList").innerHTML = Array.from({length:cfg.teams},(_,i)=>`
+    <label class="name-row"><span>${i+1}</span>
+      <input data-name="${i}" value="${esc(cfg.names[i]||("隊 "+(i+1)))}" maxlength="12" autocomplete="off"></label>`).join("");
   $$("#nameList input").forEach(inp=>inp.onchange=()=>{
     cfg.names[+inp.dataset.name] = inp.value.trim() || ("隊 "+(+inp.dataset.name+1));
-    inp.value = cfg.names[+inp.dataset.name]; saveCfg();
+    inp.value = cfg.names[+inp.dataset.name]; saveCfg(); renderSummary();
   });
 
   $("#secInput").value = cfg.sec;
+  $$("#secChips button").forEach(b=>b.setAttribute("aria-pressed", String(+b.dataset.sec === +cfg.sec)));
+  renderSummary();
+}
 
-  $("#qCount").innerHTML = lines.length
-    ? `${lines.length}<span class="unit">題</span>`
-    : `<span class="unit">未連接：無法讀取題目</span>`;
-  $("#btnStart").disabled = !lines.length;
-  $("#btnStart").textContent = lines.length ? "開始遊戲" : "題目未連線";
+function renderSummary(){
+  const ok = lines.length > 0;
+  $("#setupSummary").textContent = ok
+    ? `${cfg.teams} 隊 · ${cfg.sec} 秒 · ${lines.length} 題`
+    : "題目尚未連線";
+  const next = $("#btnNext");
+  next.disabled = !ok;
+  next.textContent = SETUP.i < 2 ? "繼續" : (ok ? "開始遊戲" : "題目未連線");
+}
+
+function goStep(i, dir){
+  SETUP.i = Math.max(0, Math.min(2, i));
+  $$(".sstep").forEach(el=>{
+    const k = +el.dataset.step;
+    el.classList.toggle("on", k === SETUP.i);
+    el.classList.toggle("back", k < SETUP.i || (dir < 0 && k > SETUP.i));
+  });
+  $$("#stepDots i").forEach((d,n)=>d.classList.toggle("on", n <= SETUP.i));
+  $("#stepCount").textContent = `${SETUP.i+1} / 3`;
+  $("#btnNext").textContent = SETUP.i < 2 ? "繼續" : "開始遊戲";
+  renderSummary();
+  if(SETUP.i === 1){
+    const first = $("#nameList input");
+    if(first) setTimeout(()=>first.focus({preventScroll:true}), 260);
+  }
+}
+
+function startSetup(){
+  renderSetup();
+  goStep(0, 1);
+  showView("v-setup");
+}
+
+function launchGame(){
+  if(!lines.length){ toast("題目尚未載入"); return; }
+  const veil = $("#launch");
+  veil.classList.add("on");
+  setTimeout(()=>{ veil.classList.remove("on"); startGame(); }, 240);
 }
 
 /* ================= 題庫管理（離線用） ================= */
@@ -733,8 +822,17 @@ function setTeams(n){
 $("#teamInput").onchange = e=> setTeams(e.target.value);
 $("#teamMinus").onclick = ()=> setTeams(cfg.teams - 1);
 $("#teamPlus").onclick  = ()=> setTeams(cfg.teams + 1);
-$("#secInput").onchange  = e=>{ cfg.sec=Math.max(5,Math.min(600,+e.target.value||60)); saveCfg(); };
-$("#btnStart").onclick = startGame;
+$("#secInput").onchange  = e=>{ cfg.sec=Math.max(5,Math.min(600,+e.target.value||60)); saveCfg(); renderSetup(); };
+$$("#secChips button").forEach(b=>b.onclick = ()=>{
+  cfg.sec = +b.dataset.sec; saveCfg(); renderSetup();
+});
+
+$("#btnEnter").onclick = startSetup;
+$("#btnStepBack").onclick = ()=>{
+  if(SETUP.i === 0){ showView("v-home"); renderHome(); }
+  else goStep(SETUP.i - 1, -1);
+};
+$("#btnNext").onclick = ()=>{ if(SETUP.i < 2) goStep(SETUP.i + 1, 1); else launchGame(); };
 
 $$("[data-judge]").forEach(b=>b.onclick=()=>judge(b.dataset.judge));
 $("#btnReady").onclick = startRound;
@@ -768,6 +866,18 @@ $("#btnPause").onclick = ()=>{
 
 $("#btnAgain").onclick = startGame;
 $("#btnBackHome").onclick = ()=>{ showView("v-home"); renderHome(); };
+
+/* 鍵盤：設定流程 */
+document.addEventListener("keydown", e=>{
+  if(!$("#v-setup").classList.contains("active")) return;
+  if(e.target.tagName === "INPUT" && e.key !== "Enter") return;
+  if(e.key === "Enter"){
+    e.preventDefault();
+    if(SETUP.i < 2) goStep(SETUP.i + 1, 1); else launchGame();
+  }else if(e.key === "Escape"){
+    e.preventDefault(); $("#btnStepBack").click();
+  }
+});
 
 /* 鍵盤控場 */
 document.addEventListener("keydown", e=>{
