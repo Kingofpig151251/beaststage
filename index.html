@@ -60,58 +60,68 @@
   .kbd{font-family:var(--font-mono); font-size:12px; padding:2px 7px; border-radius:6px;
     background:var(--fill); color:var(--ink-2)}
 
-  /* ---------- home ---------- */
-  #v-home .top{display:flex; justify-content:space-between; align-items:flex-start;
-    gap:12px; flex-wrap:wrap; margin-bottom:24px}
-  .setup{display:grid; grid-template-columns:minmax(0,1fr); gap:20px; align-items:stretch}
-  @media (min-width:900px){ .setup{grid-template-columns:repeat(2,minmax(0,1fr))} }
-  .stack{display:flex; flex-direction:column; gap:20px}
-  .stack > .well{flex:1}
+  /* ---------- home：單一張 sheet（設定 + 隊名 + 主動作），內容高度、垂直居中 ---------- */
+  body[data-view="home"] .wrap{padding-bottom:28px}
+  #v-home{display:none; flex-direction:column; justify-content:center; min-height:calc(100dvh - 50px)}
+  #v-home.active{display:flex}
+  #v-home .top{margin-bottom:24px}
 
-  .well{background:var(--surface); border-radius:var(--r-xl); padding:24px}
-  .well h2{margin-bottom:16px}
-  .well.teams{display:flex; flex-direction:column}
+  .sheet{display:flex; flex-direction:column; background:var(--surface);
+    border-radius:var(--r-xl); padding:0 24px}
 
-  .row{display:flex; align-items:center; gap:12px; flex-wrap:wrap; min-height:48px}
-  .row > label{font-size:15px; color:var(--ink-2)}
+  /* 兩條軌：label 起點 / 控件終點 */
+  .frow{display:grid; grid-template-columns:180px minmax(0,1fr); align-items:center;
+    gap:24px; padding:0; min-height:76px; position:relative}
+  .frow::before{content:""; position:absolute; top:0; left:0; right:0; height:var(--hair); background:var(--sep)}
+  .sheet > .frow:first-child::before{display:none}
+  .fnames::before{content:""; position:absolute; top:0; left:0; right:0; height:var(--hair); background:var(--sep)}
+  .flabel{font-size:17px; color:var(--ink)}
+  .funit{font-size:15px; color:var(--ink-2); font-variant-numeric:tabular-nums}
+  .ctl{display:flex; align-items:center; justify-content:flex-end; gap:12px}
+
+  /* 隊名：自動欄數，每欄最少 210px */
+  .fnames{display:grid; grid-template-columns:180px minmax(0,1fr); gap:24px;
+    padding:20px 0; position:relative; align-items:start}
+  .fnames > .flabel{padding-top:11px}
+  .namegrid{display:grid; grid-template-columns:repeat(auto-fit,minmax(170px,1fr)); gap:12px 16px}
+  .name-row{display:grid; grid-template-columns:28px minmax(0,1fr); gap:12px; align-items:center}
+  .name-row span{display:flex; align-items:center; justify-content:center; width:28px; height:28px;
+    font-size:15px; font-weight:600; color:var(--ink-2); font-variant-numeric:tabular-nums}
+
+  /* 主動作：卡內底部，同卡同寬 */
+  .faction{padding:20px 0 24px; border-top:var(--hair) solid var(--sep)}
+  .faction .btn-primary{width:100%; min-height:56px; font-size:19px; border-radius:var(--r-lg)}
 
   /* stepper：capsule */
   .stepper{display:flex; align-items:center; background:var(--fill); border-radius:var(--pill);
     padding:2px; gap:2px}
-  .step-btn{width:40px; height:40px; padding:0; display:grid; place-items:center;
+  .step-btn{width:44px; height:44px; padding:0; display:grid; place-items:center;
     border:0; border-radius:50%; background:transparent; color:var(--ink)}
   .step-btn svg{width:18px; height:18px; fill:none; stroke:currentColor; stroke-width:2.2; stroke-linecap:round}
   .step-btn:active{background:var(--fill-2)}
   .step-btn:disabled{opacity:.3; background:transparent; color:var(--ink-3); cursor:not-allowed}
-  #teamInput{width:52px; min-height:40px; padding:0; text-align:center; border:0; background:transparent;
+  #teamInput{width:56px; min-height:44px; padding:0; text-align:center; border:0; background:transparent;
     color:var(--ink); font-family:var(--font-display); font-size:20px; font-weight:600;
     -moz-appearance:textfield}
   #teamInput::-webkit-outer-spin-button,#teamInput::-webkit-inner-spin-button{-webkit-appearance:none; margin:0}
 
-  .names{display:flex; flex-direction:column; gap:12px; margin-top:20px; max-height:46vh; overflow-y:auto}
-  .name-row{display:grid; grid-template-columns:26px minmax(0,1fr); gap:10px; align-items:center}
-  .name-row span{display:flex; align-items:center; justify-content:center; width:26px; height:26px;
-    font-size:13px; font-weight:600; color:var(--ink-2); font-variant-numeric:tabular-nums}
-
   /* inputs */
   input,textarea,select{font-family:inherit; font-size:17px; color:var(--ink);
-    background:var(--fill); border:0; border-radius:var(--r-md); padding:11px 14px; min-height:44px; width:100%}
+    background:var(--fill); border:0; border-radius:var(--r-md); padding:11px 14px; min-height:48px; width:100%}
   input::placeholder,textarea::placeholder{color:var(--ink-3)}
   input:focus-visible,textarea:focus-visible,select:focus-visible,button:focus-visible,a:focus-visible{
     outline:3px solid var(--focus-ring); outline-offset:2px}
 
-  #secInput{width:88px; min-height:48px; text-align:center; font-family:var(--font-display);
+  #secInput{width:96px; min-height:48px; text-align:center; font-family:var(--font-display);
     font-size:20px; font-weight:600; background:var(--fill); -moz-appearance:textfield}
   #secInput::-webkit-outer-spin-button,#secInput::-webkit-inner-spin-button{-webkit-appearance:none; margin:0}
 
-  .qhead{display:flex; align-items:baseline; justify-content:space-between; gap:12px; margin-bottom:20px}
-  .qhead h2{margin:0}
   .qcount{display:inline-flex; align-items:baseline; gap:6px; font-family:var(--font-display);
     font-size:20px; font-weight:700; letter-spacing:-.02em; color:var(--ink)}
   .qcount .unit{font-size:15px; font-weight:500; color:var(--ink-2); letter-spacing:0}
-  .qedit{display:flex; align-items:center; justify-content:center; margin-top:auto; min-height:46px;
-    border-radius:var(--r-md); background:var(--fill); color:var(--ink); text-decoration:none;
-    font-size:17px; font-weight:500}
+  .qedit{display:inline-flex; align-items:center; justify-content:center; min-height:44px; padding:0 20px;
+    border-radius:var(--pill); background:var(--fill); color:var(--ink); text-decoration:none;
+    font-size:17px; font-weight:500; white-space:nowrap}
   .qedit:active{background:var(--fill-2)}
 
   /* ---------- buttons ---------- */
@@ -126,14 +136,6 @@
   .btn-quiet:active{background:var(--fill-2)}
   .btn-big{width:100%; padding:17px 18px; font-size:19px; font-weight:600}
 
-  .startbar{display:none; position:fixed; left:0; right:0; bottom:0; z-index:30;
-    background:var(--bar-bg); -webkit-backdrop-filter:saturate(180%) blur(20px);
-    backdrop-filter:saturate(180%) blur(20px); border-top:var(--hair) solid var(--sep)}
-  body[data-view="home"] .startbar{display:block}
-  .startbar > div{max-width:1024px; margin:0 auto; display:flex; align-items:center; gap:10px;
-    padding:12px max(20px,env(safe-area-inset-right)) calc(12px + env(safe-area-inset-bottom)) max(20px,env(safe-area-inset-left))}
-  .startbar #btnStart{flex:1; min-height:52px; font-size:19px; border-radius:var(--r-lg)}
-  .startbar .rail{display:flex; gap:8px; margin-left:auto}
 
   /* ---------- play ---------- */
   body[data-view="play"]{background:var(--bg)}
@@ -142,7 +144,6 @@
   body[data-view="play"]{overflow:hidden}
   body[data-view="play"] .wrap{padding:0; max-width:none}
   #v-play.active{display:flex}
-  body[data-view="play"] .startbar{display:none}
 
   .flash-top{display:flex; align-items:center; justify-content:space-between; gap:10px;
     padding:8px max(18px,env(safe-area-inset-right)) 8px max(18px,env(safe-area-inset-left))}
@@ -286,11 +287,10 @@
       </div>
     </header>
 
-    <div class="setup">
-      <section class="well teams">
-        <h2>隊伍名單</h2>
-        <div class="row" style="margin-bottom:10px">
-          <span class="kv">隊伍數量</span>
+    <section class="sheet">
+      <div class="frow">
+        <span class="flabel">隊伍數量</span>
+        <div class="ctl">
           <div class="stepper">
             <button class="step-btn" id="teamMinus" aria-label="減少一隊">
               <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M6 12h12"/></svg>
@@ -300,29 +300,35 @@
               <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M6 12h12"/><path d="M12 6v12"/></svg>
             </button>
           </div>
-          <span class="kv">隊</span>
+          <span class="funit">隊</span>
         </div>
-        <div class="names" id="nameList"></div>
-      </section>
-
-      <div class="stack">
-      <section class="well">
-        <h2>計時</h2>
-        <div class="row" style="margin-bottom:12px">
-          <label>每回合時間</label>
-          <input id="secInput" type="number" min="5" max="600" step="5" style="width:88px">
-          <span class="kv">秒</span>
-        </div>
-      </section>
-
-      <section class="well">
-        <div class="qhead">
-          <h2>題目</h2>
-          <b class="qcount" id="qCount">正在載入…</b>
-        </div>
-        <a class="btn-quiet qedit" href="/edit">編輯題目</a>
       </div>
-    </div>
+
+      <div class="frow">
+        <span class="flabel">每回合時間</span>
+        <div class="ctl">
+          <input id="secInput" type="number" min="5" max="600" step="5">
+          <span class="funit">秒</span>
+        </div>
+      </div>
+
+      <div class="frow">
+        <span class="flabel">題目</span>
+        <div class="ctl">
+          <b class="qcount" id="qCount">正在載入…</b>
+          <a class="qedit" href="/edit">編輯題目</a>
+        </div>
+      </div>
+
+      <div class="fnames">
+        <span class="flabel">隊名</span>
+        <div class="namegrid" id="nameList"></div>
+      </div>
+
+      <div class="faction">
+        <button class="btn-primary" id="btnStart">開始遊戲</button>
+      </div>
+    </section>
   </section>
 
   <!-- ========== 遊戲 ========== -->
@@ -393,11 +399,6 @@
 
 </div>
 
-<div class="startbar">
-  <div>
-    <button class="btn-primary" id="btnStart">開始遊戲</button>
-  </div>
-</div>
 
 <div class="toast" id="toast"></div>
 <script>
