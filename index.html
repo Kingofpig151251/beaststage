@@ -99,7 +99,8 @@
   .dots{display:flex; justify-content:center; gap:8px}
   .dots i{width:9px; height:9px; border-radius:50%; background:var(--sep);
     transition:background-color .3s var(--ease), transform .3s var(--ease)}
-  .dots i.on{background:var(--blue); transform:scale(1.55)}
+  .dots i.on{background:var(--blue)}
+  .dots i.cur{transform:scale(1.6)}
   .step-count{font-size:15px; color:var(--ink-3); text-align:right; font-variant-numeric:tabular-nums}
 
   .stage{position:relative; flex:1; min-height:0; margin:8px 0}
@@ -367,8 +368,8 @@
       <button class="icon-btn" id="btnStepBack" aria-label="上一步" title="上一步（Esc）">
         <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M14.5 5 7.5 12l7 7"/></svg>
       </button>
-      <div class="dots" id="stepDots" aria-hidden="true"><i></i><i></i><i></i><i></i></div>
-      <div class="step-count" id="stepCount">1 / 4</div>
+      <div class="dots" id="stepDots" aria-hidden="true"><i></i><i></i><i></i></div>
+      <div class="step-count" id="stepCount">1 / 3</div>
     </div>
 
     <div class="stage" id="stepStage">
@@ -401,12 +402,6 @@
         </div>
       </section>
 
-      <section class="sstep" data-step="3">
-        <h2 class="sstep-title">題目</h2>
-        <div class="bigcount" id="qCount"></div>
-        <a class="linkbtn" id="btnEditBank" href="/edit">編輯題目</a>
-        <div class="sstep-hint" id="qHint">一行一題，任何人皆可修改</div>
-      </section>
     </div>
 
     <div class="setup-foot">
@@ -612,19 +607,22 @@ function renderSummary(){
     : "題目尚未連線";
   const next = $("#btnNext");
   next.disabled = !ok;
-  next.textContent = SETUP.i < 3 ? "繼續" : (ok ? "開始遊戲" : "題目未連線");
+  next.textContent = SETUP.i < 2 ? "繼續" : (ok ? "開始遊戲" : "題目未連線");
 }
 
 function goStep(i, dir){
-  SETUP.i = Math.max(0, Math.min(3, i));
+  SETUP.i = Math.max(0, Math.min(2, i));
   $$(".sstep").forEach(el=>{
     const k = +el.dataset.step;
     el.classList.toggle("on", k === SETUP.i);
     el.classList.toggle("back", k < SETUP.i || (dir < 0 && k > SETUP.i));
   });
-  $$("#stepDots i").forEach((d,n)=>d.classList.toggle("on", n <= SETUP.i));
-  $("#stepCount").textContent = `${SETUP.i+1} / 4`;
-  $("#btnNext").textContent = SETUP.i < 3 ? "繼續" : "開始遊戲";
+  $$("#stepDots i").forEach((d,n)=>{
+    d.classList.toggle("on", n <= SETUP.i);
+    d.classList.toggle("cur", n === SETUP.i);
+  });
+  $("#stepCount").textContent = `${SETUP.i+1} / 3`;
+  $("#btnNext").textContent = SETUP.i < 2 ? "繼續" : "開始遊戲";
   renderSummary();
   if(SETUP.i === 1){
     const first = $("#nameList input");
@@ -910,7 +908,7 @@ $("#btnStepBack").onclick = ()=>{
   if(SETUP.i === 0){ showView("v-home"); renderHome(); }
   else goStep(SETUP.i - 1, -1);
 };
-$("#btnNext").onclick = ()=>{ if(SETUP.i < 3) goStep(SETUP.i + 1, 1); else launchGame(); };
+$("#btnNext").onclick = ()=>{ if(SETUP.i < 2) goStep(SETUP.i + 1, 1); else launchGame(); };
 
 $$("[data-judge]").forEach(b=>b.onclick=()=>judge(b.dataset.judge));
 $("#btnReady").onclick = startRound;
@@ -925,7 +923,7 @@ function backToSetup(){
   $("#readyOverlay").style.display = "none";
   document.body.classList.remove("is-ready");
   showView("v-setup");
-  goStep(3, -1);
+  goStep(2, -1);
 }
 
 $("#btnExit").onclick = ()=>{
@@ -966,7 +964,7 @@ document.addEventListener("keydown", e=>{
   if(e.target.tagName === "INPUT" && e.key !== "Enter") return;
   if(e.key === "Enter"){
     e.preventDefault();
-    if(SETUP.i < 3) goStep(SETUP.i + 1, 1); else launchGame();
+    if(SETUP.i < 2) goStep(SETUP.i + 1, 1); else launchGame();
   }else if(e.key === "Escape"){
     e.preventDefault(); $("#btnStepBack").click();
   }
