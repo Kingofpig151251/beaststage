@@ -374,6 +374,7 @@
   .cd-num{font-family:var(--font-display); font-weight:700; color:var(--ink);
     font-size:clamp(92px,19vh,184px); line-height:1; letter-spacing:-.04em;
     font-variant-numeric:tabular-nums}
+  .cd-num.word{font-size:clamp(38px,8vh,72px); letter-spacing:.02em; text-align:center}
   .cd-num.beat{animation:cdBeat .55s var(--ease)}
   @keyframes cdBeat{0%{transform:scale(1.24); opacity:.3} 100%{transform:scale(1); opacity:1}}
   .cd-team{display:flex; align-items:center; gap:12px; font-weight:600;
@@ -1058,6 +1059,7 @@ function startRound(){
   const BEAT = REDUCE ? 700 : 1000;
   const paint = v => {
     num.textContent = v;
+    num.classList.toggle("word", typeof v === "string");   // 文字（開始）用細字級，避免撐出圓圈
     num.classList.remove("beat"); void num.offsetWidth; num.classList.add("beat");
     prog.style.transition = "none";
     prog.style.strokeDashoffset = "0";
