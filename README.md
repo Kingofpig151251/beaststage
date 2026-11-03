@@ -130,8 +130,11 @@ samples/hk-icebreaker.json 新 DB 首次 seed 題庫（6 類 62 題）
 完整聲明（參與範圍、審核流程、第三方素材、使用者提示、英文摘要）見
 [`AI-DISCLOSURE.md`](AI-DISCLOSURE.md)。
 
-## 十三、參與
+## 十三、參與方式
 
-- 貢獻方式與設計公約：[`CONTRIBUTING.md`](CONTRIBUTING.md)
-- 安全問題回報：[`SECURITY.md`](SECURITY.md)
-- 已知的設計取捨（開放寫入、無帳號、無本機備份）列於 SECURITY.md 末段
+本項目由作者 **Leung Tung Lam** 獨立開發，**不接受外部 Pull Request，也不打算與他人共同開發**。
+程式碼以 MIT 授權公開，你可以自由 fork、修改、自行發佈（請保留授權與署名）。
+
+- **Bug 回報與功能建議**：歡迎開 GitHub Issue，但作者不保證回應時間或採納。
+- **安全問題**：請依 [`SECURITY.md`](SECURITY.md) 私下回報，不要開公開 issue。
+- **自行維護的分支**：與本項目無隸屬關係，作者不提供支援。
