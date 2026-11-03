@@ -1227,7 +1227,6 @@ function slamGate(then){
   gate.classList.add("on");
   void gate.offsetWidth;                        // 先讓 display 生效，過場才播得出
   gate.classList.add("closed");
-  beep(110, 0.20, 0.075);                       // 幕落地嘅悶響
   const HIT  = REDUCE ? 80  : 560;              // 幕合埋（0.46s）之後見字
   const CARD = REDUCE ? 300 : 1250;             // 停一停，轉結算卡
   setTimeout(()=>{ gate.classList.add("text"); beep(300, 0.13, 0.05); }, HIT);
