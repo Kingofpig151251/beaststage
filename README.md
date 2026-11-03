@@ -89,7 +89,6 @@ api/_app.py                Vercel 後端（FastAPI + Postgres）
 api/[...path].py / index.py  路由入口
 vercel.json                 rewrites、function 設定
 tests/mock_sync_server.py  本地 mock 後端（開發用）
-docs/                      設計規範與審查紀錄
 samples/hk-icebreaker.json 首次 seed 題庫
 ```
 
