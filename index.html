@@ -78,10 +78,10 @@
   .landing-title{margin:14px 0 0; font-family:var(--font-display); font-weight:700;
     font-size:clamp(76px,16vh,168px); letter-spacing:-.045em; line-height:.98;
     animation:rise .62s .06s var(--ease) both}
-  .landing-go{margin-top:36px; min-width:260px; min-height:60px; font-size:21px; border-radius:var(--pill);
+  .landing-go{margin-top:36px; min-width:260px; min-height:60px; font-size:21px; border-radius:var(--r-lg);
     animation:rise .62s .18s var(--ease) both}
   .landing-link{display:inline-flex; align-items:center; justify-content:center; margin-top:18px;
-    min-height:48px; padding:0 26px; border-radius:var(--pill); background:var(--fill);
+    min-height:48px; padding:0 26px; border-radius:var(--r-lg); background:var(--fill);
     color:var(--ink); font-size:17px; font-weight:600; text-decoration:none;
     animation:rise .62s .22s var(--ease) both}
   .landing-link:active{background:var(--fill-2)}
@@ -127,18 +127,9 @@
   .bignum-sec{justify-content:center; padding-left:clamp(24px,3vw,40px)}
   .bignum-sec input{width:3ch}
   .bignum-unit{font-family:var(--font-display); font-size:clamp(24px,3.4vh,34px); font-weight:600; color:var(--ink-2); margin-left:-6px}
-  .round-btn{width:clamp(56px,7vh,72px); height:clamp(56px,7vh,72px); border-radius:50%;
-    background:var(--fill); color:var(--ink); font-size:clamp(24px,3.2vh,32px); font-weight:400;
-    display:grid; place-items:center; line-height:1}
-  .round-btn:active{background:var(--fill-2)}
   .pop{animation:pop .34s var(--ease)}
   @keyframes pop{0%{transform:scale(1)} 38%{transform:scale(1.07)} 100%{transform:scale(1)}}
-  .round-btn:disabled{background:var(--fill-3); color:var(--ink-3); cursor:not-allowed; transform:none}
 
-  .chips{display:flex; gap:12px; flex-wrap:wrap; justify-content:center}
-  .chips button{min-height:48px; padding:0 26px; border-radius:var(--pill); background:var(--fill);
-    color:var(--ink); font-size:17px; font-weight:600; font-variant-numeric:tabular-nums}
-  .chips button[aria-pressed="true"]{background:var(--blue); color:var(--on-accent)}
 
   .namegrid{display:grid; grid-template-columns:repeat(auto-fit,minmax(240px,1fr)); gap:12px 16px;
     width:min(760px,100%)}
@@ -153,6 +144,23 @@
     border-radius:50%; background:var(--tc); fill:none; stroke:var(--on-accent); stroke-width:2.4;
     stroke-linejoin:round}
   .animal-btn:active{background:color-mix(in oklab, var(--tc) 28%, transparent)}
+
+  /* ---------- tile：同 animal-grid 同一語言，全站共用 ---------- */
+  .tile-grid{display:grid; gap:10px; width:min(760px,100%)}
+  .tile-grid.count{grid-template-columns:repeat(7,minmax(0,1fr)); width:min(720px,100%)}
+  .tile-grid.secs{grid-template-columns:repeat(4,minmax(0,1fr)); width:min(520px,100%)}
+  .tile{position:relative; display:flex; flex-direction:column; align-items:center; justify-content:center;
+    gap:4px; padding:14px 8px; min-height:88px; border-radius:var(--r-md);
+    background:var(--fill); box-shadow:inset 0 0 0 1px var(--sep); color:var(--ink);
+    font-family:var(--font-display); font-weight:700; line-height:1.05}
+  .tile .tile-num{font-size:clamp(26px,4.4vh,40px); letter-spacing:-.02em; font-variant-numeric:tabular-nums}
+  .tile .tile-cap{font-family:var(--font-body); font-size:13px; font-weight:600; color:var(--ink-2)}
+  .tile[aria-pressed="true"], .tile .on{box-shadow:inset 0 0 0 2.5px var(--blue);
+    background:color-mix(in oklab, var(--blue) 12%, var(--surface))}
+  .tile[aria-pressed="true"] .tile-cap{color:var(--blue)}
+  .tile[aria-pressed="true"]::after{content:"✓"; position:absolute; top:6px; right:8px;
+    font-size:12px; font-weight:700; color:var(--blue)}
+  .tile:active{background:var(--fill-2)}
 
   /* 選隊色面板 */
   .sheet-wrap{position:fixed; inset:0; z-index:70; display:none; place-items:end center;
@@ -182,13 +190,9 @@
   .bigcount{font-family:var(--font-display); font-size:clamp(72px,14vh,150px); font-weight:700;
     letter-spacing:-.04em; line-height:1; min-height:1em; font-variant-numeric:tabular-nums}
   .bigcount .unit{font-size:clamp(22px,3.2vh,32px); font-weight:600; color:var(--ink-2); margin-left:10px}
-  .linkbtn{display:inline-flex; align-items:center; justify-content:center; min-height:52px;
-    padding:0 30px; border-radius:var(--pill); background:var(--fill); color:var(--ink);
-    text-decoration:none; font-size:17px; font-weight:600}
-  .linkbtn:active{background:var(--fill-2)}
 
   .setup-foot{display:flex; flex-direction:column; align-items:center; gap:12px; padding:12px 0 8px}
-  .setup-foot .btn-primary{min-width:260px; min-height:56px; font-size:19px; border-radius:var(--pill)}
+  .setup-foot .btn-primary{min-width:260px; min-height:56px; font-size:19px; border-radius:var(--r-lg)}
 
   /* 開始遊戲：舞台幕 */
   .launch{position:fixed; inset:0; z-index:80; pointer-events:none; overflow:hidden}
@@ -236,7 +240,7 @@
     font-size:20px; font-weight:700; letter-spacing:-.02em; color:var(--ink)}
   .qcount .unit{font-size:15px; font-weight:500; color:var(--ink-2); letter-spacing:0}
   .qedit{display:inline-flex; align-items:center; justify-content:center; min-height:44px; padding:0 20px;
-    border-radius:var(--pill); background:var(--fill); color:var(--ink); text-decoration:none;
+    border-radius:var(--r-lg); background:var(--fill); color:var(--ink); text-decoration:none;
     font-size:17px; font-weight:500; white-space:nowrap}
   .qedit:active{background:var(--fill-2)}
 
@@ -329,15 +333,17 @@
   .readyTeam{font-family:var(--font-display); font-weight:700; font-size:clamp(52px,13vh,140px);
     letter-spacing:-.03em; line-height:1.02; margin:10px 0 16px}
   .readyScores{display:flex; gap:12px; flex-wrap:wrap; justify-content:center; margin-top:clamp(20px,3.4vh,32px)}
-  .readyScores .pill-mark{display:inline-block; width:16px; height:16px; font-size:16px; color:var(--tc)}
+  .readyScores .score-tile{display:flex; flex-direction:column; align-items:center; gap:2px;
+    min-width:96px; padding:10px 14px; border-radius:var(--r-md);
+    background:var(--fill); box-shadow:inset 0 0 0 1px var(--sep)}
+  .readyScores .score-tile.cur{background:color-mix(in oklab, var(--tc) 18%, var(--surface));
+    box-shadow:inset 0 0 0 2.5px var(--tc)}
+  .readyScores .pill-mark{display:block; width:22px; height:22px; font-size:22px; color:var(--tc)}
   .readyScores .pill-mark svg{display:block; width:1em; height:1em}
-  .readyScores span{display:inline-flex; align-items:center; gap:8px; padding:9px 16px;
-    border-radius:var(--pill); background:var(--fill); font-size:15px; color:var(--ink-2)}
+  .readyScores .score-name{font-size:13px; font-weight:600; color:var(--ink);
+    max-width:12ch; overflow:hidden; text-overflow:ellipsis; white-space:nowrap}
   .readyScores b{font-family:var(--font-display); font-size:17px; font-weight:600; color:var(--ink);
     font-variant-numeric:tabular-nums}
-  .readyScores .cur{background:color-mix(in oklab, var(--tc) 20%, var(--surface-2));
-    color:var(--ink); box-shadow:inset 0 0 0 2px var(--tc)}
-  .readyScores .cur b{color:var(--ink)}
   .readyCard button{margin-top:clamp(24px,4vh,36px); min-height:56px; padding:0 40px;
     background:var(--blue-fill); color:var(--on-accent); font-size:19px; font-weight:600; border-radius:var(--r-lg)}
   .readyKbd{margin-top:14px; font-size:13px; color:var(--ink-3)}
@@ -354,11 +360,16 @@
     display:grid; grid-template-columns:minmax(0,1fr) auto; align-items:end; gap:4px 16px}
   .champ.tied{background:var(--surface-2)}
   .champ-label{grid-column:1; font-size:15px; font-weight:600; color:var(--blue); letter-spacing:.01em}
-  .champ-mark{display:inline-block; vertical-align:-.12em; margin-right:12px; color:var(--tc);
-    font-size:clamp(34px,5.4vh,52px); line-height:1}
+  .champ-tile{display:inline-grid; place-items:center; width:clamp(52px,7vh,68px); aspect-ratio:1;
+    border-radius:14px; margin-right:14px; vertical-align:-.16em;
+    background:color-mix(in oklab, var(--tc) 14%, transparent);
+    box-shadow:inset 0 0 0 1px color-mix(in oklab, var(--tc) 34%, transparent)}
+  .champ-mark{display:block; font-size:clamp(30px,4.4vh,42px); line-height:1; color:var(--tc)}
   .champ-mark svg{display:block; width:1em; height:1em}
-  .rk-mark{display:inline-block; vertical-align:-.14em; margin-right:10px; color:var(--tc);
-    font-size:24px; line-height:1}
+  .rk-tile{width:44px; height:44px; border-radius:12px; display:grid; place-items:center;
+    background:color-mix(in oklab, var(--tc) 14%, transparent);
+    box-shadow:inset 0 0 0 1px color-mix(in oklab, var(--tc) 34%, transparent); flex:0 0 auto}
+  .rk-tile .rk-mark{display:block; font-size:24px; line-height:1; color:var(--tc)}
   .rk-mark svg{display:block; width:1em; height:1em}
   .champ-name{grid-column:1; font-family:var(--font-display); font-size:clamp(30px,5vh,46px);
     font-weight:700; letter-spacing:-.02em; line-height:1.05}
@@ -371,9 +382,9 @@
 
   .rank{margin-top:24px; padding:0 24px}
   .rank-h{font-size:15px; font-weight:600; color:var(--ink-2); margin:0 0 4px}
-  .rk{position:relative; display:grid; grid-template-columns:34px minmax(0,1fr) auto; align-items:center;
-    gap:12px; padding:14px 0}
-  .rk::after{content:""; position:absolute; left:46px; right:0; bottom:0; height:var(--hair);
+  .rk{position:relative; display:grid; grid-template-columns:26px 44px minmax(0,1fr) auto; align-items:center;
+    gap:12px; padding:12px 0}
+  .rk::after{content:""; position:absolute; left:82px; right:0; bottom:0; height:var(--hair);
     background:var(--sep)}
   .rk:last-child::after{display:none}
   .rk .no{font-size:15px; color:var(--ink-3); font-variant-numeric:tabular-nums}
@@ -437,12 +448,15 @@
     <div class="stage" id="stepStage">
       <section class="sstep" data-step="0">
         <h2 class="sstep-title">有多少隊參賽？</h2>
-        <div class="bignum">
-          <button class="round-btn" id="teamMinus" aria-label="減少一隊">−</button>
-          <input id="teamInput" type="number" inputmode="numeric" min="2" max="8" step="1" value="2" aria-label="隊伍數量">
-          <button class="round-btn" id="teamPlus" aria-label="增加一隊">+</button>
+        <div class="tile-grid count" id="teamTiles">
+          <button class="tile" data-teams="2" aria-pressed="false"><span class="tile-num">2</span><span class="tile-cap">隊</span></button>
+          <button class="tile" data-teams="3" aria-pressed="false"><span class="tile-num">3</span><span class="tile-cap">隊</span></button>
+          <button class="tile" data-teams="4" aria-pressed="false"><span class="tile-num">4</span><span class="tile-cap">隊</span></button>
+          <button class="tile" data-teams="5" aria-pressed="false"><span class="tile-num">5</span><span class="tile-cap">隊</span></button>
+          <button class="tile" data-teams="6" aria-pressed="false"><span class="tile-num">6</span><span class="tile-cap">隊</span></button>
+          <button class="tile" data-teams="7" aria-pressed="false"><span class="tile-num">7</span><span class="tile-cap">隊</span></button>
+          <button class="tile" data-teams="8" aria-pressed="false"><span class="tile-num">8</span><span class="tile-cap">隊</span></button>
         </div>
-        <div class="sstep-hint">最少 2 隊，最多 8 隊</div>
       </section>
 
       <section class="sstep" data-step="1">
@@ -456,11 +470,11 @@
           <input id="secInput" type="number" min="5" max="600" step="5" aria-label="每回合秒數">
           <span class="bignum-unit">秒</span>
         </div>
-        <div class="chips" id="secChips">
-          <button type="button" data-sec="30">30</button>
-          <button type="button" data-sec="60">60</button>
-          <button type="button" data-sec="90">90</button>
-          <button type="button" data-sec="120">120</button>
+        <div class="tile-grid secs" id="secChips">
+          <button type="button" class="tile" data-sec="30" aria-pressed="false"><span class="tile-num">30</span><span class="tile-cap">秒</span></button>
+          <button type="button" class="tile" data-sec="60" aria-pressed="false"><span class="tile-num">60</span><span class="tile-cap">秒</span></button>
+          <button type="button" class="tile" data-sec="90" aria-pressed="false"><span class="tile-num">90</span><span class="tile-cap">秒</span></button>
+          <button type="button" class="tile" data-sec="120" aria-pressed="false"><span class="tile-num">120</span><span class="tile-cap">秒</span></button>
         </div>
       </section>
 
@@ -710,9 +724,7 @@ function renderSetup(){
   if(qc) qc.innerHTML = lines.length ? `${lines.length}<span class="unit">題</span>` : "";
   const qh = $("#qHint");
   if(qh) qh.textContent = lines.length ? "一行一題，任何人皆可修改" : "題目尚未連線，正在重試…";
-  $("#teamInput").value = cfg.teams;
-  $("#teamMinus").disabled = cfg.teams <= 2;
-  $("#teamPlus").disabled  = cfg.teams >= 8;
+  $$("#teamTiles .tile").forEach(b=>b.setAttribute("aria-pressed", String(+b.dataset.teams === cfg.teams)));
 
   $("#nameList").innerHTML = Array.from({length:cfg.teams},(_,i)=>{
     const a = animalAt(i);
@@ -921,8 +933,10 @@ function enterReady(){
   $("#rdTeam").style.setProperty("--tc", cur.color);
   $("#readyOverlay").style.setProperty("--tc", cur.color);
   $("#rdScores").innerHTML = G.teams.map((t,i)=>
-    `<span class="${i===G.turn?"cur":""}" style="--tc:${t.color}">
-       <em class="pill-mark">${ICONS[t.id] || ""}</em>${esc(t.name)}<b>${t.score}</b></span>`).join("");
+    `<div class="score-tile${i===G.turn?" cur":""}" style="--tc:${t.color}">
+       <em class="pill-mark">${ICONS[t.id] || ""}</em>
+       <span class="score-name">${esc(t.name)}</span>
+       <b>${t.score}</b></div>`).join("");
   $("#rdCount").textContent = "";
   $("#rdCount").classList.remove("on");
   $("#btnReady").style.display = "";
@@ -1095,7 +1109,7 @@ function endGame(){
     <div class="champ ${tied ? "tied" : ""}">
       <div class="champ-label">${tied ? "並列第一" : "冠軍"}</div>
       <div class="champ-name" style="--tc:${top.color}">
-        <span class="champ-mark">${ICONS[top.id] || ""}</span>${winners.map(t=>esc(t.name)).join(" · ")}</div>
+        <span class="champ-tile"><span class="champ-mark">${ICONS[top.id] || ""}</span></span>${winners.map(t=>esc(t.name)).join(" · ")}</div>
       <div class="champ-score"><em>總分</em>${top.score}<span>分</span></div>
       <div class="champ-meta">對 ${top.ok} · 跳 ${top.skip}</div>
     </div>`;
@@ -1105,7 +1119,8 @@ function endGame(){
     <div class="rank-h">其餘名次</div>` + rest.map((t,idx)=>`
     <div class="rk" style="--tc:${t.color}">
       <div class="no">${idx+winners.length+1}</div>
-      <div class="nm"><span class="rk-mark">${ICONS[t.id] || ""}</span>${esc(t.name)}
+      <div class="rk-tile"><span class="rk-mark">${ICONS[t.id] || ""}</span></div>
+      <div class="nm">${esc(t.name)}
         <div class="st">對 ${t.ok} · 跳 ${t.skip}</div>
       </div>
       <div class="pt">${t.score}</div>
@@ -1118,12 +1133,10 @@ function setTeams(n){
   cfg.teams = Math.max(2, Math.min(8, Math.round(+n || 2)));
   ensureUniqueAnimals();
   saveCfg(); renderHome();
-  const el = $("#teamInput");
-  el.classList.remove("pop"); void el.offsetWidth; el.classList.add("pop");
+  const el = document.querySelector(`#teamTiles .tile[data-teams="${cfg.teams}"]`);
+  if(el){ el.classList.remove("pop"); void el.offsetWidth; el.classList.add("pop"); }
 }
-$("#teamInput").onchange = e=> setTeams(e.target.value);
-$("#teamMinus").onclick = ()=> setTeams(cfg.teams - 1);
-$("#teamPlus").onclick  = ()=> setTeams(cfg.teams + 1);
+$$("#teamTiles .tile").forEach(b=>b.onclick = ()=> setTeams(+b.dataset.teams));
 $("#secInput").onchange  = e=>{ cfg.sec=Math.max(5,Math.min(600,+e.target.value||60)); saveCfg(); renderSetup(); };
 $$("#secChips button").forEach(b=>b.onclick = ()=>{
   cfg.sec = +b.dataset.sec; saveCfg(); renderSetup();
