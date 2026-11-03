@@ -81,13 +81,22 @@ PUT  /api/text      整份取代（開放寫入，/edit 用）
 - 舞台優先：出題畫面只有一個大字
 - 動效：步進 420ms `cubic-bezier(.32,.72,0,1)`、開場幕 460ms、藍幕以 `clip-path` 夾合、倒數每拍 1s、回合結算停留 1.55s
 - 落閘、倒數、結算共用同一套藍幕 `clip-path`／位移語言：幕合 → 幕上出字 → 幕開
-- 音效：倒數（三短一長）與回合結算提示音用 WebAudio 即時合成（正弦波），**冇音檔**，所以零授權問題、零額外下載；落閘本身無聲
+- 音效：**判定與倒數全部用真音源**——
+  「對」門鐘叮噹（`sfx/dingdong.mp3`，Wikimedia Commons 公共領域，1.7s）／
+  「跳過」子彈飛過（`sfx/whoosh.mp3`，合成）／
+  **倒數**（`sfx/countdown.mp3`，OpenGameArt 賽車起步錄音，CC0，4.25s）
+- 倒數錄音三個起音正好在 0／1／2 秒、GO 在 3 秒，同畫面每拍 1 秒天生對齊，所以整段照播、不逐拍發聲
+- 其餘（「時間到！」、結算卡）暫用 WebAudio 合成正弦波；落閘本身無聲
+- 兩個 mp3 共約 **26KB**，`index.html` 大小不變；第一次觸控時用 `decodeAudioData` 預載，之後播放零延遲
 - 系統開了「減少動態效果」時：動畫時長壓到近 0，倒數改 0.7s 一拍；幕照合、照停，等人按「繼續」
 
 ## 檔案
 
 ```
 index.html                 主持台（單檔，含 SVG 圖示）
+sfx/dingdong.mp3           判定「對」：門鐘叮噹
+sfx/whoosh.mp3             判定「跳過」：子彈飛過
+sfx/countdown.mp3          倒數 3／2／1＋開始（真實賽車起步錄音）
 edit.html                  題目編輯（一個 textarea + 自動儲存）
 api/_app.py                Vercel 後端（FastAPI + Postgres，2 個路由）
 api/[...path].py / index.py  路由入口
@@ -130,6 +139,9 @@ samples/hk-icebreaker.json 首次 seed 題庫
 - **GitHub 圖示**：取自 **Octicons**（MIT）。GitHub 名稱與 Octocat 圖案為 GitHub, Inc. 的商標，
   此處僅用作連結本項目原始碼，不代表任何認可或關聯。
 - **字體**：沒有內嵌任何字體檔，只用 `system-ui`；裝置上的系統字體依該裝置授權，不隨本項目轉授。
+- **判定音效**：`sfx/dingdong.mp3` 來自 Wikimedia Commons《Doorbell-cheap-dingdong》（Public domain）。
+  `sfx/whoosh.mp3` 為本項目自行合成（掃頻噪音），無第三方素材。
+- **倒數音效**：`sfx/countdown.mp3` 來自 OpenGameArt《race start countdown》（CC0 1.0）。
 - **依賴**：見 `requirements.txt`（FastAPI、psycopg 等），各自依原授權（MIT / BSD / Apache-2.0）。
 
 **Built with Hermes & OpenCode**

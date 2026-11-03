@@ -1063,6 +1063,32 @@ function audioCtx(){
   if(AC.state === "suspended") AC.resume();
   return AC;
 }
+/* 音檔：判定用真音源（門鐘／子彈），其餘場合仍用合成音 */
+const SFX_SRC = { ding: "/sfx/dingdong.mp3", whoosh: "/sfx/whoosh.mp3", countdown: "/sfx/countdown.mp3" };
+const SFX = {};
+let SFX_LOADING = false;
+async function loadSfx(){
+  const c = audioCtx(); if(!c || SFX_LOADING) return;
+  SFX_LOADING = true;
+  await Promise.all(Object.entries(SFX_SRC).map(async ([k, url])=>{
+    try{
+      const r = await fetch(url, {cache:"force-cache"});
+      SFX[k] = await c.decodeAudioData(await r.arrayBuffer());
+    }catch(e){ /* 音檔拿不到就靜靜留空，唔影響流程 */ }
+  }));
+}
+function sfx(name, vol=0.85){
+  const c = audioCtx(), buf = SFX[name];
+  if(!c || !buf) return false;
+  const src = c.createBufferSource(), g = c.createGain();
+  src.buffer = buf; g.gain.value = vol;
+  src.connect(g).connect(c.destination);
+  src.start();
+  return true;
+}
+document.addEventListener("pointerdown", loadSfx, {once:true});
+document.addEventListener("keydown", loadSfx, {once:true});
+
 function beep(freq, dur, vol){
   const c = audioCtx(); if(!c) return;
   const t0 = c.currentTime, o = c.createOscillator(), g = c.createGain();
@@ -1100,11 +1126,12 @@ function startRound(){
     prog.style.strokeDashoffset = String(CD_CIRC);
   };
   let n = 3;
-  paint(n); beep(560, 0.10, 0.05);
+  paint(n);
+  sfx("countdown", 0.9);        // 真實錄音：0／1／2 秒三響，3 秒 GO，同畫面每拍 1 秒對齊
   const tick = setInterval(()=>{
     n--;
-    if(n > 0){ paint(n); beep(560, 0.10, 0.05); }
-    else if(n === 0){ paint("開始"); beep(880, 0.26, 0.06); }
+    if(n > 0){ paint(n); }
+    else if(n === 0){ paint("開始"); }
     else {
       clearInterval(tick);
       box.classList.remove("on");
@@ -1203,8 +1230,8 @@ function judge(kind){
   const delta = kind==="ok" ? 1 : 0;
   G.judged++;
   t.score += delta;
-  if(kind==="ok"){ t.ok++; fxOk(); }
-  else { t.skip++; fxSkip(); }
+  if(kind==="ok"){ t.ok++; fxOk(); sfx("ding"); }
+  else { t.skip++; fxSkip(); sfx("whoosh", 0.75); }
   G.cur = drawItem();
   renderPlay();
 }
