@@ -3,9 +3,8 @@
 ------------------------------------------------------------------
 題目就係一段純文字，冇分類、冇組合、冇 token。
 
-  GET  /api/ping
   GET  /api/text   → {"text": "...", "updated_at": "..."}
-  PUT  /api/text   → 整份取代；每次覆寫前留 3 份快照（meta: snap1–snap3）
+  PUT  /api/text   → 整份取代（無快照、無歷史）
 
 環境變數
   DATABASE_URL   postgres://...（Neon / Vercel Marketplace 的 Postgres）
@@ -88,57 +87,16 @@ def seed_text():
     return "\n".join(out)
 
 
-def legacy_text(cur):
-    """舊版存 decks/items；有就轉成一段文字（一次性遷移）。"""
-    try:
-        cur.execute("SELECT id FROM decks ORDER BY sort, name")
-        decks = cur.fetchall()
-    except Exception:
-        return None
-    if not decks:
-        return None
-    out = []
-    for d in decks:
-        cur.execute("SELECT text FROM items WHERE deck_id=%s ORDER BY sort, id", (d["id"],))
-        for r in cur.fetchall():
-            if r["text"].strip():
-                out.append(r["text"].strip())
-    return "\n".join(out) if out else None
-
-
 def read_text(cur):
     text = get_meta(cur, "text")
     if text is None:
-        text = legacy_text(cur)
-        if text is None:
-            text = seed_text()
+        text = seed_text()
         put_meta(cur, "text", text)
         put_meta(cur, "updated_at", now())
     return text
 
 
-def snapshot(cur, text):
-    """覆寫前留 3 份：snap3 ← snap2 ← snap1 ← 舊內容。"""
-    if not text:
-        return
-    s1 = get_meta(cur, "snap1")
-    s2 = get_meta(cur, "snap2")
-    if s2:
-        put_meta(cur, "snap3", s2)
-    if s1:
-        put_meta(cur, "snap2", s1)
-    put_meta(cur, "snap1", text)
-
-
 # ------------------------------------------------------------------ routes
-@app.get("/api/ping")
-def ping():
-    schema()
-    with conn() as c, c.cursor() as cur:
-        cur.execute("SELECT 1")
-    return {"ok": True, "time": now(), "version": 3, "db": True}
-
-
 @app.get("/api/text")
 def text_get():
     schema()
@@ -157,7 +115,6 @@ async def text_put(request: Request):
         return JSONResponse({"error": "text 要係字串"}, status_code=400)
     text = text.replace("\r\n", "\n").replace("\r", "\n")[:200000]
     with conn() as c, c.cursor() as cur:
-        snapshot(cur, get_meta(cur, "text"))
         put_meta(cur, "text", text)
         put_meta(cur, "updated_at", now())
     return {"ok": True, "chars": len(text)}

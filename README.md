@@ -11,15 +11,15 @@
 ## 玩法
 
 一隊派一人**背向屏幕**，屏幕出一個詞，全隊用說話／動作提示（不可以講出題目上任何一隻字），
-主持按「對」或「跳過」，限時內猜得多就贏。
+主持按 **→** 判對、按 **←** 判跳過，限時內猜得多就贏。
 
 ## 主持流程
 
 1. **入口**：大電視 → 開始
 2. **三步設定**：隊伍數量（2–8）→ 隊名（可改動物與隊色）→ 每回合時間（30／60／90／120 或自訂）
 3. **開場**：上下兩塊藍幕夾合，幕上顯示全部隊伍一字排開，之後分開入場
-4. **準備畫面**：第 N 隊、動物圖示、隊名、全隊分數
-5. **一個回合**：按「開始」→ 3、2、1 倒數 → 出題兼起錶；時間到自動跳下一隊
+4. **準備畫面**：第 N 隊、動物圖示、隊名、全隊分數，按「準備好」繼續
+5. **一個回合**：按「準備好」→ 3、2、1 倒數 → 出題兼起錶；時間到自動跳下一隊
 6. **結果頁**：冠軍卡 + 其餘名次
 
 出題畫面只有一個大字：冇分數、冇類別、冇剩題數。
@@ -31,10 +31,10 @@
 | 左上 | chevron | 設定頁 = 上一步；未開始過的遊戲 = 返回設定；已開始 = 退出（先確認） |
 | 頂帶中央 | 隊名 chip | 顯示當前隊伍與隊色 |
 | 右上 | 計時環 | 剩餘秒數兼進度弧；撳環 = 暫停，再撳繼續 |
-| 底部左 | 跳過 | 不計分，下一題 |
-| 底部右 | 對 | +1 分，下一題 |
+| 底部左 | ← 鍵 | 跳過：不計分，下一題 |
+| 底部右 | → 鍵 | 對：+1 分，下一題 |
 
-鍵盤：`Space`／`Enter` = 對（準備畫面 = 開始）　`S`／`↓` = 跳過　`Esc`／`P` = 暫停　
+判定只有方向鍵：`→` = 對（準備畫面 = 開始）　`←` = 跳過　`Esc` = 暫停
 設定頁：`Enter` = 下一步、`Esc` = 上一步
 
 ## 隊伍
@@ -61,13 +61,11 @@
 - 編輯頁是一個 textarea，改完 **800ms 自動儲存**
 - 任何人有網址就改得，不用帳號、不用入 repo
 - 自動更新：每 15 秒拉一次；切回分頁即時拉；有未存改動時不會覆蓋
-- 後端每次覆寫前留 3 份快照（`meta` 表 `snap1`–`snap3`）
 - 主持台只讀，出題時抽行洗牌
 
 ## API
 
 ```
-GET  /api/ping
 GET  /api/text      題目（讀）
 PUT  /api/text      整份取代（開放寫入，/edit 用）
 ```
@@ -85,7 +83,7 @@ PUT  /api/text      整份取代（開放寫入，/edit 用）
 ```
 index.html                 主持台（單檔，含 SVG 圖示）
 edit.html                  題目編輯（一個 textarea + 自動儲存）
-api/_app.py                Vercel 後端（FastAPI + Postgres）
+api/_app.py                Vercel 後端（FastAPI + Postgres，2 個路由）
 api/[...path].py / index.py  路由入口
 vercel.json                 rewrites、function 設定
 tests/mock_sync_server.py  本地 mock 後端（開發用）
@@ -102,6 +100,7 @@ samples/hk-icebreaker.json 首次 seed 題庫
 
 - 冇排行榜：分數只在準備畫面與結果頁出現，不寫入 DB
 - 冇帳號系統，題目寫入開放——任何知道網址的人都能改
+- 冇快照、冇歷史：一次 `PUT` 就整份覆蓋，舊內容救不回來
 - 主持台連不到後端就冇題可玩（冇本機 fallback）
 - 猜的人要**背向**屏幕（不是閉眼），一隊 4–8 人最順
 
@@ -129,11 +128,11 @@ samples/hk-icebreaker.json 首次 seed 題庫
 
 **Built with Hermes & OpenCode**
 
-首頁 footer 顯示的 [Hermes](https://github.com/NousResearch/hermes-agent) 與 [OpenCode](https://opencode.ai)
+首頁 footer 顯示的 [Hermes](https://hermes-agent.nousresearch.com) 與 [OpenCode](https://opencode.ai/console/go)
 圖示屬該兩個專案的品牌標誌，只作致謝與連結用途，不代表任何認可或關聯。
 
-本項目在 [**Hermes**](https://github.com/NousResearch/hermes)（AI 代理框架）與
-[**OpenCode**](https://opencode.ai)（模型服務）協助下開發，語言模型為 **DeepSeek V4.1 Flash**。
+本項目在 [**Hermes**](https://hermes-agent.nousresearch.com)（AI 代理框架）與
+[**OpenCode**](https://opencode.ai/console/go)（模型服務）協助下開發，語言模型為 **DeepSeek V4.1 Flash**。
 感謝這兩個工具，令一個人也可以做出這樣的東西。
 
 **名稱說明**
