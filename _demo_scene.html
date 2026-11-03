@@ -1,0 +1,75 @@
+<!doctype html><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1">
+<title>情境試聽 · 三個方向</title>
+<style>
+ body{font:16px/1.5 -apple-system,system-ui,sans-serif;background:#F2F2F7;color:#1D1D1F;margin:0;padding:24px}
+ h1{font-size:28px;margin:0 0 4px} p.lead{color:#6b6b70;margin:0 0 20px;font-size:15px}
+ .dir{border:0;border-radius:16px;background:#fff;box-shadow:inset 0 0 0 1px rgba(60,60,67,.14);
+   padding:18px;margin-bottom:14px;text-align:left;font:inherit;color:inherit;width:100%;cursor:pointer}
+ .dir h2{font-size:19px;margin:0 0 4px} .dir p{margin:0;font-size:14px;color:#6b6b70}
+ .dir.playing{box-shadow:inset 0 0 0 2px #0071E3}
+ .log{margin-top:18px;font-family:ui-monospace,monospace;font-size:13px;color:#6b6b70;white-space:pre-line}
+ #stop{margin-top:14px;min-height:48px;padding:0 24px;border:0;border-radius:12px;background:#1D1D1F;color:#fff;font:inherit;font-weight:600}
+</style>
+<h1>情境試聽</h1>
+<p class="lead">撳一下會自動播完整流程：倒數 → 判對 → 跳過 → 時間到（哨子）→ 結算 → 冠軍。用整個流程去感受，唔好單獨聽。</p>
+
+<button class="dir" data-dir="A">
+  <h2>A · 實物聲（推薦）</h2>
+  <p>門鐘、足球哨、子彈、玻璃叮。冇音樂、冇人群，全靠日常物件聲組成一套語言。</p>
+</button>
+
+<button class="dir" data-dir="B">
+  <h2>B · 電視節目音效</h2>
+  <p>倒數＋哨子＋銅管「噠」＋色士風 fanfare。最似綜藝節目，但音樂感較重。</p>
+</button>
+
+<button class="dir" data-dir="C">
+  <h2>C · 卡通</h2>
+  <p>兒童木琴＋小朋友人聲。最活潑，但同你個 Apple 明亮介面可能唔夾。</p>
+</button>
+
+<button id="stop">停止</button>
+<div class="log" id="log"></div>
+
+<script>
+const SRC = {
+  countdown: "/sfx/countdown.mp3",
+  ding: "/sfx/dingdong.mp3",
+  whoosh: "/sfx/whoosh.mp3",
+  whistle: "/_sfx_raw10/cut/whistle_football.mp3",
+  glass: "/_sfx_raw/glass_005.wav",
+  brass: "/_sfx_raw2/jingles_hit_1.ogg",
+  sax: "/_sfx_raw3/jingles_sax_3.ogg",
+  xylo: "/_sfx_raw16/cut/xylo2.mp3",
+  kids: "/_sfx_raw16/cut/kids_loop.mp3"
+};
+const PLAN = {
+  A: [[0,"countdown"],[4300,"ding"],[4750,"whoosh"],[5300,"whistle"],[6500,"glass"],[7600,"ding"],[8000,"ding"],[8400,"ding"]],
+  B: [[0,"countdown"],[4300,"ding"],[4750,"whoosh"],[5300,"whistle"],[6500,"brass"],[7600,"sax"]],
+  C: [[0,"countdown"],[4300,"ding"],[4750,"whoosh"],[5300,"whistle"],[6500,"xylo"],[8600,"kids"]]
+};
+const NAME = {countdown:"倒數",ding:"對（門鐘）",whoosh:"跳過（子彈）",whistle:"時間到（哨子）",
+  glass:"結算（玻璃叮）",brass:"結算（銅管）",sax:"冠軍（色士風）",xylo:"結算（木琴）",kids:"冠軍（小朋友）"};
+let timers = [], cur = null, ctx = null;
+function stop(){
+  timers.forEach(clearTimeout); timers = [];
+  if(ctx){ ctx.close(); ctx = null; }
+  document.querySelectorAll('.dir').forEach(d=>d.classList.remove('playing'));
+  document.getElementById('log').textContent = '';
+}
+function play(name, when){
+  const a = new Audio(SRC[name]); a.volume = 0.9; a.play().catch(()=>{});
+  const el = document.getElementById('log');
+  el.textContent += `+${(when/1000).toFixed(1)}s  ${NAME[name]}\n`;
+}
+document.addEventListener('click', e=>{
+  if(e.target.closest('#stop')){ stop(); return; }
+  const d = e.target.closest('.dir'); if(!d) return;
+  stop();
+  d.classList.add('playing');
+  const plan = PLAN[d.dataset.dir];
+  document.getElementById('log').textContent = `方向 ${d.dataset.dir}\n`;
+  plan.forEach(([t,name])=>{ timers.push(setTimeout(()=>play(name,t), t)); });
+  timers.push(setTimeout(()=>d.classList.remove('playing'), 11000));
+});
+</script>

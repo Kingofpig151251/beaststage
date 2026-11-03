@@ -1064,7 +1064,9 @@ function audioCtx(){
   return AC;
 }
 /* 音檔：判定用真音源（門鐘／子彈），其餘場合仍用合成音 */
-const SFX_SRC = { ding: "/sfx/dingdong.mp3", whoosh: "/sfx/whoosh.mp3", countdown: "/sfx/countdown.mp3" };
+const SFX_SRC = { ding: "/sfx/dingdong.mp3", whoosh: "/sfx/whoosh.mp3",
+                   countdown: "/sfx/countdown.mp3", whistle: "/sfx/whistle.mp3",
+                   settle: "/sfx/settle.mp3", champion: "/sfx/champion.mp3" };
 const SFX = {};
 let SFX_LOADING = false;
 async function loadSfx(){
@@ -1088,18 +1090,6 @@ function sfx(name, vol=0.85){
 }
 document.addEventListener("pointerdown", loadSfx, {once:true});
 document.addEventListener("keydown", loadSfx, {once:true});
-
-function beep(freq, dur, vol){
-  const c = audioCtx(); if(!c) return;
-  const t0 = c.currentTime, o = c.createOscillator(), g = c.createGain();
-  o.type = "sine";
-  o.frequency.setValueAtTime(freq, t0);
-  g.gain.setValueAtTime(0.0001, t0);
-  g.gain.exponentialRampToValueAtTime(vol, t0 + 0.012);
-  g.gain.exponentialRampToValueAtTime(0.0001, t0 + dur);
-  o.connect(g).connect(c.destination);
-  o.start(t0); o.stop(t0 + dur + 0.03);
-}
 
 /* 按「準備好」→ 獨立倒數過場（3、2、1、開始）→ 出題兼起錶 */
 const REDUCE = window.matchMedia("(prefers-reduced-motion: reduce)").matches;
@@ -1257,9 +1247,10 @@ function slamGate(then){
   gate.classList.add("on");
   void gate.offsetWidth;                        // 先讓 display 生效，過場才播得出
   gate.classList.add("closed");
+  sfx("whistle", 0.85);                         // 球證哨：落閘即吹
   const HIT  = REDUCE ? 80  : 560;              // 幕合埋（0.46s）之後見字
   const CARD = REDUCE ? 300 : 1250;             // 停一停，轉結算卡
-  setTimeout(()=>{ gate.classList.add("text"); beep(300, 0.13, 0.05); }, HIT);
+  setTimeout(()=>{ gate.classList.add("text"); }, HIT);
   setTimeout(()=>{ then(); gate.classList.add("settle"); }, CARD);
 }
 
@@ -1284,7 +1275,7 @@ function showTurnEnd(team, stats, done){
   } else {
     sc.innerHTML = `+${target}<em>分</em>`;
   }
-  beep(660, 0.13, 0.045);
+  sfx("settle", 0.8);
 }
 
 function closeTurnEnd(){
@@ -1358,6 +1349,7 @@ function endGame(){
       <div class="pt">${t.score}</div>
     </div>`).join("") : "";
   showView("v-result");
+  sfx("champion", 0.9);
 }
 
 /* ================= 事件 ================= */
