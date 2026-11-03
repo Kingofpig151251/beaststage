@@ -18,7 +18,9 @@
     color-scheme:light;
     /* ground */
     --bg:#F2F2F7; --surface:#FFFFFF; --surface-2:#E9E9EE; --fill:rgba(118,118,128,.12);
-    --fill-2:rgba(118,118,128,.20); --fill-3:rgba(118,118,128,.10); --spot:rgba(0,113,227,.10);
+    --fill-2:rgba(118,118,128,.20); --fill-3:rgba(118,118,128,.10); --spot:rgba(0,113,227,.10); --curtain-deep:#0A5FC4; --curtain-glow:rgba(255,255,255,.10);
+    --fold-light:rgba(255,255,255,.075); --fold-mid:rgba(255,255,255,.015);
+    --fold-dark:rgba(0,0,0,.075); --fold-dark-2:rgba(0,0,0,.02);
     /* ink */
     --ink:#000000; --ink-2:rgba(60,60,67,.72); --ink-3:rgba(60,60,67,.40);
     --sep:rgba(60,60,67,.18);
@@ -160,18 +162,38 @@
   .setup-foot .btn-primary{min-width:260px; min-height:56px; font-size:19px; border-radius:var(--pill)}
 
   /* 開始遊戲：白光過場 */
-  .launch{position:fixed; inset:0; z-index:80; pointer-events:none; background:var(--blue-fill);
-    clip-path:circle(0% at 50% 78%);
-    transition:clip-path .46s cubic-bezier(.55,0,.25,1), opacity .32s var(--ease)}
-  .js .launch.on{clip-path:circle(152% at 50% 78%)}
-  .launch.out{opacity:0}
-  .launch.done{transition:none}
-  .launch-mark{position:absolute; inset:0; display:grid; place-items:center; color:var(--on-accent);
-    font-family:var(--font-display); font-size:clamp(40px,7.4vh,76px); font-weight:700; letter-spacing:-.03em;
-    transition:opacity .3s var(--ease), transform .55s var(--ease)}
-  .js .launch-mark{opacity:0; transform:scale(.94)}
-  .js .launch.on .launch-mark{opacity:1; transform:none; transition-delay:.14s}
-  .js .launch:not(.on) .launch-mark{transition-delay:0s}
+  .launch{position:fixed; inset:0; z-index:80; pointer-events:none; overflow:hidden}
+  .curtain{position:absolute; left:0; right:0; height:50.4%;
+    transition:transform .46s cubic-bezier(.62,0,.38,1)}
+  .curtain.top{top:0; background:
+    radial-gradient(120% 70% at 50% 100%, var(--curtain-glow), transparent 62%),
+    repeating-linear-gradient(90deg,
+      var(--fold-light) 0px, var(--fold-mid) 14px, var(--fold-dark) 28px,
+      var(--fold-dark-2) 42px, var(--fold-light) 56px),
+    linear-gradient(180deg, var(--curtain-deep) 0%, var(--blue-fill) 74%)}
+  .curtain.bot{bottom:0; background:
+    radial-gradient(120% 70% at 50% 0%, var(--curtain-glow), transparent 62%),
+    repeating-linear-gradient(90deg,
+      var(--fold-light) 0px, var(--fold-mid) 14px, var(--fold-dark) 28px,
+      var(--fold-dark-2) 42px, var(--fold-light) 56px),
+    linear-gradient(0deg, var(--curtain-deep) 0%, var(--blue-fill) 74%)}
+  .js .curtain.top{transform:translateY(-100%)}
+  .js .curtain.bot{transform:translateY(100%)}
+  .js .launch.closed{pointer-events:auto}
+  .js .launch.closed .curtain.top,
+  .js .launch.closed .curtain.bot{transform:none}
+
+  .vs{position:absolute; inset:0; display:flex; align-items:center; justify-content:center;
+    gap:clamp(24px,4vw,56px); color:var(--on-accent); text-align:center;
+    pointer-events:none; transition:opacity .26s var(--ease), transform .44s var(--ease)}
+  .js .vs{opacity:0; transform:scale(.97)}
+  .js .launch.show .vs{opacity:1; transform:none}
+  .js .launch.hide .vs{opacity:0; transform:scale(1.02); transition-duration:.2s}
+  .vs-name{font-family:var(--font-display); font-weight:700; font-size:clamp(38px,7.2vh,76px);
+    letter-spacing:-.03em; max-width:34vw; overflow-wrap:anywhere}
+  .vs-word{font-size:clamp(15px,2.2vh,22px); font-weight:700; opacity:.72; align-self:center}
+  .vs-name{align-self:center}
+
   body.is-launch .stage{opacity:0; transform:translateY(-28px) scale(.97);
     transition:opacity .38s var(--ease), transform .48s var(--ease)}
   body.is-launch .setup-foot{opacity:0; transform:translateY(18px); transition:opacity .3s, transform .38s var(--ease)}
@@ -480,7 +502,15 @@
 </div>
 
 
-<div class="launch" id="launch" aria-hidden="true"><span class="launch-mark">大電視</span></div>
+<div class="launch" id="launch" aria-hidden="true">
+  <div class="curtain top"></div>
+  <div class="curtain bot"></div>
+  <div class="vs">
+    <span class="vs-name" id="vsA">A 隊</span>
+    <span class="vs-word">VS</span>
+    <span class="vs-name" id="vsB">B 隊</span>
+  </div>
+</div>
 <div class="toast" id="toast"></div>
 <script>
 "use strict";
@@ -643,24 +673,46 @@ function startSetup(){
   }, 300);
 }
 
+const LAUNCH_TIMERS = [];
+function clearLaunch(){
+  LAUNCH_TIMERS.forEach(clearTimeout);
+  LAUNCH_TIMERS.length = 0;
+}
+function skipLaunch(){
+  clearLaunch();
+  const veil = $("#launch");
+  veil.classList.add("done");
+  veil.classList.remove("closed","show","hide");
+  requestAnimationFrame(()=>veil.classList.remove("done"));
+  document.body.classList.remove("is-launch");
+  if(!G) startGame();
+  SETUP.busy = false;
+}
+
 function launchGame(){
   if(!lines.length){ toast("題目尚未載入"); return; }
   if(SETUP.busy) return;
   SETUP.busy = true;
+  clearLaunch();
   const veil = $("#launch");
-  document.body.classList.add("is-launch");        // 1. 內容上飛、淡出
-  setTimeout(()=>veil.classList.add("on"), 200);   // 2. 藍幕由下方擴散
-  setTimeout(()=>{                                  // 3. 換到遊戲（幕後）
+  $("#vsA").textContent = cfg.names[0] || "隊 1";
+  $("#vsB").textContent = cfg.names[1] || "隊 2";
+
+  document.body.classList.add("is-launch");                       // 1. 內容收走
+  LAUNCH_TIMERS.push(setTimeout(()=>veil.classList.add("closed"), 160));  // 2. 上下兩幕夾合
+  LAUNCH_TIMERS.push(setTimeout(()=>veil.classList.add("show"), 620));    // 3. 幕上出 VS
+  LAUNCH_TIMERS.push(setTimeout(()=>veil.classList.add("hide"), 1900));   // 4. VS 淡出
+  LAUNCH_TIMERS.push(setTimeout(()=>{                              // 5. 幕後換場景
     document.body.classList.remove("is-launch");
     startGame();
-  }, 700);
-  setTimeout(()=>veil.classList.add("out"), 860);   // 4. 藍幕淡出
-  setTimeout(()=>{                                  // 5. 即刻復位（避免幕反向縮回）
+  }, 1980));
+  LAUNCH_TIMERS.push(setTimeout(()=>veil.classList.remove("closed"), 2120)); // 6. 上下分開
+  LAUNCH_TIMERS.push(setTimeout(()=>{                              // 7. 復位
     veil.classList.add("done");
-    veil.classList.remove("on","out");
+    veil.classList.remove("show","hide");
     requestAnimationFrame(()=>veil.classList.remove("done"));
     SETUP.busy = false;
-  }, 1240);
+  }, 2660));
 }
 
 /* ================= 題庫管理（離線用） ================= */
@@ -903,6 +955,7 @@ $$("#secChips button").forEach(b=>b.onclick = ()=>{
   const el = $("#secInput"); el.classList.remove("pop"); void el.offsetWidth; el.classList.add("pop");
 });
 
+$("#launch").onclick = ()=>{ if(SETUP.busy) skipLaunch(); };
 $("#btnEnter").onclick = startSetup;
 $("#btnStepBack").onclick = ()=>{
   if(SETUP.i === 0){ showView("v-home"); renderHome(); }
