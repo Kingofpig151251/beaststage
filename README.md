@@ -74,7 +74,7 @@ PUT  /api/text      整份取代（開放寫入，/edit 用）
 
 ## 設計
 
-- Apple 明亮語言：底色 `#F2F2F7`、卡面 `#FFFFFF`、系統藍 `#0071E3`、圓角 12／16／22、髮絲線分隔
+- 明亮系統風格（參考 iOS 排版慣例，與 Apple 無隸屬）：底色 `#F2F2F7`、卡面 `#FFFFFF`、系統藍 `#0071E3`、圓角 12／16／22、髮絲線分隔
 - 字階嚴格遞減：頁面標題 30–34 · 卡片 22 · 數值 20 · 內文 17 · 次要 15 · 註腳 13
 - 只用 `system-ui`，沒有網絡字體；單檔交付，沒有 build step
 - 舞台優先：出題畫面只有一個大字
@@ -114,20 +114,28 @@ samples/hk-icebreaker.json 首次 seed 題庫
 可自由使用、修改、商用，唯一要求是保留版權聲明與授權條文；介面上的
 `© 2026 Leung Tung Lam · MIT License` 屬作者署名，請勿移除。
 
-## Credits
+## 版權、致謝與商標
 
-- **動物圖示**：[Twemoji](https://github.com/jdecked/twemoji)，**CC-BY 4.0**，以內嵌 SVG 使用、圖形未修改
-- **字體**：沒有內嵌字體檔，只用 `system-ui`（Apple 裝置上為 SF Pro，屬系統字體）
-- **AI 開發**：本項目在 [**Hermes**](https://github.com/NousResearch/hermes)（AI 代理框架）與
-  [**OpenCode**](https://opencode.ai)（模型服務）協助下開發，語言模型為 **DeepSeek V4.1 Flash**。
-  感謝這兩個工具令一個人也可以做出這樣的東西。
-- **依賴**：見 `requirements.txt`，各自依原授權（MIT / BSD / Apache-2.0）
+本項目原創部分（程式碼、介面設計、文案）以 **MIT** 授權，`Copyright (c) 2026 Leung Tung Lam`。
 
-## 安全
+**第三方素材**
 
-請勿在公開 issue 披露安全問題，電郵 `lam151251@gmail.com`（主旨 `[SECURITY] bigtv`）。
-本項目只有 `main`，沒有 LTS。
+- **動物圖示**：Emoji artwork provided by **Twemoji**, licensed under **CC BY 4.0**
+  （<https://github.com/jdecked/twemoji>）。以內嵌 SVG 使用，圖形未經修改。
+- **GitHub 圖示**：取自 **Octicons**（MIT）。GitHub 名稱與 Octocat 圖案為 GitHub, Inc. 的商標，
+  此處僅用作連結本項目原始碼，不代表任何認可或關聯。
+- **字體**：沒有內嵌任何字體檔，只用 `system-ui`；裝置上的系統字體依該裝置授權，不隨本項目轉授。
+- **依賴**：見 `requirements.txt`（FastAPI、psycopg 等），各自依原授權（MIT / BSD / Apache-2.0）。
 
-## 參與
+**AI 開發**
 
-由作者獨立開發，**不接受外部 Pull Request**。歡迎開 Issue 回報問題或提建議，但不保證回應或採納。
+本項目在 [**Hermes**](https://github.com/NousResearch/hermes)（AI 代理框架）與
+[**OpenCode**](https://opencode.ai)（模型服務）協助下開發，語言模型為 **DeepSeek V4.1 Flash**。
+感謝這兩個工具，令一個人也可以做出這樣的東西。
+
+**名稱說明**
+
+「大電視」是香港通用的派對猜詞遊戲名稱（源自電視綜藝的同名遊戲環節）。
+本項目是獨立開發的主持工具，**與任何電視節目、電視台或同名手機 App 並無關聯**，
+亦非任何節目的官方產品。介面採用明亮系統風格（跟隨 iOS 的排版與可讀性慣例），
+與 Apple Inc. 並無隸屬或認可關係。
