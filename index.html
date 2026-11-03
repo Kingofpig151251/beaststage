@@ -393,6 +393,8 @@
   .js .gate-body{opacity:0}
   .gate.text .gate-body{opacity:1}
   .gate.settle{pointer-events:auto}
+  .gate.opening .gate-body,
+  .gate.opening .te-card{opacity:0; transition:none}   /* 撳繼續即刻收走結算內容 */
   .gate-hit{position:absolute; text-align:center; font-family:var(--font-display);
     font-weight:700; font-size:clamp(44px,8.4vh,88px); letter-spacing:-.02em;
     transition:opacity .26s var(--ease), transform .3s var(--ease)}
@@ -1217,7 +1219,7 @@ function resetTurnTimers(){
 function clearTurnEnd(){
   resetTurnTimers();
   const cd = $("#countdown"); if(cd) cd.classList.remove("on");
-  const gate = $("#gate"); if(gate) gate.classList.remove("on","closed","text","settle");
+  const gate = $("#gate"); if(gate) gate.classList.remove("on","closed","text","settle","opening");
 }
 
 /* 落閘：重用開場幕布夾埋 → 「時間到！」 → 幕內結算 → 撳繼續才開幕 */
@@ -1263,9 +1265,14 @@ function closeTurnEnd(){
   TE_FINISH = null;
   clearTimeout(TE_TIMER); clearInterval(TE_IV);
   const gate = $("#gate");
-  done();                                   // 幕後面先換好下一隊／結果頁
-  gate.classList.remove("closed");          // 開幕
-  setTimeout(()=>{ gate.classList.remove("on","text","settle"); }, REDUCE ? 80 : 520);
+  gate.classList.add("opening");            // 結算內容即時收走，唔會留住半空
+  gate.classList.remove("settle","text");
+  void gate.offsetWidth;
+  done();                                   // 幕仍然全黑，先喺後面砌好下一隊／結果頁
+  setTimeout(()=>{                          // 等一版畫好，先至開幕
+    gate.classList.remove("closed");
+    setTimeout(()=>{ gate.classList.remove("on","opening"); }, REDUCE ? 40 : 500);
+  }, REDUCE ? 0 : 110);
 }
 
 $("#teNext").onclick = ()=> closeTurnEnd();
