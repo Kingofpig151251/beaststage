@@ -97,3 +97,9 @@ samples/hk-icebreaker.json 新 DB 首次 seed 題庫（6 類 62 題）
 - 冇帳號系統；題庫寫入開放
 - 主持台連唔到後端就冇題可玩（冇本機 fallback）
 - 經典擺位：猜嗰個要**背向**屏幕（唔係閉眼），一隊 4–8 人最順
+
+## 十、第三方素材
+
+- **動物圖示**：Twemoji（<https://github.com/jdecked/twemoji>），授權 **CC-BY 4.0**。
+  8 個 SVG（🐢🦊🐳🐙🐝🦩🐬🐻）以內嵌方式放在 `index.html` 的 `ICONS`，冇額外請求。
+  如要替換圖示，保持 `viewBox="0 0 36 36"` 及 `width/height="1em"` 即可。
