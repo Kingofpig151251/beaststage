@@ -18,9 +18,7 @@
     color-scheme:light;
     /* ground */
     --bg:#F2F2F7; --surface:#FFFFFF; --surface-2:#E9E9EE; --fill:rgba(118,118,128,.12);
-    --fill-2:rgba(118,118,128,.20); --fill-3:rgba(118,118,128,.10); --spot:rgba(0,113,227,.10); --curtain-deep:#0A5FC4; --curtain-glow:rgba(255,255,255,.10);
-    --fold-light:rgba(255,255,255,.075); --fold-mid:rgba(255,255,255,.015);
-    --fold-dark:rgba(0,0,0,.075); --fold-dark-2:rgba(0,0,0,.02);
+    --fill-2:rgba(118,118,128,.20); --fill-3:rgba(118,118,128,.10); --spot:rgba(0,113,227,.10); --sheet-veil:rgba(0,0,0,.28); --vs-shadow:rgba(0,0,0,.18);
     /* ink */
     --ink:#000000; --ink-2:rgba(60,60,67,.72); --ink-3:rgba(60,60,67,.40);
     --sep:rgba(60,60,67,.18);
@@ -43,6 +41,7 @@
     --font-display:-apple-system,BlinkMacSystemFont,system-ui,"SF Pro Display","PingFang HK","Noto Sans HK",sans-serif;
     --font-body:-apple-system,BlinkMacSystemFont,system-ui,"SF Pro Text","PingFang HK","Noto Sans HK",sans-serif;
     --font-mono:ui-monospace,"SF Mono",Menlo,monospace;
+    --font-emoji:"Apple Color Emoji","Segoe UI Emoji","Noto Color Emoji",sans-serif;
   }
 
   *{box-sizing:border-box}
@@ -145,9 +144,33 @@
 
   .namegrid{display:grid; grid-template-columns:repeat(auto-fit,minmax(240px,1fr)); gap:12px 16px;
     width:min(760px,100%)}
-  .name-row{display:grid; grid-template-columns:28px minmax(0,1fr); gap:12px; align-items:center}
-  .name-row span{display:flex; align-items:center; justify-content:center; width:28px; height:28px;
-    font-size:15px; font-weight:600; color:var(--ink-2); font-variant-numeric:tabular-nums}
+  .name-row{display:grid; grid-template-columns:56px minmax(0,1fr); gap:12px; align-items:center}
+  .animal-btn{position:relative; width:56px; height:56px; padding:0; border-radius:50%;
+    display:grid; place-items:center; line-height:1;
+    background:color-mix(in oklab, var(--tc) 16%, transparent);
+    box-shadow:inset 0 0 0 2px color-mix(in oklab, var(--tc) 62%, transparent)}
+  .animal-mark{font-family:var(--font-emoji); font-size:26px}
+  .animal-edit{position:absolute; right:-2px; bottom:-2px; width:20px; height:20px; padding:4px;
+    border-radius:50%; background:var(--tc); fill:none; stroke:var(--on-accent); stroke-width:2.4;
+    stroke-linejoin:round}
+  .animal-btn:active{background:color-mix(in oklab, var(--tc) 28%, transparent)}
+
+  /* 選隊色面板 */
+  .sheet-wrap{position:fixed; inset:0; z-index:70; display:none; place-items:end center;
+    background:var(--sheet-veil); padding:0 16px calc(16px + env(safe-area-inset-bottom))}
+  .sheet-wrap.on{display:grid}
+  .sheet-card{width:min(560px,100%); background:var(--surface); border-radius:var(--r-xl);
+    padding:20px; display:flex; flex-direction:column; gap:16px}
+  .sheet-title{font-size:17px; font-weight:600; color:var(--ink-2)}
+  .animal-grid{display:grid; grid-template-columns:repeat(4,minmax(0,1fr)); gap:10px}
+  .animal-opt{display:flex; flex-direction:column; align-items:center; gap:6px; padding:12px 6px;
+    border-radius:var(--r-md); background:color-mix(in oklab, var(--tc) 12%, transparent);
+    box-shadow:inset 0 0 0 1px color-mix(in oklab, var(--tc) 34%, transparent)}
+  .animal-opt.on{box-shadow:inset 0 0 0 2.5px var(--tc)}
+  .animal-opt .opt-mark{font-family:var(--font-emoji); font-size:26px; line-height:1}
+  .animal-opt .opt-name{font-size:13px; font-weight:600; color:var(--ink)}
+  .sheet-cancel{min-height:48px; border-radius:var(--r-md); background:var(--fill); color:var(--ink);
+    font-size:17px; font-weight:600}
 
   .bigcount{font-family:var(--font-display); font-size:clamp(72px,14vh,150px); font-weight:700;
     letter-spacing:-.04em; line-height:1; min-height:1em; font-variant-numeric:tabular-nums}
@@ -161,22 +184,12 @@
   .summary{font-size:15px; color:var(--ink-2); font-variant-numeric:tabular-nums; min-height:20px}
   .setup-foot .btn-primary{min-width:260px; min-height:56px; font-size:19px; border-radius:var(--pill)}
 
-  /* 開始遊戲：白光過場 */
+  /* 開始遊戲：舞台幕 */
   .launch{position:fixed; inset:0; z-index:80; pointer-events:none; overflow:hidden}
   .curtain{position:absolute; left:0; right:0; height:50.4%;
     transition:transform .46s cubic-bezier(.62,0,.38,1)}
-  .curtain.top{top:0; background:
-    radial-gradient(120% 70% at 50% 100%, var(--curtain-glow), transparent 62%),
-    repeating-linear-gradient(90deg,
-      var(--fold-light) 0px, var(--fold-mid) 14px, var(--fold-dark) 28px,
-      var(--fold-dark-2) 42px, var(--fold-light) 56px),
-    linear-gradient(180deg, var(--curtain-deep) 0%, var(--blue-fill) 74%)}
-  .curtain.bot{bottom:0; background:
-    radial-gradient(120% 70% at 50% 0%, var(--curtain-glow), transparent 62%),
-    repeating-linear-gradient(90deg,
-      var(--fold-light) 0px, var(--fold-mid) 14px, var(--fold-dark) 28px,
-      var(--fold-dark-2) 42px, var(--fold-light) 56px),
-    linear-gradient(0deg, var(--curtain-deep) 0%, var(--blue-fill) 74%)}
+  .curtain.top{top:0; background:var(--blue-fill)}
+  .curtain.bot{bottom:0; background:var(--blue-fill)}
   .js .curtain.top{transform:translateY(-100%)}
   .js .curtain.bot{transform:translateY(100%)}
   .js .launch.closed{pointer-events:auto}
@@ -184,15 +197,20 @@
   .js .launch.closed .curtain.bot{transform:none}
 
   .vs{position:absolute; inset:0; display:flex; align-items:center; justify-content:center;
-    gap:clamp(24px,4vw,56px); color:var(--on-accent); text-align:center;
+    gap:clamp(10px,1.6vw,26px); padding:0 clamp(24px,4vw,64px); color:var(--on-accent);
     pointer-events:none; transition:opacity .26s var(--ease), transform .44s var(--ease)}
   .js .vs{opacity:0; transform:scale(.97)}
   .js .launch.show .vs{opacity:1; transform:none}
   .js .launch.hide .vs{opacity:0; transform:scale(1.02); transition-duration:.2s}
-  .vs-name{font-family:var(--font-display); font-weight:700; font-size:clamp(38px,7.2vh,76px);
-    letter-spacing:-.03em; max-width:34vw; overflow-wrap:anywhere}
-  .vs-word{font-size:clamp(15px,2.2vh,22px); font-weight:700; opacity:.72; align-self:center}
-  .vs-name{align-self:center}
+
+  .vs-team{flex:1 1 0; min-width:0; display:flex; flex-direction:column; align-items:center;
+    gap:clamp(8px,1.4vh,16px); text-align:center}
+  .vs-mark{font-family:var(--font-emoji); font-size:var(--mark,72px); line-height:1; filter:drop-shadow(0 2px 6px var(--vs-shadow))}
+  .vs-label{font-family:var(--font-display); font-weight:700; font-size:var(--label,40px);
+    letter-spacing:-.02em; line-height:1.15;
+    overflow-wrap:anywhere; text-wrap:balance}
+  .vs-team::after{content:""; display:block; width:28px; height:3px; border-radius:2px;
+    background:var(--tc,var(--on-accent)); opacity:.9}
 
   body.is-launch .stage{opacity:0; transform:translateY(-28px) scale(.97);
     transition:opacity .38s var(--ease), transform .48s var(--ease)}
@@ -502,14 +520,18 @@
 </div>
 
 
+<div class="sheet-wrap" id="animalSheet" role="dialog" aria-modal="true" aria-label="選擇隊色">
+  <div class="sheet-card">
+    <div class="sheet-title">選擇動物與隊色</div>
+    <div class="animal-grid" id="animalGrid"></div>
+    <button class="sheet-cancel" id="animalCancel">取消</button>
+  </div>
+</div>
+
 <div class="launch" id="launch" aria-hidden="true">
   <div class="curtain top"></div>
   <div class="curtain bot"></div>
-  <div class="vs">
-    <span class="vs-name" id="vsA">A 隊</span>
-    <span class="vs-word">VS</span>
-    <span class="vs-name" id="vsB">B 隊</span>
-  </div>
+  <div class="vs" id="vsBoard"></div>
 </div>
 <div class="toast" id="toast"></div>
 <script>
@@ -524,12 +546,32 @@ const store = {
 };
 
 let lines = [];                                  // 題目：一行一題
+/* 隊伍動物：名稱、圖示、顏色三者綁定；改動物＝改色，但唔會覆蓋自己改過嘅隊名 */
+const ANIMALS = [
+  { id:"turtle",   mark:"🐢", name:"烏龜隊",   color:"#34C759" },
+  { id:"fox",      mark:"🦊", name:"狐狸隊",   color:"#FF9500" },
+  { id:"whale",    mark:"🐳", name:"鯨魚隊",   color:"#0071E3" },
+  { id:"octopus",  mark:"🐙", name:"章魚隊",   color:"#AF52DE" },
+  { id:"bee",      mark:"🐝", name:"蜜蜂隊",   color:"#F5A300" },
+  { id:"flamingo", mark:"🦩", name:"火烈鳥隊", color:"#FF2D55" },
+  { id:"dolphin",  mark:"🐬", name:"海豚隊",   color:"#30B0C7" },
+  { id:"bear",     mark:"🐻", name:"棕熊隊",   color:"#A2845E" }
+];
+const animalById = id => ANIMALS.find(a=>a.id===id) || ANIMALS[0];
+const animalAt = i => animalById((cfg.animals && cfg.animals[i]) || ANIMALS[i % ANIMALS.length].id);
+const teamName = i => cfg.names[i] || animalAt(i).name;
+
 let cfg  = Object.assign({
-  teams:2, names:["A 隊","B 隊","C 隊","D 隊","E 隊","F 隊","G 隊","H 隊"],
+  teams:2,
+  names:ANIMALS.slice(0,8).map(a=>a.name),
+  animals:ANIMALS.map(a=>a.id),
   sec:60
 }, store.get(K_CFG, {}));
 
 cfg.teams = Math.max(2, Math.min(8, Math.round(+cfg.teams || 2)));
+if(!Array.isArray(cfg.names)) cfg.names = ANIMALS.slice(0,8).map(a=>a.name);
+if(!Array.isArray(cfg.animals)) cfg.animals = [];
+ANIMALS.forEach((a,i)=>{ if(!cfg.animals[i]) cfg.animals[i] = a.id; });
 
 let G = null;
 let REMOTE = { ok:false };
@@ -617,17 +659,71 @@ function renderSetup(){
   $("#teamMinus").disabled = cfg.teams <= 2;
   $("#teamPlus").disabled  = cfg.teams >= 8;
 
-  $("#nameList").innerHTML = Array.from({length:cfg.teams},(_,i)=>`
-    <label class="name-row"><span>${i+1}</span>
-      <input data-name="${i}" value="${esc(cfg.names[i]||("隊 "+(i+1)))}" maxlength="12" autocomplete="off"></label>`).join("");
+  $("#nameList").innerHTML = Array.from({length:cfg.teams},(_,i)=>{
+    const a = animalAt(i);
+    return `<div class="name-row" style="--tc:${a.color}">
+      <button class="animal-btn" data-animal="${i}" aria-label="更改第 ${i+1} 隊的隊色" title="更改隊色">
+        <span class="animal-mark">${a.mark}</span>
+        <svg class="animal-edit" viewBox="0 0 24 24" aria-hidden="true"><path d="M4 20h4l10-10-4-4L4 16v4z"/></svg>
+      </button>
+      <input data-name="${i}" value="${esc(teamName(i))}" maxlength="12" autocomplete="off">
+    </div>`;
+  }).join("");
   $$("#nameList input").forEach(inp=>inp.onchange=()=>{
-    cfg.names[+inp.dataset.name] = inp.value.trim() || ("隊 "+(+inp.dataset.name+1));
-    inp.value = cfg.names[+inp.dataset.name]; saveCfg(); renderSummary();
+    const i = +inp.dataset.name;
+    cfg.names[i] = inp.value.trim() || animalAt(i).name;
+    inp.value = cfg.names[i]; saveCfg(); renderSummary();
   });
+  $$("#nameList .animal-btn").forEach(btn=>btn.onclick=()=>openAnimals(+btn.dataset.animal));
 
   $("#secInput").value = cfg.sec;
   $$("#secChips button").forEach(b=>b.setAttribute("aria-pressed", String(+b.dataset.sec === +cfg.sec)));
   renderSummary();
+}
+
+function renderVsBoard(){
+  const n = cfg.teams;
+  const mark  = n <= 3 ? 96 : n <= 5 ? 68 : n <= 6 ? 58 : 48;
+  const label = n <= 3 ? 44 : n <= 5 ? 30 : n <= 6 ? 26 : 21;
+  const board = $("#vsBoard");
+  if(!board) return;
+  board.style.setProperty("--mark", mark + "px");
+  board.style.setProperty("--label", label + "px");
+  board.innerHTML = Array.from({length:n},(_,i)=>{
+    const a = animalAt(i);
+    return `<div class="vs-team" style="--tc:${a.color}">
+      <span class="vs-mark">${a.mark}</span>
+      <span class="vs-label">${esc(teamName(i))}</span>
+    </div>`;
+  }).join("");
+  board.dataset.count = n;
+}
+
+let animalTarget = 0;
+function renderAnimalGrid(){
+  const cur = animalAt(animalTarget).id;
+  $("#animalGrid").innerHTML = ANIMALS.map(a=>`
+    <button class="animal-opt${a.id===cur?" on":""}" data-id="${a.id}" style="--tc:${a.color}"
+      aria-pressed="${a.id===cur}">
+      <span class="opt-mark">${a.mark}</span><span class="opt-name">${a.name}</span>
+    </button>`).join("");
+  $$("#animalGrid .animal-opt").forEach(b=>b.onclick=()=>selectAnimal(b.dataset.id));
+}
+function openAnimals(i){
+  animalTarget = i;
+  renderAnimalGrid();
+  $("#animalSheet").classList.add("on");
+}
+function closeAnimals(){ $("#animalSheet").classList.remove("on"); }
+function selectAnimal(id){
+  const i = animalTarget;
+  const prev = animalAt(i);
+  const next = animalById(id);
+  const cur = cfg.names[i];
+  // 只喺隊名未被人改過時跟住換名；自己改過嘅名一律唔動
+  if(!cur || cur === prev.name || /^隊\s*\d+$/.test(cur)) cfg.names[i] = next.name;
+  cfg.animals[i] = id;
+  saveCfg(); renderSetup(); closeAnimals();
 }
 
 function renderSummary(){
@@ -695,8 +791,7 @@ function launchGame(){
   SETUP.busy = true;
   clearLaunch();
   const veil = $("#launch");
-  $("#vsA").textContent = cfg.names[0] || "隊 1";
-  $("#vsB").textContent = cfg.names[1] || "隊 2";
+  renderVsBoard();
 
   document.body.classList.add("is-launch");                       // 1. 內容收走
   LAUNCH_TIMERS.push(setTimeout(()=>veil.classList.add("closed"), 160));  // 2. 上下兩幕夾合
@@ -719,7 +814,7 @@ function launchGame(){
 /* ================= 遊戲流程 ================= */
 function startGame(){
   if(G){ clearInterval(G.timerId); G.timerToken++; }   // 清除上一局殘留的計時器
-  const names = Array.from({length:cfg.teams},(_,i)=> cfg.names[i] || ("隊 "+(i+1)));
+  const names = Array.from({length:cfg.teams},(_,i)=> teamName(i));
   const pool = lines.map(t=>({ t }));
   if(!pool.length){ toast("題目尚未載入"); return; }
 
@@ -955,6 +1050,8 @@ $$("#secChips button").forEach(b=>b.onclick = ()=>{
   const el = $("#secInput"); el.classList.remove("pop"); void el.offsetWidth; el.classList.add("pop");
 });
 
+$("#animalCancel").onclick = closeAnimals;
+$("#animalSheet").onclick = e=>{ if(e.target.id === "animalSheet") closeAnimals(); };
 $("#launch").onclick = ()=>{ if(SETUP.busy) skipLaunch(); };
 $("#btnEnter").onclick = startSetup;
 $("#btnStepBack").onclick = ()=>{
