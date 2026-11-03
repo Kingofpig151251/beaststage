@@ -129,6 +129,9 @@ samples/hk-icebreaker.json 首次 seed 題庫
 
 **Built with Hermes & OpenCode**
 
+首頁 footer 顯示的 [Hermes](https://github.com/NousResearch/hermes-agent) 與 [OpenCode](https://opencode.ai)
+圖示屬該兩個專案的品牌標誌，只作致謝與連結用途，不代表任何認可或關聯。
+
 本項目在 [**Hermes**](https://github.com/NousResearch/hermes)（AI 代理框架）與
 [**OpenCode**](https://opencode.ai)（模型服務）協助下開發，語言模型為 **DeepSeek V4.1 Flash**。
 感謝這兩個工具，令一個人也可以做出這樣的東西。
