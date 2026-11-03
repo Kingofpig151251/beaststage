@@ -130,14 +130,17 @@
     font-weight:700; letter-spacing:-.02em}
   .sstep-hint{font-size:15px; color:var(--ink-2)}
 
-  .bignum{display:flex; align-items:baseline; gap:clamp(16px,3.4vw,40px)}
-  .bignum input{width:2ch; min-height:0; padding:0; background:transparent; border:0; text-align:center;
+  .bignum{display:flex; align-items:baseline; justify-content:center; gap:clamp(8px,1.4vw,16px)}
+  .bignum input{width:2ch; min-height:0; padding:0 2px 4px; background:transparent; border:0;
+    border-bottom:2px solid color-mix(in oklab, var(--sep) 90%, transparent);
+    border-radius:0; text-align:center;
     font-family:var(--font-display); font-size:clamp(84px,17vh,180px); font-weight:700;
     letter-spacing:-.04em; line-height:1; -moz-appearance:textfield; font-variant-numeric:tabular-nums}
   .bignum input::-webkit-outer-spin-button,.bignum input::-webkit-inner-spin-button{-webkit-appearance:none; margin:0}
-  .bignum-sec{justify-content:center; padding-left:clamp(24px,3vw,40px)}
-  .bignum-sec input{width:3ch}
-  .bignum-unit{font-family:var(--font-display); font-size:clamp(24px,3.4vh,34px); font-weight:600; color:var(--ink-2); margin-left:-6px}
+  .bignum-sec{padding-left:0}
+  .bignum-sec input{width:3.4ch}
+  .bignum input:focus-visible{border-bottom-color:var(--blue); outline:none}
+  .bignum-unit{font-family:var(--font-display); font-size:clamp(24px,3.4vh,34px); font-weight:600; color:var(--ink-2); margin-left:0}
   .pop{animation:pop .34s var(--ease)}
   @keyframes pop{0%{transform:scale(1)} 38%{transform:scale(1.07)} 100%{transform:scale(1)}}
 
@@ -229,6 +232,7 @@
 
   /* 秒數 chips（第三步） */
   .chips{display:flex; gap:12px; flex-wrap:wrap; justify-content:center}
+  [data-step="2"] .chips{margin-top:clamp(18px,3vh,30px)}
   .chips button{min-height:48px; padding:0 26px; border-radius:var(--pill); background:var(--fill);
     color:var(--ink); font-size:17px; font-weight:600; font-variant-numeric:tabular-nums}
   .chips button[aria-pressed="true"]{background:var(--blue); color:var(--on-accent)}
@@ -383,6 +387,28 @@
   .cd-team .cd-mark{font-size:1.15em; line-height:1}
   .cd-team .cd-mark svg{display:block; width:1em; height:1em}
 
+  /* ---------- 落閘（時間到） ---------- */
+  .gate{position:fixed; inset:0; z-index:75; display:none; pointer-events:none;
+    overflow:hidden; background:transparent; opacity:1;
+    transition:opacity .26s var(--ease)}
+  .gate.on{display:block}
+  .gate.out{opacity:0}
+  .gate-panel{position:absolute; left:0; right:0; height:50.4%; background:var(--blue-fill);
+    transition:transform .3s cubic-bezier(.2,.86,.14,1)}
+  .gate-panel.top{top:0; transform:translateY(-101%)}
+  .gate-panel.bot{bottom:0; transform:translateY(101%)}
+  .gate.closed .gate-panel.top,
+  .gate.closed .gate-panel.bot{transform:none}
+  .gate-seam{position:absolute; left:0; right:0; top:50%; height:2px; margin-top:-1px;
+    background:color-mix(in oklab, var(--ink) 30%, transparent); opacity:0; transition:opacity .18s}
+  .gate.closed .gate-seam{opacity:1}
+  .gate-text{position:absolute; inset:0; display:grid; place-items:center; text-align:center;
+    font-family:var(--font-display); font-weight:700; color:var(--on-accent);
+    font-size:clamp(44px,8.4vh,88px); letter-spacing:-.02em;
+    transition:opacity .22s var(--ease), transform .22s var(--ease)}
+  .js .gate-text{opacity:0; transform:scale(.94)}
+  .gate.text .gate-text{opacity:1; transform:none}
+
   /* ---------- 回合結算（過場） ---------- */
   .turnend{position:fixed; inset:0; z-index:65; display:none; place-items:center;
     background:var(--surface); cursor:pointer; transition:opacity .3s var(--ease)}
@@ -405,6 +431,14 @@
   .te-score em{font-style:normal; font-size:.32em; font-weight:600; color:var(--ink-2);
     margin-left:10px; letter-spacing:0}
   .te-score.zero{color:var(--ink-3)}
+  .te-next{margin-top:clamp(22px,3.6vh,36px); min-height:56px; padding:0 34px;
+    display:inline-flex; align-items:center; gap:12px;
+    background:var(--blue-fill); color:var(--on-accent); font-size:19px; font-weight:600;
+    border-radius:var(--r-lg)}
+  .te-next:active{background:var(--blue-fill-press)}
+  .te-next::after{content:"→"; display:inline-grid; place-items:center; min-width:30px; height:30px;
+    padding:0 8px; border-radius:8px; font-family:var(--font-mono); font-size:16px; line-height:1;
+    background:color-mix(in oklab, var(--on-accent) 24%, transparent); opacity:.9}
 
   /* ---------- result ---------- */
   #v-result h1{margin-bottom:4px}
@@ -529,15 +563,19 @@
       <section class="sstep" data-step="2">
         <h2 class="sstep-title">每回合時間</h2>
         <div class="bignum bignum-sec">
-          <input id="secInput" type="number" min="5" max="600" step="5" aria-label="每回合秒數">
+          <input id="secInput" type="number" inputmode="numeric" min="1" max="3600" step="1"
+                 aria-label="每回合秒數（可自訂）" placeholder="60">
           <span class="bignum-unit">秒</span>
         </div>
         <div class="chips" id="secChips">
+          <button type="button" data-sec="5">5</button>
+          <button type="button" data-sec="15">15</button>
           <button type="button" data-sec="30">30</button>
           <button type="button" data-sec="60">60</button>
           <button type="button" data-sec="90">90</button>
           <button type="button" data-sec="120">120</button>
         </div>
+        <div class="sstep-hint">可直接輸入 1 至 3600 秒</div>
       </section>
 
     </div>
@@ -599,12 +637,20 @@
       </div>
     </div>
 
+    <div class="gate" id="gate" aria-hidden="true">
+      <div class="gate-panel top"></div>
+      <div class="gate-panel bot"></div>
+      <div class="gate-seam"></div>
+      <div class="gate-text" id="gateText">時間到！</div>
+    </div>
+
     <div class="turnend" id="turnEnd" aria-hidden="true">
       <div class="te-card">
         <div class="te-mark" id="teMark"></div>
         <div class="te-name" id="teName"></div>
         <div class="te-stats" id="teStats"></div>
         <div class="te-score" id="teScore"></div>
+        <button class="te-next" id="teNext">繼續</button>
       </div>
     </div>
   </section>
@@ -1184,6 +1230,26 @@ function clearTurnEnd(){
   TE_FINISH = null;
   const box = $("#turnEnd"); if(box) box.classList.remove("on","out");
   const cd = $("#countdown"); if(cd) cd.classList.remove("on");
+  const gate = $("#gate"); if(gate) gate.classList.remove("on","out","closed","text");
+}
+
+/* 落閘：上下兩塊藍閘夾埋 → 「時間到！」 → 交畀結算卡 */
+function slamGate(then){
+  const gate = $("#gate");
+  gate.classList.remove("out","closed","text");
+  gate.classList.add("on");
+  const SLAM = REDUCE ? 0 : 300;
+  const TEXT = REDUCE ? 60 : 330;
+  const OPEN = REDUCE ? 520 : 1500;
+  void gate.offsetWidth;                       // 先讓 display 生效，動畫才真正播出
+  gate.classList.add("closed");
+  beep(110, 0.20, 0.075);                      // 閘落地嘅悶響
+  setTimeout(()=>{ gate.classList.add("text"); beep(300, 0.13, 0.05); }, TEXT);
+  setTimeout(()=>{ then(); }, OPEN);           // 結算卡喺閘後面出現
+  setTimeout(()=>{ gate.classList.add("out"); }, OPEN + (REDUCE ? 40 : 260));
+  setTimeout(()=>{
+    gate.classList.remove("on","out","closed","text");
+  }, OPEN + (REDUCE ? 160 : 620));
 }
 
 function showTurnEnd(team, stats, done){
@@ -1196,6 +1262,7 @@ function showTurnEnd(team, stats, done){
   st.innerHTML = `對 <b>${stats.ok}</b> · 跳過 <b>${stats.skip}</b>`;
   sc.classList.toggle("zero", stats.score === 0);
   TE_FINISH = done;
+  clearTimeout(TE_TIMER);
   box.classList.remove("out");
   box.classList.add("on");
   const target = stats.score;
@@ -1211,8 +1278,7 @@ function showTurnEnd(team, stats, done){
   } else {
     sc.innerHTML = `+${target}<em>分</em>`;
   }
-  beep(660, 0.13, 0.045);
-  TE_TIMER = setTimeout(()=>closeTurnEnd(), REDUCE ? 850 : 1550);
+  beep(660, 0.13, 0.045);        // 停住，等用戶撳「繼續」
 }
 
 function closeTurnEnd(){
@@ -1230,7 +1296,7 @@ function closeTurnEnd(){
   if(REDUCE) finish(); else setTimeout(finish, 300);
 }
 
-$("#turnEnd").onclick = ()=> closeTurnEnd();
+$("#teNext").onclick = ()=> closeTurnEnd();
 
 function endTurn(){
   if(!G) return;
@@ -1242,11 +1308,12 @@ function endTurn(){
   const base = G.base || { ok:0, skip:0, score:0 };
   const stats = { ok: team.ok - base.ok, skip: team.skip - base.skip, score: team.score - base.score };
   G.phase = "interstitial";
-  beep(400, 0.22, 0.05);
-  showTurnEnd(team, stats, ()=>{
-    G.turn++;
-    if(G.turn >= G.teams.length){ endGame(); return; }
-    enterReady();
+  slamGate(()=>{
+    showTurnEnd(team, stats, ()=>{
+      G.turn++;
+      if(G.turn >= G.teams.length){ endGame(); return; }
+      enterReady();
+    });
   });
 }
 
@@ -1299,7 +1366,8 @@ function setTeams(n){
 $("#teamInput").onchange = e=> setTeams(e.target.value);
 $("#teamMinus").onclick = ()=> setTeams(cfg.teams - 1);
 $("#teamPlus").onclick  = ()=> setTeams(cfg.teams + 1);
-$("#secInput").onchange  = e=>{ cfg.sec=Math.max(5,Math.min(600,+e.target.value||60)); saveCfg(); renderSetup(); };
+$("#secInput").onchange  = e=>{ cfg.sec=Math.max(1,Math.min(3600,+e.target.value||60)); saveCfg(); renderSetup(); };
+$("#secInput").onfocus   = e=> e.target.select();
 $$("#secChips button").forEach(b=>b.onclick = ()=>{
   cfg.sec = +b.dataset.sec; saveCfg(); renderSetup();
   const el = $("#secInput"); el.classList.remove("pop"); void el.offsetWidth; el.classList.add("pop");
@@ -1385,6 +1453,7 @@ document.addEventListener("keydown", e=>{
     e.preventDefault();
     if(G.phase === "ready") startRound();
     else if(G.phase === "running") judge("ok");
+    else if(G.phase === "interstitial") closeTurnEnd();     // 結算卡：繼續
   }else if(e.key === "ArrowLeft"){
     e.preventDefault();
     if(G.phase === "running") judge("skip");
