@@ -31,4 +31,6 @@ class H(SimpleHTTPRequestHandler):
 
 if __name__ == "__main__":
     os.chdir(os.path.dirname(os.path.dirname(os.path.abspath(__file__))))  # repo root
-    ThreadingHTTPServer(("127.0.0.1", 8899), H).serve_forever()
+    host = os.environ.get("MOCK_HOST", "127.0.0.1")      # 0.0.0.0 = 容許同網段機睇預覽
+    port = int(os.environ.get("MOCK_PORT", "8899"))
+    ThreadingHTTPServer((host, port), H).serve_forever()

@@ -393,8 +393,9 @@
   .js .gate-body{opacity:0}
   .gate.text .gate-body{opacity:1}
   .gate.settle{pointer-events:auto}
-  .gate.opening .gate-body,
-  .gate.opening .te-card{opacity:0; transition:none}   /* 撳繼續即刻收走結算內容 */
+  .gate.opening .gate-body{opacity:0; transition:none}
+  .js .gate.opening .te-card{opacity:0; transform:translateY(-12%) scale(.985);
+    transition:opacity .16s var(--ease), transform .3s var(--ease)}   /* 跟住開幕一齊滑走 */
   .gate-hit{position:absolute; text-align:center; font-family:var(--font-display);
     font-weight:700; font-size:clamp(44px,8.4vh,88px); letter-spacing:-.02em;
     transition:opacity .26s var(--ease), transform .3s var(--ease)}
@@ -1268,11 +1269,9 @@ function closeTurnEnd(){
   gate.classList.add("opening");            // 結算內容即時收走，唔會留住半空
   gate.classList.remove("settle","text");
   void gate.offsetWidth;
-  done();                                   // 幕仍然全黑，先喺後面砌好下一隊／結果頁
-  setTimeout(()=>{                          // 等一版畫好，先至開幕
-    gate.classList.remove("closed");
-    setTimeout(()=>{ gate.classList.remove("on","opening"); }, REDUCE ? 40 : 500);
-  }, REDUCE ? 0 : 110);
+  done();                                   // 喺後面砌好下一隊／結果頁
+  gate.classList.remove("closed");           // 同一 frame 開幕，卡同時滑走
+  setTimeout(()=>{ gate.classList.remove("on","opening"); }, REDUCE ? 40 : 500);
 }
 
 $("#teNext").onclick = ()=> closeTurnEnd();
