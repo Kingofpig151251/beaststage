@@ -164,10 +164,17 @@
     padding:20px; display:flex; flex-direction:column; gap:16px}
   .sheet-title{font-size:17px; font-weight:600; color:var(--ink-2)}
   .animal-grid{display:grid; grid-template-columns:repeat(4,minmax(0,1fr)); gap:10px}
-  .animal-opt{display:flex; flex-direction:column; align-items:center; gap:6px; padding:12px 6px;
-    border-radius:var(--r-md); background:color-mix(in oklab, var(--tc) 12%, transparent);
+  .animal-opt{position:relative; display:flex; flex-direction:column; align-items:center; gap:6px;
+    padding:12px 6px; border-radius:var(--r-md);
+    background:color-mix(in oklab, var(--tc) 12%, transparent);
     box-shadow:inset 0 0 0 1px color-mix(in oklab, var(--tc) 34%, transparent)}
   .animal-opt.on{box-shadow:inset 0 0 0 2.5px var(--tc)}
+  .animal-opt.on::after{content:"✓"; position:absolute; top:6px; right:9px; font-size:13px;
+    font-weight:700; color:var(--tc)}
+  .animal-opt.taken{background:var(--fill); cursor:not-allowed;
+    box-shadow:inset 0 0 0 1px var(--sep)}
+  .animal-opt.taken .opt-mark,.animal-opt.taken .opt-name{opacity:.42}
+  .animal-opt .opt-taken{font-size:11px; font-weight:600; color:var(--ink-2); line-height:1.2}
   .animal-opt .opt-mark{font-size:26px; line-height:1; color:var(--tc)}
   .animal-opt .opt-mark svg{display:block; width:1em; height:1em}
   .animal-opt .opt-name{font-size:13px; font-weight:600; color:var(--ink)}
@@ -597,7 +604,8 @@ const ANIMALS = [
 ];
 const animalById = id => ANIMALS.find(a=>a.id===id) || ANIMALS[0];
 const animalAt = i => animalById((cfg.animals && cfg.animals[i]) || ANIMALS[i % ANIMALS.length].id);
-const teamName = i => cfg.names[i] || animalAt(i).name;
+const teamName = i => (cfg.custom && cfg.custom[i] && cfg.names[i])
+  ? cfg.names[i] : animalAt(i).name;
 
 let cfg  = Object.assign({
   teams:2,
@@ -609,7 +617,23 @@ let cfg  = Object.assign({
 cfg.teams = Math.max(2, Math.min(8, Math.round(+cfg.teams || 2)));
 if(!Array.isArray(cfg.names)) cfg.names = ANIMALS.slice(0,8).map(a=>a.name);
 if(!Array.isArray(cfg.animals)) cfg.animals = [];
+if(!Array.isArray(cfg.custom)) cfg.custom = [];
 ANIMALS.forEach((a,i)=>{ if(!cfg.animals[i]) cfg.animals[i] = a.id; });
+
+/* 動物不可重複：只計現役隊伍；未上場嘅槽位自動補位 */
+function ensureUniqueAnimals(){
+  const used = new Set();
+  for(let i=0;i<cfg.teams;i++){
+    let id = cfg.animals[i];
+    if(!id || used.has(id)) id = ANIMALS.find(a=>!used.has(a.id)).id;
+    cfg.animals[i] = id; used.add(id);
+  }
+  for(let i=cfg.teams;i<ANIMALS.length;i++){
+    if(!cfg.animals[i] || used.has(cfg.animals[i])) cfg.animals[i] = ANIMALS.find(a=>!used.has(a.id)).id;
+    used.add(cfg.animals[i]);
+  }
+}
+ensureUniqueAnimals();
 
 let G = null;
 let REMOTE = { ok:false };
@@ -709,7 +733,9 @@ function renderSetup(){
   }).join("");
   $$("#nameList input").forEach(inp=>inp.onchange=()=>{
     const i = +inp.dataset.name;
-    cfg.names[i] = inp.value.trim() || animalAt(i).name;
+    const v = inp.value.trim();
+    cfg.names[i] = v || animalAt(i).name;
+    cfg.custom[i] = !!v && v !== animalAt(i).name;   // 手動改過就鎖住，換動物時唔覆蓋
     inp.value = cfg.names[i]; saveCfg(); renderSummary();
   });
   $$("#nameList .animal-btn").forEach(btn=>btn.onclick=()=>openAnimals(+btn.dataset.animal));
@@ -740,12 +766,20 @@ function renderVsBoard(){
 let animalTarget = 0;
 function renderAnimalGrid(){
   const cur = animalAt(animalTarget).id;
-  $("#animalGrid").innerHTML = ANIMALS.map(a=>`
-    <button class="animal-opt${a.id===cur?" on":""}" data-id="${a.id}" style="--tc:${a.color}"
-      aria-pressed="${a.id===cur}">
-      <span class="opt-mark">${ICONS[a.id]}</span><span class="opt-name">${a.name}</span>
-    </button>`).join("");
-  $$("#animalGrid .animal-opt").forEach(b=>b.onclick=()=>selectAnimal(b.dataset.id));
+  $("#animalGrid").innerHTML = ANIMALS.map(a=>{
+    const owner = animalOwner(a.id, animalTarget);
+    const taken = owner >= 0;
+    return `<button class="animal-opt${a.id===cur?" on":""}${taken?" taken":""}" data-id="${a.id}"
+      style="--tc:${a.color}" aria-pressed="${a.id===cur}" ${taken?"aria-disabled=\"true\" tabindex=\"-1\"":""}>
+      <span class="opt-mark">${ICONS[a.id]}</span>
+      <span class="opt-name">${a.name}</span>
+      ${taken ? `<span class="opt-taken">第 ${owner+1} 隊已選</span>` : ""}
+    </button>`;
+  }).join("");
+  $$("#animalGrid .animal-opt").forEach(b=>{
+    if(b.getAttribute("aria-disabled") === "true") return;
+    b.onclick = ()=>selectAnimal(b.dataset.id);
+  });
 }
 function openAnimals(i){
   animalTarget = i;
@@ -753,14 +787,17 @@ function openAnimals(i){
   $("#animalSheet").classList.add("on");
 }
 function closeAnimals(){ $("#animalSheet").classList.remove("on"); }
+function animalOwner(id, except){
+  for(let i=0;i<cfg.teams;i++) if(i !== except && cfg.animals[i] === id) return i;
+  return -1;
+}
 function selectAnimal(id){
   const i = animalTarget;
-  const prev = animalAt(i);
+  if(animalOwner(id, i) >= 0) return;            // 已被其他隊用，唔准重複
   const next = animalById(id);
-  const cur = cfg.names[i];
-  // 只喺隊名未被人改過時跟住換名；自己改過嘅名一律唔動
-  if(!cur || cur === prev.name || /^隊\s*\d+$/.test(cur)) cfg.names[i] = next.name;
+  if(!cfg.custom[i]) cfg.names[i] = next.name;   // 只有未手動改過先跟住改名
   cfg.animals[i] = id;
+  ensureUniqueAnimals();
   saveCfg(); renderSetup(); closeAnimals();
 }
 
@@ -1089,6 +1126,7 @@ function endGame(){
 /* ================= 事件 ================= */
 function setTeams(n){
   cfg.teams = Math.max(2, Math.min(8, Math.round(+n || 2)));
+  ensureUniqueAnimals();
   saveCfg(); renderHome();
   const el = $("#teamInput");
   el.classList.remove("pop"); void el.offsetWidth; el.classList.add("pop");
