@@ -127,7 +127,7 @@ samples/hk-icebreaker.json 首次 seed 題庫
 - **字體**：沒有內嵌任何字體檔，只用 `system-ui`；裝置上的系統字體依該裝置授權，不隨本項目轉授。
 - **依賴**：見 `requirements.txt`（FastAPI、psycopg 等），各自依原授權（MIT / BSD / Apache-2.0）。
 
-**AI 開發**
+**Built with Hermes & OpenCode**
 
 本項目在 [**Hermes**](https://github.com/NousResearch/hermes)（AI 代理框架）與
 [**OpenCode**](https://opencode.ai)（模型服務）協助下開發，語言模型為 **DeepSeek V4.1 Flash**。
@@ -137,5 +137,4 @@ samples/hk-icebreaker.json 首次 seed 題庫
 
 「大電視」是香港通用的派對猜詞遊戲名稱（源自電視綜藝的同名遊戲環節）。
 本項目是獨立開發的主持工具，**與任何電視節目、電視台或同名手機 App 並無關聯**，
-亦非任何節目的官方產品。介面採用明亮系統風格（跟隨 iOS 的排版與可讀性慣例），
-與 Apple Inc. 並無隸屬或認可關係。
+亦非任何節目的官方產品。
