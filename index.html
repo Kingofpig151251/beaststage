@@ -63,8 +63,6 @@
   h2{margin:0; font-size:22px; font-weight:600; color:var(--ink); letter-spacing:-.01em}
   .sub{margin:8px 0 0; font-size:15px; color:var(--ink-2); max-width:60ch}
   .kv{font-size:15px; color:var(--ink-2)}
-  .kbd{font-family:var(--font-mono); font-size:12px; padding:2px 7px; border-radius:6px;
-    background:var(--fill); color:var(--ink-2)}
 
   /* ---------- 主頁（入口） ---------- */
   #v-home{display:none}
@@ -323,12 +321,16 @@
 
   .flash-hud{display:grid; grid-template-columns:1fr 1fr; gap:12px; align-items:center;
     padding:12px max(18px,env(safe-area-inset-right)) calc(14px + env(safe-area-inset-bottom)) max(18px,env(safe-area-inset-left))}
-  .flash-hud .j-skip{justify-self:start; min-height:64px; width:clamp(140px,20vw,220px);
-    background:var(--fill); color:var(--ink); font-size:19px; border-radius:var(--r-lg);
-    -webkit-backdrop-filter:blur(20px); backdrop-filter:blur(20px)}
-  .flash-hud .j-ok{justify-self:end; min-height:64px; width:clamp(160px,24vw,260px);
-    background:var(--blue-fill); color:var(--on-accent); font-size:22px; font-weight:600; border-radius:var(--r-lg)}
-  .flash-hud .j-ok:active{background:var(--blue-fill-press)}
+  .flash-hud .key{display:grid; place-items:center;
+    width:clamp(124px,17vw,168px); height:clamp(84px,12.5vh,108px); border-radius:20px;
+    transition:transform var(--dur) var(--ease), background-color var(--dur), color var(--dur)}
+  .flash-hud .key svg{width:clamp(30px,4.2vh,38px); height:clamp(30px,4.2vh,38px);
+    fill:none; stroke:currentColor; stroke-width:2.1; stroke-linecap:round; stroke-linejoin:round}
+  .flash-hud .key{background:var(--fill); color:var(--ink);
+    box-shadow:inset 0 0 0 1px color-mix(in oklab, var(--sep) 65%, transparent)}
+  .flash-hud .key-skip{justify-self:start}
+  .flash-hud .key-ok{justify-self:end}
+  .flash-hud .key:active{background:var(--fill-2)}
 
   .sidenum{display:none}
 
@@ -356,7 +358,10 @@
     font-variant-numeric:tabular-nums}
   .readyCard button{margin-top:clamp(24px,4vh,36px); min-height:56px; padding:0 40px;
     background:var(--blue-fill); color:var(--on-accent); font-size:19px; font-weight:600; border-radius:var(--r-lg)}
-  .readyKbd{margin-top:14px; font-size:13px; color:var(--ink-3)}
+  #btnReady::after{content:"→"; display:inline-grid; place-items:center; min-width:30px; height:30px;
+    margin-left:12px; padding:0 8px; border-radius:8px;
+    background:color-mix(in oklab, currentColor 14%, transparent); color:inherit;
+    font-family:var(--font-mono); font-size:17px; line-height:1; vertical-align:2px; opacity:.85}
   .readyCount{display:none; font-family:var(--font-display); font-size:clamp(72px,15vw,132px);
     font-weight:700; color:var(--ink)}
   .readyCount.on{display:block; margin-top:16px}
@@ -531,8 +536,12 @@
     </main>
 
     <div class="flash-hud">
-      <button class="j-skip" data-judge="skip">跳過</button>
-      <button class="j-ok" data-judge="ok">對</button>
+      <button class="key key-skip" data-judge="skip" aria-label="跳過" title="跳過（←）">
+        <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M19 12H6"/><path d="M12 5 5 12l7 7"/></svg>
+      </button>
+      <button class="key key-ok" data-judge="ok" aria-label="對" title="對（→）">
+        <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M5 12h13"/><path d="m12 5 7 7-7 7"/></svg>
+      </button>
     </div>
 
     <div class="ready" id="readyOverlay" style="display:none">
@@ -541,8 +550,7 @@
         <div class="readyMark" id="rdMark" aria-hidden="true"></div>
         <div class="readyTeam" id="rdTeam"></div>
         <div class="readyScores" id="rdScores"></div>
-        <button id="btnReady">開始</button>
-        <div class="readyKbd">或按 <span class="kbd">空白鍵</span></div>
+        <button id="btnReady">準備好</button>
         <div class="readyCount" id="rdCount"></div>
       </div>
     </div>
@@ -1236,17 +1244,17 @@ document.addEventListener("keydown", e=>{
 document.addEventListener("keydown", e=>{
   if(!$("#v-play").classList.contains("active")) return;
   if(["INPUT","TEXTAREA"].includes(document.activeElement.tagName)) return;
-  const k = e.key.toLowerCase();
-  if(e.code==="Space" || k==="enter"){
+  if(!G) return;
+  if(e.key === "ArrowRight"){
     e.preventDefault();
-    if(!G) return;
     if(G.phase === "ready") startRound();
     else if(G.phase === "running") judge("ok");
-    return;
+  }else if(e.key === "ArrowLeft"){
+    e.preventDefault();
+    if(G.phase === "running") judge("skip");
+  }else if(e.key === "Escape"){
+    e.preventDefault(); $("#btnPause").click();
   }
-  else if(k==="s" || k==="arrowdown"){ e.preventDefault(); judge("skip"); }
-  else if(k==="z"){ /* 撤銷已移除 */ }
-  else if(k==="escape" || k==="p"){ e.preventDefault(); $("#btnPause").click(); }
 });
 
 
