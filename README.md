@@ -98,8 +98,20 @@ samples/hk-icebreaker.json 新 DB 首次 seed 題庫（6 類 62 題）
 - 主持台連唔到後端就冇題可玩（冇本機 fallback）
 - 經典擺位：猜嗰個要**背向**屏幕（唔係閉眼），一隊 4–8 人最順
 
-## 十、第三方素材
+## 十、授權
 
-- **動物圖示**：Twemoji（<https://github.com/jdecked/twemoji>），授權 **CC-BY 4.0**。
-  8 個 SVG（🐢🦊🐳🐙🐝🦩🐬🐻）以內嵌方式放在 `index.html` 的 `ICONS`，冇額外請求。
-  如要替換圖示，保持 `viewBox="0 0 36 36"` 及 `width/height="1em"` 即可。
+本項目以 **MIT License** 開源，全文見 [`LICENSE`](LICENSE)。
+
+> Copyright (c) 2026 **Leung Tung Lam**
+
+轉載、修改、商用皆可，唯一要求是保留上面的版權聲明與授權條文。
+介面左下／底部顯示嘅 `© 2026 Leung Tung Lam · MIT License` 屬作者署名，請勿移除。
+
+## 十一、第三方素材與商標
+
+- **Twemoji**（動物圖示 🐢🦊🐳🐙🐝🦩🐬🐻）：**CC-BY 4.0**，<https://github.com/jdecked/twemoji>
+  —— 以內嵌 SVG 放在 `index.html` 的 `ICONS`，圖形未經修改。
+- **字體**：冇內嵌任何字體檔，只用 `system-ui`；Apple 裝置上解析為 SF Pro（Apple Inc. 系統字體，不隨本項目轉授）。
+- **依賴**：見 `requirements.txt`，各自依原授權（MIT / BSD / Apache-2.0）。
+
+完整版權與第三方清單見 [`NOTICE.md`](NOTICE.md)。

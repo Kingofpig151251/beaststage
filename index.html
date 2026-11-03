@@ -7,7 +7,9 @@
 <meta name="apple-mobile-web-app-capable" content="yes">
 <meta name="apple-mobile-web-app-title" content="大電視">
 <meta name="apple-mobile-web-app-status-bar-style" content="default">
-<meta name="description" content="大電視破冰主持台：一部機控場，一人背向屏幕猜，全隊描述，主持按對或跳過，題庫同排行榜可以自訂。">
+<meta name="author" content="Leung Tung Lam">
+<meta name="copyright" content="© 2026 Leung Tung Lam. MIT License.">
+<meta name="description" content="大電視破冰主持台：一部機控場，一人背向屏幕猜，全隊描述，主持按對或跳過，題庫可以自訂。">
 <title>大電視 · 破冰主持台</title>
 <style>
   /* Hallmark · redesign: Apple (iPadOS dark) · scope: app · v3.0.0
@@ -80,6 +82,8 @@
     animation:rise .62s .06s var(--ease) both}
   .landing-go{margin-top:36px; min-width:260px; min-height:60px; font-size:21px; border-radius:var(--pill);
     animation:rise .62s .18s var(--ease) both}
+  .landing-credit{margin-top:clamp(28px,5vh,48px); font-size:13px; color:var(--ink-3);
+    font-variant-numeric:tabular-nums; animation:rise .62s .24s var(--ease) both}
   .landing-link{display:inline-flex; align-items:center; justify-content:center; margin-top:20px;
     min-height:48px; padding:0 26px; border-radius:var(--pill); background:var(--fill);
     color:var(--ink); font-size:17px; font-weight:600; text-decoration:none;
@@ -388,8 +392,7 @@
   .rk.first .pt{color:var(--blue)}
 
   .result-actions{display:flex; gap:12px; margin-top:32px; flex-wrap:wrap}
-  .result-actions .btn-big{flex:2 1 240px; max-width:none; min-height:52px; padding:0 22px; font-size:17px}
-  .result-actions .btn-quiet{flex:1 1 120px; min-height:52px; padding:0 22px}
+  .result-actions .btn-big{flex:1 1 100%; max-width:none; min-height:52px; padding:0 22px; font-size:17px}
 
   /* ---------- toast ---------- */
   .toast{position:fixed; left:50%; bottom:calc(24px + env(safe-area-inset-bottom)); z-index:90;
@@ -425,6 +428,7 @@
       <h1 class="landing-title">大電視</h1>
       <button class="btn-primary landing-go" id="btnEnter">開始</button>
       <a class="landing-link" id="btnEditHome" href="/edit">編輯題目</a>
+      <div class="landing-credit">© 2026 Leung Tung Lam · MIT License</div>
     </div>
   </section>
 
@@ -527,8 +531,7 @@
     <div id="champBox"></div>
     <div class="rank" id="rankList"></div>
     <div class="result-actions">
-      <button class="btn-primary btn-big" id="btnAgain">再玩一次</button>
-      <button class="btn-quiet" id="btnBackHome">返回主頁</button>
+      <button class="btn-primary btn-big" id="btnBackHome">返回主頁</button>
     </div>
   </section>
 
@@ -1189,7 +1192,6 @@ $("#btnPause").onclick = ()=>{
   renderTimer();
 };
 
-$("#btnAgain").onclick = startGame;
 $("#btnBackHome").onclick = ()=>{ showView("v-home"); renderHome(); };
 
 /* 鍵盤：設定流程 */

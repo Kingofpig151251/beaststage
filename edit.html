@@ -3,6 +3,8 @@
 <head>
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<meta name="author" content="Leung Tung Lam">
+<meta name="copyright" content="© 2026 Leung Tung Lam. MIT License.">
 <meta name="description" content="大電視題目：一段文字，一行一題。任何人改得，改完自動儲存。">
 <title>題目 · 大電視</title>
 <style>
@@ -26,6 +28,7 @@
   header{display:flex; align-items:center; gap:12px; flex-wrap:wrap}
   h1{margin:0; font-size:28px; font-weight:700; letter-spacing:-.02em; line-height:1.12; text-wrap:balance}
   .kv{font-size:15px; color:var(--ink-2)}
+  .credit{margin:0; font-size:13px; color:var(--muted); text-align:center}
   .dot{display:inline-flex; align-items:center; gap:8px; font-size:15px; color:var(--ink-2)}
   .dot::before{content:""; width:7px; height:7px; border-radius:50%; background:var(--muted)}
   .dot.ok{color:var(--accent-2)} .dot.ok::before{background:var(--accent-2)}
@@ -52,6 +55,7 @@
 
   <textarea id="text" spellcheck="false" autocomplete="off" autocapitalize="off"
     placeholder="請貼上題目，一行一題&#10;雞蛋仔&#10;菠蘿包&#10;絲襪奶茶" aria-label="題目"></textarea>
+<p class="credit">© 2026 Leung Tung Lam · MIT License</p>
 
 <script>
 "use strict";

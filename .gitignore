@@ -16,3 +16,7 @@ node_modules/
 .env.local
 .vercel
 .env*
+
+# 本機工具產物
+.agents/
+.hallmark/
