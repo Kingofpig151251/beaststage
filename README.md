@@ -116,10 +116,22 @@ samples/hk-icebreaker.json 新 DB 首次 seed 題庫（6 類 62 題）
 
 完整版權與第三方清單見 [`NOTICE.md`](NOTICE.md)。
 
-## 十二、AI 開發聲明
+## 十二、AI 使用聲明
 
-本項目的設計方向、功能取捨、內容定稿與發佈決定由作者 **Leung Tung Lam** 負責；
-程式碼與文案在 **AI 編碼助理（Hermes Agent／大型語言模型）**協助下生成與修改，
-每輪改動都經作者審核後才合併。重用本項目程式碼時，請自行覆核正確性與安全性。
+本項目在開發過程中使用 AI 編碼助理協助實作。**產品方向、設計決定、內容定稿、測試與發佈
+均由作者 Leung Tung Lam 負責**；AI 不具備決定權，亦非共同作者。
 
-詳見 [`NOTICE.md`](NOTICE.md)。
+| 層級 | 工具 |
+|---|---|
+| 代理框架 | Hermes Agent（Nous Research） |
+| 模型服務 | OpenCode（Go 方案） |
+| 語言模型 | DeepSeek V4.1 Flash |
+
+完整聲明（參與範圍、審核流程、第三方素材、使用者提示、英文摘要）見
+[`AI-DISCLOSURE.md`](AI-DISCLOSURE.md)。
+
+## 十三、參與
+
+- 貢獻方式與設計公約：[`CONTRIBUTING.md`](CONTRIBUTING.md)
+- 安全問題回報：[`SECURITY.md`](SECURITY.md)
+- 已知的設計取捨（開放寫入、無帳號、無本機備份）列於 SECURITY.md 末段
