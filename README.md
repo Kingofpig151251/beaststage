@@ -84,9 +84,10 @@ PUT  /api/text      整份取代（開放寫入，/edit 用）
 - 音效走「電視節目」路線，全部係真音源檔（**程式內已無合成音**）：
   **對**＝門鐘叮噹（`sfx/dingdong.mp3`）／**跳過**＝子彈飛過（`sfx/whoosh.mp3`）／
   **倒數**＝賽車起步錄音（`sfx/countdown.mp3`）／**時間到**＝球證哨三吹（`sfx/whistle.mp3`）／
-  **結算卡**＝銅管「噠」（`sfx/settle.mp3`）／**冠軍**＝色士風 fanfare（`sfx/champion.mp3`）
+  **結算卡**＝銅管 fanfare（`sfx/settle.mp3`，2.9s）／**冠軍**＝Celebration 背景音樂（`sfx/champion.mp3`，16.7s 無縫 loop）
 - 倒數錄音三個起音正好在 0／1／2 秒、GO 在 3 秒，同畫面每拍 1 秒天生對齊，所以整段照播、不逐拍發聲
-- 六個 mp3 合共約 **110KB**，`index.html` 大小不變；第一次觸控時用 `decodeAudioData` 一次過預載，之後播放零延遲
+- 六個 mp3 合共約 **240KB**，`index.html` 大小不變；第一次觸控時用 `decodeAudioData` 一次過預載，之後播放零延遲
+- 冠軍 BGM 以 `loop = true` 無限循環，返回主頁或再開一局即停；音量 0.42，不蓋過現場講話
 - 系統開了「減少動態效果」時：動畫時長壓到近 0，倒數改 0.7s 一拍；幕照合、照停，等人按「繼續」
 
 ## 檔案
@@ -97,8 +98,8 @@ sfx/dingdong.mp3           判定「對」：門鐘叮噹
 sfx/whoosh.mp3             判定「跳過」：子彈飛過
 sfx/countdown.mp3          倒數 3／2／1＋開始（真實賽車起步錄音）
 sfx/whistle.mp3            時間到：球證哨三吹
-sfx/settle.mp3             結算卡：銅管「噠」
-sfx/champion.mp3           冠軍揭曉：色士風 fanfare
+sfx/settle.mp3             結算卡：銅管 fanfare（2.9s）
+sfx/champion.mp3           冠軍揭曉：Celebration loop（16.7s）
 edit.html                  題目編輯（一個 textarea + 自動儲存）
 api/_app.py                Vercel 後端（FastAPI + Postgres，2 個路由）
 api/[...path].py / index.py  路由入口
@@ -145,7 +146,9 @@ samples/hk-icebreaker.json 首次 seed 題庫
   `sfx/whoosh.mp3` 為本項目自行合成（掃頻噪音），無第三方素材。
 - **倒數音效**：`sfx/countdown.mp3` 來自 OpenGameArt《race start countdown》（CC0 1.0）。
 - **時間到哨子**：`sfx/whistle.mp3` 由 SpliceSound 裁判哨（CC0）剪成三吹。
-- **結算與冠軍**：`sfx/settle.mp3`、`sfx/champion.mp3` 來自 Kenney《Music Jingles》（CC0 1.0）。
+- **結算 fanfare**：`sfx/settle.mp3` 來自 OpenGameArt《Classic fanfare lick》（CC0 1.0）。
+- **冠軍 BGM**：`sfx/champion.mp3` 為 Kevin MacLeod《Celebration》節錄（[incompetech.com](https://incompetech.com)），
+  以 **CC BY 4.0** 授權使用，已按授權要求在此署名；16.7 秒（8 小節，114.8 BPM）經交叉淡化做成無縫 loop。
 - **依賴**：見 `requirements.txt`（FastAPI、psycopg 等），各自依原授權（MIT / BSD / Apache-2.0）。
 
 **Built with Hermes & OpenCode**

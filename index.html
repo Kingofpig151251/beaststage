@@ -996,6 +996,7 @@ function launchGame(){
 /* ================= 題庫管理（離線用） ================= */
 /* ================= 遊戲流程 ================= */
 function startGame(){
+  stopBgm();
   if(G){ clearInterval(G.timerId); G.timerToken++; }   // 清除上一局殘留的計時器
   const names = Array.from({length:cfg.teams},(_,i)=> teamName(i));
   const looks = Array.from({length:cfg.teams},(_,i)=>{ const a = animalAt(i); return { id:a.id, color:a.color }; });
@@ -1087,6 +1088,24 @@ function sfx(name, vol=0.85){
   src.connect(g).connect(c.destination);
   src.start();
   return true;
+}
+
+/* 冠軍頁背景音樂：無縫 loop，離開結果頁／重開一局即停 */
+let BGM = null;
+function bgm(name, vol=0.42){
+  stopBgm();
+  const c = audioCtx(), buf = SFX[name];
+  if(!c || !buf) return;
+  const src = c.createBufferSource(), g = c.createGain();
+  src.buffer = buf; src.loop = true; g.gain.value = vol;
+  src.connect(g).connect(c.destination);
+  src.start();
+  BGM = src;
+}
+function stopBgm(){
+  if(!BGM) return;
+  try{ BGM.stop(); }catch(e){}
+  BGM = null;
 }
 document.addEventListener("pointerdown", loadSfx, {once:true});
 document.addEventListener("keydown", loadSfx, {once:true});
@@ -1349,7 +1368,7 @@ function endGame(){
       <div class="pt">${t.score}</div>
     </div>`).join("") : "";
   showView("v-result");
-  sfx("champion", 0.9);
+  bgm("champion", 0.42);
 }
 
 /* ================= 事件 ================= */
@@ -1397,6 +1416,7 @@ function backToSetup(){
 }
 
 $("#btnExit").onclick = ()=>{
+  stopBgm();
   if(!G) { showView("v-home"); renderHome(); return; }
   if(isPristine()){ backToSetup(); return; }   // 未開始過 → 上一步回設定
   if(!confirm("確定退出遊戲？本局成績將不會記錄。")) return;
@@ -1426,7 +1446,7 @@ $("#btnPause").onclick = ()=>{
   renderTimer();
 };
 
-$("#btnBackHome").onclick = ()=>{ showView("v-home"); renderHome(); };
+$("#btnBackHome").onclick = ()=>{ stopBgm(); showView("v-home"); renderHome(); };
 
 /* 鍵盤：設定流程 */
 document.addEventListener("keydown", e=>{
