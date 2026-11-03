@@ -312,16 +312,21 @@
 
   .flash-hud{display:grid; grid-template-columns:1fr 1fr; gap:12px; align-items:center;
     padding:12px max(18px,env(safe-area-inset-right)) calc(14px + env(safe-area-inset-bottom)) max(18px,env(safe-area-inset-left))}
-  .flash-hud .key{display:grid; place-items:center;
-    width:clamp(124px,17vw,168px); height:clamp(84px,12.5vh,108px); border-radius:20px;
+  .flash-hud .key{display:inline-flex; align-items:center; justify-content:center; gap:12px;
+    width:clamp(148px,20vw,214px); height:clamp(62px,9.2vh,80px); border-radius:var(--r-lg);
+    font-size:clamp(18px,2.4vh,21px); font-weight:600;
     transition:transform var(--dur) var(--ease), background-color var(--dur), color var(--dur)}
-  .flash-hud .key svg{width:clamp(30px,4.2vh,38px); height:clamp(30px,4.2vh,38px);
-    fill:none; stroke:currentColor; stroke-width:2.1; stroke-linecap:round; stroke-linejoin:round}
-  .flash-hud .key{background:var(--fill); color:var(--ink);
-    box-shadow:inset 0 0 0 1px color-mix(in oklab, var(--sep) 65%, transparent)}
-  .flash-hud .key-skip{justify-self:start}
-  .flash-hud .key-ok{justify-self:end}
-  .flash-hud .key:active{background:var(--fill-2)}
+  .flash-hud .key::before,
+  .flash-hud .key::after{display:inline-grid; place-items:center; min-width:30px; height:30px;
+    padding:0 8px; border-radius:8px; font-family:var(--font-mono); font-size:16px; line-height:1;
+    background:color-mix(in oklab, currentColor 14%, transparent); opacity:.9}
+  .flash-hud .key-skip::before{content:"←"}
+  .flash-hud .key-ok::after{content:"→"}
+  .flash-hud .key-skip{justify-self:start; background:var(--fill); color:var(--ink)}
+  .flash-hud .key-skip:active{background:var(--fill-2)}
+  .flash-hud .key-ok{justify-self:end; background:var(--blue-fill); color:var(--on-accent)}
+  .flash-hud .key-ok:active{background:var(--blue-fill-press)}
+  .flash-hud .key-ok::after{background:color-mix(in oklab, var(--on-accent) 24%, transparent)}
 
 
   /* ---------- ready ---------- */
@@ -566,12 +571,8 @@
     </main>
 
     <div class="flash-hud">
-      <button class="key key-skip" data-judge="skip" aria-label="跳過" title="跳過（←）">
-        <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M19 12H6"/><path d="M12 5 5 12l7 7"/></svg>
-      </button>
-      <button class="key key-ok" data-judge="ok" aria-label="對" title="對（→）">
-        <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M5 12h13"/><path d="m12 5 7 7-7 7"/></svg>
-      </button>
+      <button class="key key-skip" data-judge="skip" aria-label="跳過" title="跳過（←）">跳過</button>
+      <button class="key key-ok" data-judge="ok" aria-label="對" title="對（→）">對</button>
     </div>
 
     <div class="ready" id="readyOverlay" style="display:none">
