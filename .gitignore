@@ -24,3 +24,6 @@ node_modules/
 # 音效試聽素材（只在本機／LAN 預覽用，不入 repo）
 _sfx_raw*/
 _audition*.html
+
+# 一次性情境 demo（不屬 app）
+_demo*.html
