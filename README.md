@@ -115,3 +115,11 @@ samples/hk-icebreaker.json 新 DB 首次 seed 題庫（6 類 62 題）
 - **依賴**：見 `requirements.txt`，各自依原授權（MIT / BSD / Apache-2.0）。
 
 完整版權與第三方清單見 [`NOTICE.md`](NOTICE.md)。
+
+## 十二、AI 開發聲明
+
+本項目的設計方向、功能取捨、內容定稿與發佈決定由作者 **Leung Tung Lam** 負責；
+程式碼與文案在 **AI 編碼助理（Hermes Agent／大型語言模型）**協助下生成與修改，
+每輪改動都經作者審核後才合併。重用本項目程式碼時，請自行覆核正確性與安全性。
+
+詳見 [`NOTICE.md`](NOTICE.md)。

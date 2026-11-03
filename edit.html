@@ -29,6 +29,7 @@
   h1{margin:0; font-size:28px; font-weight:700; letter-spacing:-.02em; line-height:1.12; text-wrap:balance}
   .kv{font-size:15px; color:var(--ink-2)}
   .credit{margin:0; font-size:13px; color:var(--muted); text-align:center}
+  .credit-ai{padding-left:10px; margin-left:8px; border-left:var(--hair) solid var(--rule)}
   .dot{display:inline-flex; align-items:center; gap:8px; font-size:15px; color:var(--ink-2)}
   .dot::before{content:""; width:7px; height:7px; border-radius:50%; background:var(--muted)}
   .dot.ok{color:var(--accent-2)} .dot.ok::before{background:var(--accent-2)}
@@ -55,7 +56,7 @@
 
   <textarea id="text" spellcheck="false" autocomplete="off" autocapitalize="off"
     placeholder="請貼上題目，一行一題&#10;雞蛋仔&#10;菠蘿包&#10;絲襪奶茶" aria-label="題目"></textarea>
-<p class="credit">© 2026 Leung Tung Lam · MIT License</p>
+<p class="credit">© 2026 Leung Tung Lam · MIT License <span class="credit-ai">AI 協助開發</span></p>
 
 <script>
 "use strict";
