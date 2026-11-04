@@ -1090,23 +1090,40 @@ function sfx(name, vol=0.85){
   return true;
 }
 
-/* 冠軍頁背景音樂：無縫 loop，離開結果頁／重開一局即停 */
-let BGM = null;
+/* 冠軍頁背景音樂：無縫 loop，離開結果頁／重開一局即停
+   loop = true 之外再加一層保險：ended 即重新接上，
+   並喺頁面返前景／context 被暫停時自動 resume，避免個別瀏覽器中斷 */
+let BGM = null, BGM_WANT = null;
 function bgm(name, vol=0.42){
   stopBgm();
-  const c = audioCtx(), buf = SFX[name];
+  if(!SFX[name]) return;
+  BGM_WANT = { name, vol };
+  startBgm();
+}
+function startBgm(){
+  if(!BGM_WANT) return;
+  const c = audioCtx(), buf = SFX[BGM_WANT.name];
   if(!c || !buf) return;
   const src = c.createBufferSource(), g = c.createGain();
-  src.buffer = buf; src.loop = true; g.gain.value = vol;
+  src.buffer = buf; src.loop = true;
+  src.loopStart = 0; src.loopEnd = buf.duration;
+  g.gain.value = BGM_WANT.vol;
   src.connect(g).connect(c.destination);
+  src.onended = ()=>{ if(BGM_WANT){ BGM = null; setTimeout(startBgm, 0); } };
   src.start();
   BGM = src;
 }
 function stopBgm(){
-  if(!BGM) return;
-  try{ BGM.stop(); }catch(e){}
-  BGM = null;
+  const want = BGM_WANT; BGM_WANT = null;
+  if(BGM){ try{ BGM.onended = null; BGM.stop(); }catch(e){} BGM = null; }
+  return want;
 }
+document.addEventListener("visibilitychange", ()=>{
+  if(document.hidden || !BGM_WANT) return;
+  const c = audioCtx();
+  if(c && c.state === "suspended") c.resume();
+  if(!BGM) startBgm();
+});
 document.addEventListener("pointerdown", loadSfx, {once:true});
 document.addEventListener("keydown", loadSfx, {once:true});
 
