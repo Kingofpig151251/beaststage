@@ -518,20 +518,26 @@
     font-variant-numeric:tabular-nums; transition:font-size .34s var(--ease), color .34s var(--ease)}
   .rk .crown{display:none}
 
-  /* 冠軍卡 */
-  .rk.is-champ{background:var(--surface); margin:10px 0 4px; padding:16px 14px;
+  /* 冠軍卡：內容居中、皇冠做成角標 */
+  .rk.is-champ{background:var(--surface); margin:20px auto 8px; width:min(560px, 82%);
+    padding:26px 26px 18px;
     border-radius:22px; box-shadow:inset 0 0 0 1px color-mix(in oklab, var(--tc) 20%, transparent)}
+  .rk.is-champ .face.back{display:flex; align-items:center; justify-content:space-between;
+    gap:clamp(14px,3vw,30px)}
+  .rk.is-champ .no{display:none}
   .rk.is-champ::before{content:""; position:absolute; inset:-28px -12px; border-radius:34px; z-index:-1;
     background:radial-gradient(58% 70% at 50% 50%, color-mix(in oklab, var(--tc) 30%, transparent), transparent 72%);
     filter:blur(16px); animation:champGlow 2.8s ease-in-out infinite}
-  .rk.is-champ .crown{display:inline-flex; align-items:center; gap:6px;
-    font-size:14px; font-weight:600; color:var(--tc); margin-bottom:2px}
-  .rk.is-champ .crown svg{width:18px; height:18px; fill:currentColor;
+  .rk.is-champ .crown{position:absolute; top:-13px; left:50%; transform:translateX(-50%); display:inline-flex;
+    align-items:center; gap:6px; padding:5px 13px 5px 11px; border-radius:var(--pill);
+    background:var(--tc); font-size:13px; font-weight:600; color:var(--on-accent);
+    box-shadow:0 3px 12px color-mix(in oklab, var(--tc) 45%, transparent)}
+  .rk.is-champ .crown svg{width:15px; height:15px; fill:currentColor;
     animation:crownBob 2.6s ease-in-out infinite}
   .rk.is-champ .rk-tile{border-radius:16px}
   .rk.is-champ .rk-tile .rk-mark{font-size:34px; animation:sway 2.8s ease-in-out infinite}
   .rk.is-champ .nm{font-family:var(--font-display); font-size:clamp(24px,4.4vh,34px);
-    font-weight:700; letter-spacing:-.02em}
+    font-weight:700; letter-spacing:-.02em; text-align:left; max-width:min(46vw,420px)}
   .rk.is-champ .st{font-size:15px}
   .rk.is-champ .pt{font-size:clamp(32px,5.4vh,46px); color:var(--tc)}
   .rank.compact .rk.is-champ{padding:10px 14px}
