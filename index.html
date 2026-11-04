@@ -317,7 +317,9 @@
   .question.fx-skip{animation:fxSkip .28s var(--ease)}
   .question.fx-bad{animation:fxBad .46s var(--ease)}
   .question.fx-down .card-word{animation:wordOutDown .2s var(--ease) forwards}
+  .question.fx-up .card-word{animation:wordOutUp .2s var(--ease) forwards}
   @keyframes wordOutDown{to{transform:translateY(52px); opacity:0}}
+  @keyframes wordOutUp{to{transform:translateY(-52px); opacity:0}}
   @keyframes fxOk{0%{background:transparent} 40%{background:var(--flash-ok)} 100%{background:transparent}}
   @keyframes fxSkip{0%,100%{transform:translateX(0)} 25%{transform:translateX(-8px)} 75%{transform:translateX(8px)}}
   @keyframes fxBad{
@@ -730,7 +732,7 @@
     <div class="flash-hud" id="hud">
       <button class="key key-foul" data-judge="foul" aria-label="犯規" title="犯規（←）">犯規</button>
       <button class="key key-pass" data-judge="skip" aria-label="跳過" title="跳過（↓）">跳過</button>
-      <button class="key key-ok" data-judge="ok" aria-label="對" title="對（→）">對</button>
+      <button class="key key-ok" data-judge="ok" aria-label="正確" title="正確（→）">正確</button>
     </div>
 
     <div class="ready" id="readyOverlay" style="display:none">
@@ -955,7 +957,8 @@ async function pullText(){
 /* ================= VFX ================= */
 function fxOk(){
   const q = document.querySelector(".question");
-  q.classList.remove("fx-ok","fx-skip"); void q.offsetWidth; q.classList.add("fx-ok");
+  q.classList.remove("fx-ok","fx-skip","fx-bad","fx-down","fx-up"); void q.offsetWidth;
+  q.classList.add("fx-ok","fx-up");
 }
 
 /* +1 / −1 分數浮字 */
@@ -1443,11 +1446,11 @@ function judge(kind){
   t.score += delta;
   G.judged++;
 
-  if(kind === "skip"){                       // 等文字滑走，再換下一題
+  if(kind !== "foul"){                      // 對／跳過：等文字滑走，再換下一題
     setTimeout(()=>{
       if(!G || G.phase !== "running") return;
       const q = document.querySelector(".question");
-      if(q) q.classList.remove("fx-down");
+      if(q) q.classList.remove("fx-down","fx-up","fx-ok");
       G.cur = drawItem();
       renderPlay();
     }, 190);
