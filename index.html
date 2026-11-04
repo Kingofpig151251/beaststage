@@ -29,7 +29,7 @@
     --blue-fill:var(--blue); --blue-fill-press:var(--blue-press); --green:#34C759; --red:#FF3B30; --amber:#FF9F0A;
     --on-accent:#FFFFFF; --focus-ring:rgba(0,113,227,.85);
     --bar-bg:rgba(255,255,255,.84); --flash-ok:rgba(52,199,89,.16); --toast-bg:rgba(28,28,30,.92);
-    --toast-ink:#FFFFFF;
+    --toast-ink:#FFFFFF; --flash-bad:rgba(255,59,48,.15);
     /* stage */
     --dim:rgba(0,0,0,.62); --vignette:rgba(0,0,0,.45); --beam-hi:rgba(255,255,255,.92); --beam-mid:rgba(255,255,255,.30);
     /* geometry */
@@ -308,8 +308,16 @@
   @keyframes wordIn{from{opacity:0; transform:scale(.96)} to{opacity:1; transform:scale(1)}}
   .question.fx-ok{animation:fxOk .32s var(--ease)}
   .question.fx-skip{animation:fxSkip .28s var(--ease)}
+  .question.fx-bad{animation:fxBad .46s var(--ease)}
   @keyframes fxOk{0%{background:transparent} 40%{background:var(--flash-ok)} 100%{background:transparent}}
   @keyframes fxSkip{0%,100%{transform:translateX(0)} 25%{transform:translateX(-8px)} 75%{transform:translateX(8px)}}
+  @keyframes fxBad{
+    0%{background:transparent; transform:translateX(0)}
+    18%{background:var(--flash-bad); transform:translateX(-9px)}
+    46%{background:var(--flash-bad); transform:translateX(9px)}
+    72%{background:color-mix(in oklab, var(--flash-bad) 55%, transparent); transform:translateX(-4px)}
+    100%{background:transparent; transform:translateX(0)}
+  }
   .fx-score{position:absolute; left:50%; top:12%; transform:translateX(-50%);
     font-family:var(--font-display); font-size:clamp(76px,13vh,132px); font-weight:700;
     letter-spacing:-.03em; line-height:1; font-variant-numeric:tabular-nums;
@@ -340,6 +348,12 @@
   .flash-hud .key-foul:active{background:var(--fill-2)}
   .flash-hud .key-pass{justify-self:center; background:var(--fill); color:var(--ink)}
   .flash-hud .key-pass:active{background:var(--fill-2)}
+  .flash-hud.bad-foul .key-foul,
+  .flash-hud.bad-pass .key-pass{background:color-mix(in oklab, var(--red) 13%, var(--fill)); color:var(--red)}
+  .flash-hud.bad-foul .key-foul:active,
+  .flash-hud.bad-pass .key-pass:active{background:color-mix(in oklab, var(--red) 22%, var(--fill))}
+  .flash-hud.bad-foul .key-foul::before,
+  .flash-hud.bad-pass .key-pass::before{background:color-mix(in oklab, var(--red) 18%, transparent)}
   .flash-hud.no-skip .key-pass{display:none}
   .flash-hud.no-skip{grid-template-columns:1fr 1fr}
   .flash-hud .key-ok{justify-self:end; background:var(--blue-fill); color:var(--on-accent)}
@@ -932,9 +946,10 @@ function fxScore(delta){
   q.appendChild(el);
   setTimeout(()=>el.remove(), 900);
 }
-function fxSkip(){
+function fxMiss(bad){
   const q = document.querySelector(".question");
-  q.classList.remove("fx-ok","fx-skip"); void q.offsetWidth; q.classList.add("fx-skip");
+  q.classList.remove("fx-ok","fx-skip","fx-bad"); void q.offsetWidth;
+  q.classList.add(bad ? "fx-bad" : "fx-skip");
 }
 
 /* ================= 主頁 / 設定流程 ================= */
@@ -1134,7 +1149,11 @@ function startGame(){
     phase:"ready"
   };
   const hud = $("#hud");
-  if(hud) hud.classList.toggle("no-skip", !cfg.allowSkip);
+  if(hud){
+    hud.classList.toggle("no-skip", !cfg.allowSkip);
+    hud.classList.toggle("bad-pass", cfg.allowSkip && cfg.skipPenalty);
+    hud.classList.toggle("bad-foul", cfg.foulPenalty);
+  }
   showView("v-play");
   enterReady();
 }
@@ -1392,8 +1411,8 @@ function judge(kind){
   const t = G.teams[G.turn];
   let delta = 0;
   if(kind === "ok"){ t.ok++; delta = 1; fxOk(); sfx("ding"); }
-  else if(kind === "skip"){ t.skip++; if(G.skipPenalty) delta = -1; fxSkip(); sfx("whoosh", 0.75); }
-  else { t.foul++; if(G.foulPenalty) delta = -1; fxSkip(); sfx("snare", 0.45); }
+  else if(kind === "skip"){ t.skip++; if(G.skipPenalty) delta = -1; fxMiss(G.skipPenalty); sfx("whoosh", 0.75); }
+  else { t.foul++; if(G.foulPenalty) delta = -1; fxMiss(G.foulPenalty); sfx("snare", 0.45); }
   if(delta) fxScore(delta);
   t.score += delta;
   G.judged++;
