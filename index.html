@@ -107,13 +107,14 @@
   /* ---------- 設定（逐步） ---------- */
   #v-setup{display:none}
   #v-setup.active{display:flex; flex-direction:column; min-height:calc(100dvh - 50px)}
-  .setup-top{display:grid; grid-template-columns:44px 1fr 44px; align-items:center; gap:12px}
+  .setup-top{display:grid; grid-template-columns:44px 1fr 44px; align-items:center; gap:12px;
+    margin-inline:calc(50% - 50vw);
+    padding:0 max(20px, env(safe-area-inset-right)) 0 max(20px, env(safe-area-inset-left))}
   .dots{display:flex; justify-content:center; gap:8px}
   .dots i{width:9px; height:9px; border-radius:50%; background:var(--sep);
     transition:background-color .3s var(--ease), transform .3s var(--ease)}
   .dots i.on{background:var(--blue)}
   .dots i.cur{transform:scale(1.6)}
-  .step-count{font-size:15px; color:var(--ink-3); text-align:right; font-variant-numeric:tabular-nums}
 
   .stage{position:relative; flex:1; min-height:0; margin:8px 0}
   .js .sstep{opacity:0; transform:translateX(56px); pointer-events:none}
@@ -612,7 +613,7 @@
         <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M14.5 5 7.5 12l7 7"/></svg>
       </button>
       <div class="dots" id="stepDots" aria-hidden="true"><i></i><i></i><i></i><i></i></div>
-      <div class="step-count" id="stepCount">1 / 4</div>
+      <span aria-hidden="true"></span>
     </div>
 
     <div class="stage" id="stepStage">
@@ -1037,7 +1038,6 @@ function goStep(i, dir){
     d.classList.toggle("on", n <= SETUP.i);
     d.classList.toggle("cur", n === SETUP.i);
   });
-  $("#stepCount").textContent = `${SETUP.i+1} / 4`;
   $("#btnNext").textContent = SETUP.i < 3 ? "繼續" : "開始遊戲";
   syncNext();
   if(SETUP.i === 1){
