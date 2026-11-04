@@ -1,0 +1,53 @@
+<!DOCTYPE html><html lang="zh-Hant-HK"><head><meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
+<title>按鍵音試聽 · 大電視</title>
+<style>
+  :root{color-scheme:light;--bg:#F2F2F7;--surface:#fff;--ink:#000;--ink-2:rgba(60,60,67,.72);
+    --sep:rgba(60,60,67,.18);--blue:#0071E3;--r:18px;--pill:999px;
+    --font:-apple-system,BlinkMacSystemFont,system-ui,"PingFang HK","Noto Sans HK",sans-serif}
+  *{box-sizing:border-box}
+  body{margin:0;background:var(--bg);color:var(--ink);font-family:var(--font);
+    padding:22px 18px 40px;display:flex;flex-direction:column;gap:14px;align-items:center}
+  h1{font-size:26px;margin:6px 0 2px;letter-spacing:-.02em}
+  p.sub{margin:0 0 8px;color:var(--ink-2);font-size:14px;text-align:center;max-width:32ch}
+  .card{width:min(560px,100%);background:var(--surface);border-radius:var(--r);
+    box-shadow:inset 0 0 0 1px var(--sep);overflow:hidden}
+  .row{display:flex;align-items:center;gap:14px;padding:16px 18px;border-bottom:1px solid var(--sep);
+    cursor:pointer;background:none;border-left:0;border-right:0;border-top:0;width:100%;text-align:left;
+    font:inherit;color:inherit;touch-action:manipulation}
+  .row:last-child{border-bottom:0}
+  .row:active{background:rgba(118,118,128,.12)}
+  .badge{width:30px;height:30px;border-radius:9px;background:rgba(0,113,227,.12);color:var(--blue);
+    display:grid;place-items:center;font-weight:700;font-size:14px;flex:none}
+  .name{font-weight:600}
+  .desc{color:var(--ink-2);font-size:13px;margin-top:2px}
+  .play{margin-left:auto;color:var(--blue);font-weight:600;font-size:14px}
+  .big{width:min(560px,100%);border:0;border-radius:var(--pill);background:var(--blue);color:#fff;
+    font:inherit;font-weight:600;padding:16px;touch-action:manipulation}
+</style></head><body>
+<h1>按鍵音試聽</h1>
+<p class="sub">點任何一行即播。全部都係 40–70ms，唔會拖慢操作。</p>
+<div class="card" id="list">
+  <button class="row" data-f="A_tap.mp3"><span class="badge">A</span><span><span class="name">柔和 tap</span>
+    <span class="desc">帶通噪音，最中性</span></span><span class="play">播放</span></button>
+  <button class="row" data-f="B_wood.wav"><span class="badge">B</span><span><span class="name">木質 click</span>
+    <span class="desc">噪音＋900Hz 尾音，厚身</span></span><span class="play">播放</span></button>
+  <button class="row" data-f="C_tick.mp3"><span class="badge">C</span><span><span class="name">iOS 鍵盤 tick</span>
+    <span class="desc">1500Hz 短音，最似系統鍵盤（現用）</span></span><span class="play">播放</span></button>
+  <button class="row" data-f="D_deep.mp3"><span class="badge">D</span><span><span class="name">低沉按鍵</span>
+    <span class="desc">320Hz，最沉、最唔搶</span></span><span class="play">播放</span></button>
+  <button class="row" data-f="../sfx/tick.mp3"><span class="badge">E</span><span><span class="name">現有 tick</span>
+    <span class="desc">結果頁揭曉用嘅同一個音</span></span><span class="play">播放</span></button>
+</div>
+<button class="big" id="all">全部順序播一次</button>
+<script>
+const A = new Audio();
+document.getElementById("list").addEventListener("click", e=>{
+  const b = e.target.closest(".row"); if(!b) return;
+  A.src = b.dataset.f; A.currentTime = 0; A.volume = .9; A.play();
+});
+document.getElementById("all").onclick = async ()=>{
+  const rows = [...document.querySelectorAll(".row")];
+  for(const r of rows){ A.src = r.dataset.f; A.currentTime = 0; A.play(); await new Promise(x=>setTimeout(x,700)); }
+};
+</script></body></html>

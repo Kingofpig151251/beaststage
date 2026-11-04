@@ -246,7 +246,8 @@
     outline:2px solid var(--focus-ring); outline-offset:3px}
 
   /* ---------- buttons ---------- */
-  button{font-family:inherit; font-size:17px; font-weight:500; color:var(--ink); background:transparent;
+  button{touch-action:manipulation; -webkit-tap-highlight-color:transparent;
+    font-family:inherit; font-size:17px; font-weight:500; color:var(--ink); background:transparent;
     border:0; border-radius:var(--r-md); padding:12px 18px; min-height:44px; cursor:pointer;
     transition:background-color var(--dur) var(--ease), transform var(--dur) var(--ease), opacity var(--dur)}
   button:active{transform:scale(.97)}
@@ -1230,7 +1231,8 @@ function audioCtx(){
 const SFX_SRC = { ding: "/sfx/dingdong.mp3", whoosh: "/sfx/whoosh.mp3",
                    countdown: "/sfx/countdown.mp3", whistle: "/sfx/whistle.mp3",
                    settle: "/sfx/settle.mp3", champion: "/sfx/champion.mp3",
-                   tick: "/sfx/tick.mp3", drums: "/sfx/drums.mp3", snare: "/sfx/snare.mp3" };
+                   tick: "/sfx/tick.mp3", drums: "/sfx/drums.mp3", snare: "/sfx/snare.mp3",
+                   tap: "/sfx/tap.mp3" };
 const SFX = {};
 let SFX_LOADING = false;
 async function loadSfx(){
@@ -1864,6 +1866,7 @@ $("#btnBackHome").onclick = ()=>{ stopBgm(); clearReveal(); showView("v-home"); 
 
 /* 結果頁：右方向鍵＝跳到冠軍／返回主頁；點畫面亦可快轉 */
 document.addEventListener("keydown", e=>{
+  if(e.repeat) return;
   if(!$("#v-result").classList.contains("active")) return;
   if(e.key !== "ArrowRight") return;
   e.preventDefault();
@@ -1877,6 +1880,7 @@ $("#v-result").addEventListener("click", e=>{
 
 /* 鍵盤：設定流程 */
 document.addEventListener("keydown", e=>{
+  if(e.repeat) return;
   if(!$("#v-setup").classList.contains("active")) return;
   if(e.target.tagName === "INPUT" && e.key !== "Enter") return;
   if(e.key === "Enter"){
@@ -1889,6 +1893,7 @@ document.addEventListener("keydown", e=>{
 
 /* 鍵盤控場 */
 document.addEventListener("keydown", e=>{
+  if(e.repeat) return;                       // 長按唔連發
   if(!$("#v-play").classList.contains("active")) return;
   if(["INPUT","TEXTAREA"].includes(document.activeElement.tagName)) return;
   if(!G) return;
@@ -1910,6 +1915,25 @@ document.addEventListener("keydown", e=>{
   }
 });
 
+
+/* ================= 輸入防抖 ================= */
+/* 同一個掣 260ms 內只認一次：擋連按、擋 iPad 雙擊縮放；判定掣有自己嘅聲，唔加 click */
+const TAP_GAP = 260;
+document.addEventListener("click", e=>{
+  const b = e.target.closest("button, a");
+  if(!b) return;
+  const now = performance.now();
+  if(b.__tapAt && now - b.__tapAt < TAP_GAP){
+    e.preventDefault(); e.stopPropagation();
+    return;
+  }
+  b.__tapAt = now;
+}, true);
+document.addEventListener("pointerdown", e=>{
+  const b = e.target.closest("button, a");
+  if(!b || b.disabled || b.matches("[data-judge]")) return;
+  sfx("tap", 0.5);
+}, true);
 
 /* ================= 啟動 ================= */
 /* 無法連接時每 15 秒自動重試，無需手動操作 */
