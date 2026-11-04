@@ -187,6 +187,7 @@
     box-shadow:inset 0 0 0 1px var(--sep)}
   .animal-opt.taken .opt-mark,.animal-opt.taken .opt-name{opacity:.42}
   .animal-opt .opt-taken{font-size:11px; font-weight:600; color:var(--ink-2); line-height:1.2}
+  .mark-img{display:block; width:1em; height:1em; object-fit:contain; margin:0 auto}
   .animal-opt .opt-mark{font-size:26px; line-height:1; color:var(--tc)}
   .animal-opt .opt-mark svg,.animal-opt .opt-mark .mark-img{display:block; width:1em; height:1em}
   .animal-opt .opt-name{font-size:13px; font-weight:600; color:var(--ink)}
@@ -847,7 +848,7 @@ let lines = [];                                  // 題目：一行一題
 /* 8 個動物圖示：Twemoji（CC-BY 4.0, github.com/jdecked/twemoji）— 內嵌 SVG，唔靠字型 */
 const TEAM_IDS = ["turtle","fox","whale","octopus","bee","flamingo","dolphin","bear"];
 const ICONS = Object.fromEntries(TEAM_IDS.map(id =>
-  [id, `<img class="mark-img" src="/art/team/${id}.webp" alt="" width="1em" height="1em" decoding="async">`]));
+  [id, `<img class="mark-img" src="/art/team/${id}.webp" alt="" decoding="async">`]));
 
 /* 隊伍動物：名稱、圖示、顏色三者綁定；改動物＝改色，但唔會覆蓋自己改過嘅隊名 */
 const ANIMALS = [
