@@ -46,9 +46,11 @@
   .sub{margin:2px 0 0; font-size:14px; color:var(--ink-2)}
 
   .state{margin-left:auto; display:inline-flex; align-items:center; gap:7px; flex:none;
+    opacity:0; transition:opacity .18s var(--ease);
     height:32px; padding:0 13px; border-radius:var(--pill); background:var(--fill);
     font-size:13px; font-weight:500; color:var(--ink-2); white-space:nowrap}
   .state::before{content:""; width:7px; height:7px; border-radius:50%; background:var(--ink-3)}
+  .state.on{opacity:1}
   .state.ok{color:var(--green)} .state.ok::before{background:var(--green)}
   .state.busy{color:var(--blue)} .state.busy::before{background:var(--blue); animation:pulse 1s ease-in-out infinite}
   .state.bad{color:var(--red)} .state.bad::before{background:var(--red)}
@@ -68,16 +70,11 @@
   .foot{display:flex; align-items:center; gap:10px; flex-wrap:wrap;
     padding:12px clamp(16px,2.6vw,22px); border-top:1px solid var(--sep)}
   .count{font-size:14px; color:var(--ink-2); font-variant-numeric:tabular-nums}
-  .hint{margin-left:auto; font-size:13px; color:var(--ink-3)}
 
   .credit{margin:0; text-align:center; font-size:12px; color:var(--ink-3); flex:none}
 
   @media (max-width:520px){
-    .hint{display:none}
     .sub{display:none}
-  }
-  @media (hover:none){
-    .hint{display:none}
   }
   @media (prefers-reduced-motion: reduce){
     *,*::before,*::after{animation-duration:.001ms !important; transition-duration:.001ms !important}
@@ -94,7 +91,7 @@
       <h1>題目</h1>
       <p class="sub">一行一題，改完自動儲存</p>
     </div>
-    <span class="state" id="state">正在載入…</span>
+    <span class="state" id="state"></span>
   </div>
 
   <div class="sheet">
@@ -102,7 +99,6 @@
       placeholder="雞蛋仔&#10;菠蘿包&#10;絲襪奶茶" aria-label="題目內容"></textarea>
     <div class="foot">
       <span class="count" id="meta">未有題目</span>
-      <span class="hint">Ctrl / ⌘ + S 立即儲存</span>
     </div>
   </div>
 
@@ -114,10 +110,13 @@
 const $ = s => document.querySelector(s);
 let saveTimer = null, lastSaved = "";
 
-function setState(kind, text){
+let stateTimer = null;
+function setState(kind, text, autoHide){
   const el = $("#state");
-  el.className = "state" + (kind ? " " + kind : "");
-  el.textContent = text;
+  clearTimeout(stateTimer);
+  el.className = "state" + (kind ? " " + kind : "") + (text ? " on" : "");
+  el.textContent = text || "";
+  if(autoHide) stateTimer = setTimeout(()=>{ el.className = "state"; el.textContent = ""; }, 1400);
 }
 function countLines(t){
   return String(t || "").split(/\r?\n/).map(l => l.trim()).filter(Boolean).length;
@@ -136,7 +135,7 @@ async function load(){
     $("#text").value = d.text || "";
     lastSaved = $("#text").value;
     paintMeta();
-    setState("ok", "已連接");
+    setState("", "");                       // 連上就唔顯示任何狀態
   }catch(e){
     setState("bad", "未連接，自動重試中");
   }
@@ -154,21 +153,18 @@ async function save(){
     });
     if(!r.ok) throw new Error("put");
     lastSaved = text;
-    setState("ok", "已儲存");
+    setState("ok", "已儲存", true);          // 顯示 1.4 秒後自動消失
   }catch(e){
     setState("bad", "儲存失敗，稍後重試");
   }
 }
 function scheduleSave(){
-  setState("busy", "尚未儲存…");
+  setState("busy", "儲存中…");
   clearTimeout(saveTimer);
   saveTimer = setTimeout(save, 800);
 }
 
 $("#text").oninput = () => { paintMeta(); scheduleSave(); };
-document.addEventListener("keydown", e => {
-  if((e.metaKey || e.ctrlKey) && e.key.toLowerCase() === "s"){ e.preventDefault(); save(); }
-});
 window.addEventListener("beforeunload", e => {
   if($("#text").value !== lastSaved){ e.preventDefault(); e.returnValue = ""; }
 });
@@ -180,17 +176,16 @@ async function poll(){
     const r = await fetch("/api/text", { cache: "no-store" });
     if(!r.ok) throw new Error("bad");
     const d = await r.json();
-    setState("ok", "已連接");
-    if((d.text || "") === lastSaved) return;
+    if((d.text || "") === lastSaved){ setState("", ""); return; }
     $("#text").value = d.text || "";
     lastSaved = $("#text").value;
     paintMeta();
-    setState("ok", "已更新");
+    setState("ok", "已更新", true);
   }catch(e){
     setState("bad", "未連接，自動重試中");
   }
 }
-setInterval(poll, 15000);
+setInterval(()=>{ if(!document.hidden) poll(); }, 60000);
 document.addEventListener("visibilitychange", () => { if(!document.hidden) poll(); });
 window.addEventListener("focus", poll);
 
