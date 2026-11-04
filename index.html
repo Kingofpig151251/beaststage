@@ -317,9 +317,11 @@
   .question.fx-skip{animation:fxSkip .28s var(--ease)}
   .question.fx-bad{animation:fxBad .46s var(--ease)}
   .question.fx-down .card-word{animation:wordOutDown .2s var(--ease) forwards}
-  .question.fx-up .card-word{animation:wordOutUp .2s var(--ease) forwards}
+  .question.fx-left .card-word{animation:wordOutLeft .2s var(--ease) forwards}
+  .question.fx-right .card-word{animation:wordOutRight .2s var(--ease) forwards}
   @keyframes wordOutDown{to{transform:translateY(52px); opacity:0}}
-  @keyframes wordOutUp{to{transform:translateY(-52px); opacity:0}}
+  @keyframes wordOutLeft{to{transform:translateX(-64px); opacity:0}}
+  @keyframes wordOutRight{to{transform:translateX(64px); opacity:0}}
   @keyframes fxOk{0%{background:transparent} 40%{background:var(--flash-ok)} 100%{background:transparent}}
   @keyframes fxSkip{0%,100%{transform:translateX(0)} 25%{transform:translateX(-8px)} 75%{transform:translateX(8px)}}
   @keyframes fxBad{
@@ -957,8 +959,8 @@ async function pullText(){
 /* ================= VFX ================= */
 function fxOk(){
   const q = document.querySelector(".question");
-  q.classList.remove("fx-ok","fx-skip","fx-bad","fx-down","fx-up"); void q.offsetWidth;
-  q.classList.add("fx-ok","fx-up");
+  q.classList.remove("fx-ok","fx-skip","fx-bad","fx-down","fx-left","fx-right"); void q.offsetWidth;
+  q.classList.add("fx-ok","fx-right");
 }
 
 /* +1 / −1 分數浮字 */
@@ -972,12 +974,13 @@ function fxScore(delta){
 }
 function fxFoul(bad){
   const q = document.querySelector(".question");
-  q.classList.remove("fx-ok","fx-skip","fx-bad","fx-down"); void q.offsetWidth;
-  q.classList.add(bad ? "fx-bad" : "fx-skip");
+  q.classList.remove("fx-ok","fx-skip","fx-bad","fx-down","fx-left","fx-right"); void q.offsetWidth;
+  q.classList.add("fx-left");
+  if(bad) q.classList.add("fx-bad");
 }
 function fxSkipDown(){
   const q = document.querySelector(".question");
-  q.classList.remove("fx-ok","fx-skip","fx-bad","fx-down"); void q.offsetWidth;
+  q.classList.remove("fx-ok","fx-skip","fx-bad","fx-down","fx-left","fx-right"); void q.offsetWidth;
   q.classList.add("fx-down");
 }
 
@@ -1434,6 +1437,19 @@ function statLine(t, bold){
   return parts.join(" · ");
 }
 
+/* 動作層：所有輸入來源（鍵盤／觸控／將來陀螺儀）都經 act() 入 judge() */
+const ACTIONS = {
+  foul: { key: "ArrowLeft",  dir: "left"  },   // 犯規
+  skip: { key: "ArrowDown",  dir: "down"  },   // 跳過
+  ok:   { key: "ArrowRight", dir: "right" }    // 正確
+};
+function act(name){
+  if(!ACTIONS[name]) return false;
+  if(!G || G.phase !== "running" || !G.cur) return false;
+  judge(name);
+  return true;
+}
+
 function judge(kind){
   if(!G || G.phase !== "running" || !G.cur) return;
   if(kind === "skip" && !G.allowSkip) return;
@@ -1446,18 +1462,13 @@ function judge(kind){
   t.score += delta;
   G.judged++;
 
-  if(kind !== "foul"){                      // 對／跳過：等文字滑走，再換下一題
-    setTimeout(()=>{
-      if(!G || G.phase !== "running") return;
-      const q = document.querySelector(".question");
-      if(q) q.classList.remove("fx-down","fx-up","fx-ok");
-      G.cur = drawItem();
-      renderPlay();
-    }, 190);
-    return;
-  }
-  G.cur = drawItem();
-  renderPlay();
+  setTimeout(()=>{                          // 三個判定都等文字滑走，再換下一題
+    if(!G || G.phase !== "running") return;
+    const q = document.querySelector(".question");
+    if(q) q.classList.remove("fx-down","fx-left","fx-right","fx-ok","fx-bad");
+    G.cur = drawItem();
+    renderPlay();
+  }, 190);
 }
 
 let TE_FINISH = null, TE_TIMER = 0, TE_IV = 0;
@@ -1766,7 +1777,7 @@ $("#btnStepBack").onclick = ()=>{
 };
 $("#btnNext").onclick = ()=>{ if(SETUP.i < 3) goStep(SETUP.i + 1, 1); else launchGame(); };
 
-$$("[data-judge]").forEach(b=>b.onclick=()=>judge(b.dataset.judge));
+$$("[data-judge]").forEach(b=>b.onclick=()=>act(b.dataset.judge));
 $("#btnReady").onclick = startRound;
 
 /* 規則開關 */
@@ -1881,14 +1892,14 @@ document.addEventListener("keydown", e=>{
   if(e.key === "ArrowRight"){
     e.preventDefault();
     if(G.phase === "ready") startRound();
-    else if(G.phase === "running") judge("ok");
+    else if(G.phase === "running") act("ok");
     else if(G.phase === "interstitial") closeTurnEnd();     // 結算卡：繼續
   }else if(e.key === "ArrowLeft"){
     e.preventDefault();
-    if(G.phase === "running") judge("foul");
+    if(G.phase === "running") act("foul");
   }else if(e.key === "ArrowDown"){
     e.preventDefault();
-    if(G.phase === "running") judge("skip");
+    if(G.phase === "running") act("skip");
   }else if(e.key === "Escape"){
     e.preventDefault();
     if($("#exitSheet").classList.contains("on")){ closeExit(); return; }
