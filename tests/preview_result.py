@@ -31,8 +31,6 @@ TEAMS = [
     ("octopus", "章魚隊", "#AF52DE", 5, 3, 7),
     ("bee", "蜜蜂隊", "#F5A300", 4, 4, 4),
 ]
-CROWN = ('<svg viewBox="0 0 24 24" aria-hidden="true"><path d="M3 8.4a1 1 0 0 1 1.6-.8L8.3 10.6'
-         ' 11.2 5a1 1 0 0 1 1.6 0l2.9 5.6 3.7-3a1 1 0 0 1 1.6.8v8.1a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2z"/></svg>')
 
 rows = []
 for i, (tid, name, color, ok, skip, score) in enumerate(TEAMS):
@@ -44,7 +42,7 @@ for i, (tid, name, color, ok, skip, score) in enumerate(TEAMS):
         <div class="face back">
           <div class="no">{i + 1}</div>
           <div class="rk-tile"><span class="rk-mark">{icons.get(tid, "")}</span></div>
-          <div class="nm"><span class="crown">{CROWN}{'冠軍' if champ else ''}</span>{name}
+          <div class="nm"><span class="crown">{'冠軍' if champ else ''}</span>{name}
             <div class="st">對 {ok} · 跳過 {skip} · 犯規 0</div>
           </div>
           <div class="pt" data-score="{score}">{score}</div>
