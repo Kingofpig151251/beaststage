@@ -4,7 +4,7 @@
 
 - 主持台：<https://bigtv.vercel.app>
 - 題目編輯：<https://bigtv.vercel.app/edit>
-- 原始碼：<https://github.com/Kingofpig151251/bigtv>
+- 原始碼：<https://github.com/Kingofpig151251/baishoutai>
 
 ---
 
