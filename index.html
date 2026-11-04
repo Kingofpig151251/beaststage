@@ -467,8 +467,7 @@
 
   /* 冠軍：同一行原地放大 */
   .rk.is-champ{background:var(--surface); margin:10px 0 4px; padding:16px 14px;
-    border-radius:22px; box-shadow:inset 0 0 0 1px color-mix(in oklab, var(--tc) 20%, transparent);
-    animation:champPop .52s var(--ease) both}
+    border-radius:22px; box-shadow:inset 0 0 0 1px color-mix(in oklab, var(--tc) 20%, transparent)}
   .rk.is-champ::before{content:""; position:absolute; inset:-28px -12px; border-radius:34px; z-index:-1;
     background:radial-gradient(58% 70% at 50% 50%, color-mix(in oklab, var(--tc) 30%, transparent), transparent 72%);
     filter:blur(16px); animation:champGlow 2.8s ease-in-out infinite}
@@ -485,6 +484,30 @@
   .rank.compact .rk.is-champ .nm{font-size:clamp(20px,3.4vh,26px)}
   .rank.compact .rk.is-champ .pt{font-size:clamp(24px,4vh,32px)}
 
+  /* 冠軍蓄力：細黑卡震動 → 一下放大同時回復彩色 */
+  .charge{position:absolute; z-index:5; width:76px; height:48px; pointer-events:none;
+    transform:translate(-50%,-50%);
+    transition:transform .34s cubic-bezier(.16,.92,.18,1)}
+  .charge-in{position:absolute; inset:0; border-radius:12px; background:var(--ink);
+    box-shadow:0 0 0 1px var(--sep), 0 8px 20px var(--vs-shadow);
+    animation:shiver .12s steps(2,end) infinite; --amp:1}
+  .charge.gone{opacity:0; transition:opacity .24s var(--ease)}
+  .rk.is-champ.charging{background:transparent; box-shadow:none}
+  .rk.is-champ.charging::before{display:none}
+  .rk.is-champ.charging .no,
+  .rk.is-champ.charging .rk-tile,
+  .rk.is-champ.charging .nm,
+  .rk.is-champ.charging .pt{opacity:0}
+
+  @keyframes shiver{
+    0%{transform:translate(0,0) rotate(0)}
+    20%{transform:translate(calc(-2px * var(--amp)),calc(1px * var(--amp))) rotate(-.5deg)}
+    40%{transform:translate(calc(2px * var(--amp)),calc(-1px * var(--amp))) rotate(.5deg)}
+    60%{transform:translate(calc(-1px * var(--amp)),calc(-2px * var(--amp))) rotate(-.4deg)}
+    80%{transform:translate(calc(1px * var(--amp)),calc(2px * var(--amp))) rotate(.4deg)}
+    100%{transform:translate(0,0) rotate(0)}
+  }
+
   .result-actions{display:flex; gap:12px; margin-top:22px; flex-wrap:wrap;
     opacity:0; pointer-events:none; transition:opacity .45s var(--ease)}
   .result-actions.on{opacity:1; pointer-events:auto}
@@ -494,7 +517,6 @@
     to{transform:translate3d(var(--dx,0px),108vh,0) rotate(var(--rot,540deg))}}
   @keyframes champGlow{0%,100%{opacity:.5; transform:scale(.97)} 50%{opacity:1; transform:scale(1.04)}}
   @keyframes sway{0%,100%{transform:rotate(-4deg)} 50%{transform:rotate(4deg)}}
-  @keyframes champPop{0%{transform:scale(.96)} 62%{transform:scale(1.018)} 100%{transform:scale(1)}}
 
 /* ---------- toast ---------- */
   .toast{position:fixed; left:50%; bottom:calc(24px + env(safe-area-inset-bottom)); z-index:90;
@@ -1433,36 +1455,73 @@ function startReveal(ranked){
     RES.timers.push(setTimeout(()=>{ row.classList.add("in"); sfx("tick", 0.5); }, t));
     t += STEP;
   }
-  RES.timers.push(setTimeout(drumBuild, t + 260));   // 留一拍，然後燈光亂掃
+  RES.timers.push(setTimeout(chargeBuild, t + 260));   // 留一拍，然後燈光亂掃
 }
 
-/* 冠軍前：密集鼓聲 build-up（無視覺效果），鼓停 + snare 一擊即揭曉 */
-const BUILD_MS = 2200;
+/* 冠軍蓄力：細黑卡震動（鼓聲 build-up）→ 一下放大同時回復彩色 */
+const BUILD_MS = 2200, CARD_W = 76, CARD_H = 48;
 
-function drumBuild(){
+function chargeBuild(){
   if(!RES || RES.done) return;
+  const view = $("#v-result");
+  RES.champs.forEach(r=>r.classList.add("is-champ", "charging"));   // 先佔好最終大小，避免爆開時跳位
+  const vr = view.getBoundingClientRect();
+  RES.charges = RES.champs.map(row=>{
+    const r = row.getBoundingClientRect();
+    const el = document.createElement("div");
+    el.className = "charge";
+    el.innerHTML = '<span class="charge-in"></span>';
+    el.style.left = (r.left - vr.left + r.width / 2) + "px";
+    el.style.top  = (r.top - vr.top + r.height / 2) + "px";
+    view.appendChild(el);
+    return el;
+  });
   drumRoll(BUILD_MS / 1000);
+  // 震動越來越猛：幅度同頻率同時升
+  const ramps = [[0, 1, ".12s"], [700, 1.7, ".09s"], [1400, 2.4, ".07s"]];
+  ramps.forEach(([ms, amp, dur])=>{
+    RES.timers.push(setTimeout(()=>{
+      RES.charges.forEach(c=>{
+        const inner = c.firstElementChild;
+        inner.style.setProperty("--amp", amp);
+        inner.style.animationDuration = dur;
+      });
+    }, ms));
+  });
   RES.timers.push(setTimeout(()=>{
     stopDrum();
     sfx("snare", 0.9);
-    revealChamps();
+    burstChamps();
   }, BUILD_MS));
 }
 
-/* 同分時逐張亮（0.12s 間隔） */
-function revealChamps(){
+/* 一下放大 → 彩色 */
+function burstChamps(){
   if(!RES || RES.done) return;
   RES.champs.forEach((row,i)=>{
     RES.timers.push(setTimeout(()=>{
-      row.classList.add("is-champ", "in");
-      const p = row.querySelector(".pt");
-      countUp(p, +p.dataset.score);
+      const charge = RES.charges[i];
+      if(charge){
+        const r = row.getBoundingClientRect();
+        charge.style.transform =
+          `translate(-50%,-50%) scale(${(r.width / CARD_W).toFixed(3)},${(r.height / CARD_H).toFixed(3)})`;
+      }
       sfx("tick", 0.62);
-    }, i * 120));
+      RES.timers.push(setTimeout(()=>{
+        row.classList.remove("charging");            // 回復彩色
+        row.classList.add("in");
+        const p = row.querySelector(".pt");
+        countUp(p, +p.dataset.score);
+        if(charge){
+          charge.classList.add("gone");
+          setTimeout(()=>charge.remove(), 260);
+        }
+      }, 320));
+    }, i * 130));
   });
   burstConfetti();
   bgm("champion", 0.42);
-  RES.timers.push(setTimeout(finishReveal, RES.champs.length * 120 + 950));
+  RES.timers.push(setTimeout(finishReveal, RES.champs.length * 130 + 1250));
 }
 
 function finishReveal(){
@@ -1471,10 +1530,13 @@ function finishReveal(){
   RES.timers.forEach(clearTimeout); RES.timers = [];
   stopDrum();
   RES.champs.forEach(row=>{
+    row.classList.remove("charging");
     if(!row.classList.contains("is-champ")) row.classList.add("is-champ", "in");
     const p = row.querySelector(".pt");
     if(p) p.textContent = p.dataset.score;
   });
+  (RES.charges || []).forEach(c=>c.remove());
+  RES.charges = [];
   RES.rows.forEach(r=>r.classList.add("in"));
   burstConfetti();
   bgm("champion", 0.42);
@@ -1491,6 +1553,7 @@ function clearReveal(){
   if(acts) acts.classList.remove("on");
   const box = $("#confetti");
   if(box){ box.classList.remove("on"); box.innerHTML = ""; }
+  document.querySelectorAll("#v-result .charge").forEach(c=>c.remove());
 }
 
 /* 密集鼓聲：越掃越急 */
