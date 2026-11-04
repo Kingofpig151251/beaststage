@@ -88,11 +88,14 @@
   .brand-links{display:inline-flex; align-items:center; gap:4px; padding-left:10px; margin-left:2px;
     border-left:var(--hair) solid var(--sep)}
   .brand{display:grid; place-items:center; width:38px; height:38px; border-radius:10px;
-    background:var(--surface); text-decoration:none; color:var(--ink-2);
-    box-shadow:0 0 0 1px color-mix(in oklab, var(--sep) 85%, transparent);
-    transition:box-shadow var(--dur), color var(--dur)}
-  .brand:hover{color:var(--ink);
-    box-shadow:0 0 0 1px color-mix(in oklab, var(--sep) 130%, transparent)}
+    background:var(--surface); text-decoration:none; color:var(--ink);
+    box-shadow:0 0 0 1px var(--sep);
+    transition:box-shadow var(--dur) var(--ease), transform var(--dur) var(--ease),
+               background-color var(--dur) var(--ease)}
+  .brand:hover{box-shadow:0 0 0 1px color-mix(in oklab, var(--sep) 160%, transparent), 0 4px 12px var(--vs-shadow);
+    transform:translateY(-1px)}
+  .brand:active{transform:translateY(0) scale(.96); box-shadow:0 0 0 1px var(--sep)}
+  .brand:focus-visible{outline:2px solid var(--focus-ring); outline-offset:2px}
   .brand svg{display:block; width:18px; height:18px}
   .brand img{display:block; width:29px; height:29px; border-radius:7px}
   .landing-link{display:inline-flex; align-items:center; justify-content:center; margin-top:20px;
