@@ -106,6 +106,7 @@ PUT  /api/text      整份取代（開放寫入，/edit 用）
 ```
 index.html                 主持台（單檔，含 SVG 圖示）
 art/beasts.webp            首頁插畫：八隻動物探頭（AI 生成，SenseNova）
+art/team/*.webp            八個隊伍圖示（256×256 透明底，同一批生成圖裁出）
 sfx/dingdong.mp3           判定「對」：門鐘叮噹
 sfx/whoosh.mp3             判定「跳過」：子彈飛過
 sfx/snare.mp3（同時用於犯規判定與冠軍揭曉重擊）
@@ -154,12 +155,11 @@ samples/hk-icebreaker.json 首次 seed 題庫
 
 **圖像**
 
-首頁的八動物插畫由 **SenseNova**（`sensenova-u1.5-lite`）生成，經裁切與去背處理後內嵌為 `art/beasts.webp`。
+首頁的八動物插畫與八個隊伍圖示由 **SenseNova**（`sensenova-u1.5-lite`）生成，經裁切與去背處理後存為
+`art/beasts.webp`（橫幅）與 `art/team/*.webp`（八個隊伍圖示，256×256 透明底）。
 
 **第三方素材**
 
-- **動物圖示**：Emoji artwork provided by **Twemoji**, licensed under **CC BY 4.0**
-  （<https://github.com/jdecked/twemoji>）。以內嵌 SVG 使用，圖形未經修改。
 - **GitHub 圖示**：取自 **Octicons**（MIT）。GitHub 名稱與 Octocat 圖案為 GitHub, Inc. 的商標，
   此處僅用作連結本項目原始碼，不代表任何認可或關聯。
 - **字體**：沒有內嵌任何字體檔，只用 `system-ui`；裝置上的系統字體依該裝置授權，不隨本項目轉授。
