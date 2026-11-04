@@ -314,20 +314,25 @@
     pointer-events:none; animation:fxPlus .8s var(--ease) forwards}
   @keyframes fxPlus{from{opacity:1; translate:0 0} to{opacity:0; translate:0 -60px}}
 
-  .flash-hud{display:grid; grid-template-columns:1fr 1fr; gap:12px; align-items:center;
+  .flash-hud{display:grid; grid-template-columns:1fr auto 1fr; gap:clamp(8px,1.6vw,16px); align-items:center;
     padding:12px max(18px,env(safe-area-inset-right)) calc(14px + env(safe-area-inset-bottom)) max(18px,env(safe-area-inset-left))}
   .flash-hud .key{display:inline-flex; align-items:center; justify-content:center; gap:12px;
-    width:clamp(148px,20vw,214px); height:clamp(62px,9.2vh,80px); border-radius:var(--r-lg);
+    width:clamp(104px,22vw,180px); height:clamp(62px,9.2vh,80px); border-radius:var(--r-lg);
     font-size:clamp(18px,2.4vh,21px); font-weight:600;
     transition:transform var(--dur) var(--ease), background-color var(--dur), color var(--dur)}
   .flash-hud .key::before,
   .flash-hud .key::after{display:inline-grid; place-items:center; min-width:30px; height:30px;
     padding:0 8px; border-radius:8px; font-family:var(--font-mono); font-size:16px; line-height:1;
     background:color-mix(in oklab, currentColor 14%, transparent); opacity:.9}
-  .flash-hud .key-skip::before{content:"←"}
+  .flash-hud .key-foul::before{content:"←"}
+  .flash-hud .key-pass::before{content:"↓"}
   .flash-hud .key-ok::after{content:"→"}
-  .flash-hud .key-skip{justify-self:start; background:var(--fill); color:var(--ink)}
-  .flash-hud .key-skip:active{background:var(--fill-2)}
+  .flash-hud .key-foul{justify-self:start; background:var(--fill); color:var(--ink)}
+  .flash-hud .key-foul:active{background:var(--fill-2)}
+  .flash-hud .key-pass{justify-self:center; background:var(--fill); color:var(--ink)}
+  .flash-hud .key-pass:active{background:var(--fill-2)}
+  .flash-hud.no-skip .key-pass{display:none}
+  .flash-hud.no-skip{grid-template-columns:1fr 1fr}
   .flash-hud .key-ok{justify-self:end; background:var(--blue-fill); color:var(--on-accent)}
   .flash-hud .key-ok:active{background:var(--blue-fill-press)}
   .flash-hud .key-ok::after{background:color-mix(in oklab, var(--on-accent) 24%, transparent)}
@@ -519,6 +524,22 @@
     100%{transform:translate(0,0) rotate(0)}
   }
 
+  .rules{display:flex; flex-direction:column; gap:2px; margin-top:8px}
+  .rule{display:grid; grid-template-columns:minmax(0,1fr) auto; align-items:center; gap:16px;
+    padding:14px 4px; border-bottom:var(--hair) solid var(--sep)}
+  .rule:last-child{border-bottom:0}
+  .rule.off{opacity:.38}
+  .rule-txt b{display:block; font-size:17px; font-weight:600}
+  .rule-txt span{display:block; font-size:14px; color:var(--ink-2); margin-top:2px}
+  .switch{position:relative; width:51px; height:31px; border-radius:var(--pill); border:0;
+    background:var(--fill-2); cursor:pointer; transition:background-color .22s var(--ease)}
+  .switch i{position:absolute; top:2px; left:2px; width:27px; height:27px; border-radius:50%;
+    background:var(--surface); box-shadow:0 1px 3px var(--vs-shadow);
+    transition:transform .22s var(--ease)}
+  .switch[aria-checked="true"]{background:var(--green)}
+  .switch[aria-checked="true"] i{transform:translateX(20px)}
+  .switch:disabled{cursor:default}
+
   .result-actions{display:flex; gap:12px; margin-top:22px; flex-wrap:wrap;
     opacity:0; pointer-events:none; transition:opacity .45s var(--ease)}
   .result-actions.on{opacity:1; pointer-events:auto}
@@ -586,8 +607,8 @@
       <button class="icon-btn" id="btnStepBack" aria-label="上一步" title="上一步（Esc）">
         <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M14.5 5 7.5 12l7 7"/></svg>
       </button>
-      <div class="dots" id="stepDots" aria-hidden="true"><i></i><i></i><i></i></div>
-      <div class="step-count" id="stepCount">1 / 3</div>
+      <div class="dots" id="stepDots" aria-hidden="true"><i></i><i></i><i></i><i></i></div>
+      <div class="step-count" id="stepCount">1 / 4</div>
     </div>
 
     <div class="stage" id="stepStage">
@@ -617,6 +638,24 @@
           <button type="button" data-sec="60">60</button>
           <button type="button" data-sec="90">90</button>
           <button type="button" data-sec="120">120</button>
+        </div>
+      </section>
+
+      <section class="sstep" data-step="3">
+        <h2 class="sstep-title">規則</h2>
+        <div class="rules">
+          <div class="rule" id="ruleSkip">
+            <div class="rule-txt"><b>可以跳過</b><span>主持可按「↓ 跳過」直接換下一題</span></div>
+            <button class="switch" id="swSkip" role="switch" aria-checked="true" aria-label="可以跳過"><i></i></button>
+          </div>
+          <div class="rule" id="ruleSkipPen">
+            <div class="rule-txt"><b>跳過扣 1 分</b><span>每跳過一題，該隊扣一分</span></div>
+            <button class="switch" id="swSkipPen" role="switch" aria-checked="false" aria-label="跳過扣分"><i></i></button>
+          </div>
+          <div class="rule" id="ruleFoulPen">
+            <div class="rule-txt"><b>犯規扣 1 分</b><span>每犯規一次，該隊扣一分</span></div>
+            <button class="switch" id="swFoulPen" role="switch" aria-checked="false" aria-label="犯規扣分"><i></i></button>
+          </div>
         </div>
       </section>
 
@@ -651,8 +690,9 @@
       <div class="card-word" id="pText"></div>
     </main>
 
-    <div class="flash-hud">
-      <button class="key key-skip" data-judge="skip" aria-label="跳過" title="跳過（←）">跳過</button>
+    <div class="flash-hud" id="hud">
+      <button class="key key-foul" data-judge="foul" aria-label="犯規" title="犯規（←）">犯規</button>
+      <button class="key key-pass" data-judge="skip" aria-label="跳過" title="跳過（↓）">跳過</button>
       <button class="key key-ok" data-judge="ok" aria-label="對" title="對（→）">對</button>
     </div>
 
@@ -787,8 +827,14 @@ let cfg  = Object.assign({
   teams:2,
   names:ANIMALS.slice(0,8).map(a=>a.name),
   animals:ANIMALS.map(a=>a.id),
-  sec:60
+  sec:60,
+  allowSkip:true,      // 可否跳過
+  skipPenalty:false,   // 跳過扣 1 分
+  foulPenalty:false    // 犯規扣 1 分
 }, store.get(K_CFG, {}));
+cfg.allowSkip = cfg.allowSkip !== false;
+cfg.skipPenalty = !!cfg.skipPenalty;
+cfg.foulPenalty = !!cfg.foulPenalty;
 
 cfg.teams = Math.max(2, Math.min(8, Math.round(+cfg.teams || 2)));
 if(!Array.isArray(cfg.names)) cfg.names = ANIMALS.slice(0,8).map(a=>a.name);
@@ -973,11 +1019,11 @@ function syncNext(){
   const ok = lines.length > 0;
   const next = $("#btnNext");
   next.disabled = !ok;
-  next.textContent = SETUP.i < 2 ? "繼續" : (ok ? "開始遊戲" : "題目未連線");
+  next.textContent = SETUP.i < 3 ? "繼續" : (ok ? "開始遊戲" : "題目未連線");
 }
 
 function goStep(i, dir){
-  SETUP.i = Math.max(0, Math.min(2, i));
+  SETUP.i = Math.max(0, Math.min(3, i));
   $$(".sstep").forEach(el=>{
     const k = +el.dataset.step;
     el.classList.toggle("on", k === SETUP.i);
@@ -987,8 +1033,8 @@ function goStep(i, dir){
     d.classList.toggle("on", n <= SETUP.i);
     d.classList.toggle("cur", n === SETUP.i);
   });
-  $("#stepCount").textContent = `${SETUP.i+1} / 3`;
-  $("#btnNext").textContent = SETUP.i < 2 ? "繼續" : "開始遊戲";
+  $("#stepCount").textContent = `${SETUP.i+1} / 4`;
+  $("#btnNext").textContent = SETUP.i < 3 ? "繼續" : "開始遊戲";
   syncNext();
   if(SETUP.i === 1){
     const first = $("#nameList input");
@@ -1062,12 +1108,15 @@ function startGame(){
 
   G = {
     sec: Math.max(5, Number(cfg.sec)||60),
-    teams: names.map((n,i)=>({name:n, id:looks[i].id, color:looks[i].color, score:0, ok:0, skip:0})),
+    teams: names.map((n,i)=>({name:n, id:looks[i].id, color:looks[i].color, score:0, ok:0, skip:0, foul:0})),
+    allowSkip: cfg.allowSkip, skipPenalty: cfg.skipPenalty, foulPenalty: cfg.foulPenalty,
     turn:0,
     pool: shuffle(pool.slice()), used: [], cur:null,
     judged:0, paused:false, remaining:0, timerId:null, timerToken:0,
     phase:"ready"
   };
+  const hud = $("#hud");
+  if(hud) hud.classList.toggle("no-skip", !cfg.allowSkip);
   showView("v-play");
   enterReady();
 }
@@ -1228,7 +1277,7 @@ function startRound(){
 function beginRunning(){
   G.phase = "running";
   const t0 = G.teams[G.turn];
-  G.base = { ok: t0.ok, skip: t0.skip, score: t0.score };   // 回合起點，用嚟算本回合成績
+  G.base = { ok: t0.ok, skip: t0.skip, foul: t0.foul||0, score: t0.score };   // 回合起點，用嚟算本回合成績
   G.cur = drawItem();
   G.remaining = G.sec;
   startTimer();
@@ -1308,14 +1357,27 @@ function renderPlay(){
   renderTimer();
 }
 
+function fmtScore(v){ return (v < 0 ? "−" : "+") + Math.abs(v); }
+
+/* 統計文字：對 N · 跳過 M · 犯規 K（跳過關閉時不顯示） */
+function statLine(t, bold){
+  const b = v => bold ? `<b>${v}</b>` : `${v}`;
+  const parts = [`對 ${b(t.ok)}`];
+  if(!G || G.allowSkip) parts.push(`跳過 ${b(t.skip || 0)}`);
+  parts.push(`犯規 ${b(t.foul || 0)}`);
+  return parts.join(" · ");
+}
+
 function judge(kind){
   if(!G || G.phase !== "running" || !G.cur) return;
+  if(kind === "skip" && !G.allowSkip) return;
   const t = G.teams[G.turn];
-  const delta = kind==="ok" ? 1 : 0;
-  G.judged++;
+  let delta = 0;
+  if(kind === "ok"){ t.ok++; delta = 1; fxOk(); sfx("ding"); }
+  else if(kind === "skip"){ t.skip++; if(G.skipPenalty) delta = -1; fxSkip(); sfx("whoosh", 0.75); }
+  else { t.foul++; if(G.foulPenalty) delta = -1; fxSkip(); sfx("snare", 0.45); }
   t.score += delta;
-  if(kind==="ok"){ t.ok++; fxOk(); sfx("ding"); }
-  else { t.skip++; fxSkip(); sfx("whoosh", 0.75); }
+  G.judged++;
   G.cur = drawItem();
   renderPlay();
 }
@@ -1354,7 +1416,7 @@ function showTurnEnd(team, stats, done){
   const mark = $("#teMark"), name = $("#teName"), st = $("#teStats"), sc = $("#teScore");
   mark.innerHTML = ICONS[team.id] || "";
   name.textContent = team.name;
-  st.innerHTML = `對 <b>${stats.ok}</b> · 跳過 <b>${stats.skip}</b>`;
+  st.innerHTML = statLine(stats, true);
   sc.classList.toggle("zero", stats.score === 0);
   const target = stats.score;
   if(target > 0 && !REDUCE){
@@ -1367,7 +1429,7 @@ function showTurnEnd(team, stats, done){
       if(v >= target){ clearInterval(TE_IV); TE_IV = 0; }
     }, 95);
   } else {
-    sc.innerHTML = `+${target}<em>分</em>`;
+    sc.innerHTML = `${fmtScore(target)}<em>分</em>`;
   }
   sfx("settle", 0.8);
 }
@@ -1395,8 +1457,9 @@ function endTurn(){
   clearInterval(G.timerId);
   G.timerToken++;
   const team = G.teams[G.turn];
-  const base = G.base || { ok:0, skip:0, score:0 };
-  const stats = { ok: team.ok - base.ok, skip: team.skip - base.skip, score: team.score - base.score };
+  const base = G.base || { ok:0, skip:0, foul:0, score:0 };
+  const stats = { ok: team.ok - base.ok, skip: team.skip - base.skip,
+                  foul: (team.foul||0) - (base.foul||0), score: team.score - base.score };
   G.phase = "interstitial";
   slamGate(()=>{
     showTurnEnd(team, stats, ()=>{
@@ -1434,7 +1497,7 @@ function endGame(){
       <div class="no">${t.rank}</div>
       <div class="rk-tile"><span class="rk-mark">${ICONS[t.id] || ""}</span></div>
       <div class="nm"><span class="crown">${tied && t.score === topScore ? "並列第一" : "冠軍"}</span>${esc(t.name)}
-        <div class="st">對 ${t.ok} · 跳 ${t.skip}</div>
+        <div class="st">${statLine(t, false)}</div>
       </div>
       <div class="pt" data-score="${t.score}">${t.score}</div>
     </div>`).join("");
@@ -1643,10 +1706,28 @@ $("#btnStepBack").onclick = ()=>{
   if(SETUP.i === 0){ showView("v-home"); renderHome(); }
   else goStep(SETUP.i - 1, -1);
 };
-$("#btnNext").onclick = ()=>{ if(SETUP.i < 2) goStep(SETUP.i + 1, 1); else launchGame(); };
+$("#btnNext").onclick = ()=>{ if(SETUP.i < 3) goStep(SETUP.i + 1, 1); else launchGame(); };
 
 $$("[data-judge]").forEach(b=>b.onclick=()=>judge(b.dataset.judge));
 $("#btnReady").onclick = startRound;
+
+/* 規則開關 */
+function syncRules(){
+  $("#swSkip").setAttribute("aria-checked", String(cfg.allowSkip));
+  $("#swSkipPen").setAttribute("aria-checked", String(cfg.skipPenalty));
+  $("#swFoulPen").setAttribute("aria-checked", String(cfg.foulPenalty));
+  const row = $("#ruleSkipPen");
+  row.classList.toggle("off", !cfg.allowSkip);
+  $("#swSkipPen").disabled = !cfg.allowSkip;
+}
+$("#swSkip").onclick = ()=>{
+  cfg.allowSkip = !cfg.allowSkip;
+  if(!cfg.allowSkip) cfg.skipPenalty = false;
+  saveCfg(); syncRules();
+};
+$("#swSkipPen").onclick = ()=>{ if(!cfg.allowSkip) return; cfg.skipPenalty = !cfg.skipPenalty; saveCfg(); syncRules(); };
+$("#swFoulPen").onclick = ()=>{ cfg.foulPenalty = !cfg.foulPenalty; saveCfg(); syncRules(); };
+syncRules();
 function isPristine(){
   return !!G && G.phase === "ready" && G.turn === 0 && !G.judged
     && G.teams.every(t=>t.score === 0 && !t.ok && !t.skip);
@@ -1714,7 +1795,7 @@ document.addEventListener("keydown", e=>{
   if(e.target.tagName === "INPUT" && e.key !== "Enter") return;
   if(e.key === "Enter"){
     e.preventDefault();
-    if(SETUP.i < 2) goStep(SETUP.i + 1, 1); else launchGame();
+    if(SETUP.i < 3) goStep(SETUP.i + 1, 1); else launchGame();
   }else if(e.key === "Escape"){
     e.preventDefault(); $("#btnStepBack").click();
   }
@@ -1731,6 +1812,9 @@ document.addEventListener("keydown", e=>{
     else if(G.phase === "running") judge("ok");
     else if(G.phase === "interstitial") closeTurnEnd();     // 結算卡：繼續
   }else if(e.key === "ArrowLeft"){
+    e.preventDefault();
+    if(G.phase === "running") judge("foul");
+  }else if(e.key === "ArrowDown"){
     e.preventDefault();
     if(G.phase === "running") judge("skip");
   }else if(e.key === "Escape"){
