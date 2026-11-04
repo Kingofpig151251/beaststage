@@ -524,8 +524,10 @@
   .rk.is-champ::before{content:""; position:absolute; inset:-28px -12px; border-radius:34px; z-index:-1;
     background:radial-gradient(58% 70% at 50% 50%, color-mix(in oklab, var(--tc) 30%, transparent), transparent 72%);
     filter:blur(16px); animation:champGlow 2.8s ease-in-out infinite}
-  .rk.is-champ .crown{display:block; font-size:14px; font-weight:600; color:var(--tc);
-    margin-bottom:2px}
+  .rk.is-champ .crown{display:inline-flex; align-items:center; gap:6px;
+    font-size:14px; font-weight:600; color:var(--tc); margin-bottom:2px}
+  .rk.is-champ .crown svg{width:18px; height:18px; fill:currentColor;
+    animation:crownBob 2.6s ease-in-out infinite}
   .rk.is-champ .rk-tile{border-radius:16px}
   .rk.is-champ .rk-tile .rk-mark{font-size:34px; animation:sway 2.8s ease-in-out infinite}
   .rk.is-champ .nm{font-family:var(--font-display); font-size:clamp(24px,4.4vh,34px);
@@ -540,6 +542,7 @@
   .rk.is-champ.charging{background:transparent; box-shadow:none}
   .rk.is-champ.charging::before{display:none}
 
+  @keyframes crownBob{0%,100%{transform:translateY(0) rotate(-2deg)} 50%{transform:translateY(-2px) rotate(2deg)}}
   @keyframes ringPulse{0%{opacity:.85; transform:scale(1)} 70%,100%{opacity:0; transform:scale(1.3)}}
   @keyframes qBreathe{0%,100%{opacity:.4; transform:scale(.92)} 50%{opacity:.95; transform:scale(1.08)}}
   @keyframes shiver{
@@ -1529,6 +1532,7 @@ function endGame(){
     return { ...t, rank };
   });
 
+  const CROWN = '<svg viewBox="0 0 24 24" aria-hidden="true"><path d="M3 8.4a1 1 0 0 1 1.6-.8L8.3 10.6 11.2 5a1 1 0 0 1 1.6 0l2.9 5.6 3.7-3a1 1 0 0 1 1.6.8v8.1a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2z"/></svg>';
   const champs = ranked.filter(t=>t.rank === 1).length;
   $("#rankList").classList.toggle("compact", champs >= 4);
   $("#rankList").innerHTML = ranked.map(t=>`
@@ -1538,7 +1542,7 @@ function endGame(){
         <div class="face back">
           <div class="no">${t.rank}</div>
           <div class="rk-tile"><span class="rk-mark">${ICONS[t.id] || ""}</span></div>
-          <div class="nm"><span class="crown">${tied && t.score === topScore ? "並列第一" : "冠軍"}</span>${esc(t.name)}
+          <div class="nm"><span class="crown">${CROWN}${tied && t.score === topScore ? "並列第一" : "冠軍"}</span>${esc(t.name)}
             <div class="st">${statLine(t, false)}</div>
           </div>
           <div class="pt" data-score="${t.score}">${t.score}</div>
