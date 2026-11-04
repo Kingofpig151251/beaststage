@@ -516,22 +516,15 @@
   .rk .st{font-size:14px; color:var(--ink-2); margin-top:2px}
   .rk .pt{font-family:var(--font-display); font-size:22px; font-weight:600;
     font-variant-numeric:tabular-nums; transition:font-size .34s var(--ease), color .34s var(--ease)}
-  .rk .crown{display:none}
 
   /* 冠軍卡：內容居中、皇冠做成角標 */
-  .rk.is-champ{background:var(--surface); margin:20px auto 8px; width:min(560px, 82%);
-    padding:26px 26px 18px;
+  .rk.is-champ{background:var(--surface); margin:14px 0 6px;
+    padding:20px 14px 16px;
     border-radius:22px; box-shadow:inset 0 0 0 1px color-mix(in oklab, var(--tc) 20%, transparent)}
-  .rk.is-champ .face.back{display:flex; align-items:center; justify-content:space-between;
-    gap:clamp(14px,3vw,30px)}
-  .rk.is-champ .no{display:none}
+
   .rk.is-champ::before{content:""; position:absolute; inset:-28px -12px; border-radius:34px; z-index:-1;
     background:radial-gradient(58% 70% at 50% 50%, color-mix(in oklab, var(--tc) 30%, transparent), transparent 72%);
     filter:blur(16px); animation:champGlow 2.8s ease-in-out infinite}
-  .rk.is-champ .crown{position:absolute; top:-13px; left:50%; transform:translateX(-50%); display:inline-flex;
-    align-items:center; gap:6px; padding:5px 14px; border-radius:var(--pill);
-    background:var(--tc); font-size:13px; font-weight:600; color:var(--on-accent);
-    box-shadow:0 3px 12px color-mix(in oklab, var(--tc) 45%, transparent)}
   .rk.is-champ .rk-tile{border-radius:16px}
   .rk.is-champ .rk-tile .rk-mark{font-size:34px; animation:sway 2.8s ease-in-out infinite}
   .rk.is-champ .nm{font-family:var(--font-display); font-size:clamp(24px,4.4vh,34px);
@@ -1544,7 +1537,7 @@ function endGame(){
         <div class="face back">
           <div class="no">${t.rank}</div>
           <div class="rk-tile"><span class="rk-mark">${ICONS[t.id] || ""}</span></div>
-          <div class="nm"><span class="crown">${tied && t.score === topScore ? "並列第一" : "冠軍"}</span>${esc(t.name)}
+          <div class="nm">${esc(t.name)}
             <div class="st">${statLine(t, false)}</div>
           </div>
           <div class="pt" data-score="${t.score}">${t.score}</div>

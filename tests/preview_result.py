@@ -42,7 +42,7 @@ for i, (tid, name, color, ok, skip, score) in enumerate(TEAMS):
         <div class="face back">
           <div class="no">{i + 1}</div>
           <div class="rk-tile"><span class="rk-mark">{icons.get(tid, "")}</span></div>
-          <div class="nm"><span class="crown">{'冠軍' if champ else ''}</span>{name}
+          <div class="nm">{name}
             <div class="st">對 {ok} · 跳過 {skip} · 犯規 0</div>
           </div>
           <div class="pt" data-score="{score}">{score}</div>
@@ -63,7 +63,6 @@ window.addEventListener("load", () => {
     tile: r(card.querySelector(".rk-tile")),
     nm: r(card.querySelector(".nm")),
     pt: r(card.querySelector(".pt")),
-    crown: r(card.querySelector(".crown")),
     row2: r(row2), row2pt: r(row2.querySelector(".pt")),
     display: getComputedStyle(back).display,
     justify: getComputedStyle(back).justifyContent,
