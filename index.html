@@ -5,12 +5,12 @@
 <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
 <meta name="theme-color" content="#F2F2F7">
 <meta name="apple-mobile-web-app-capable" content="yes">
-<meta name="apple-mobile-web-app-title" content="大電視">
+<meta name="apple-mobile-web-app-title" content="百獸台">
 <meta name="apple-mobile-web-app-status-bar-style" content="default">
 <meta name="author" content="Leung Tung Lam">
 <meta name="copyright" content="© 2026 Leung Tung Lam. MIT License.">
-<meta name="description" content="大電視：派對猜詞遊戲。一部 iPad 控場，一人背向屏幕猜詞、全隊負責描述，主持按「對」或「跳過」判定。">
-<title>大電視</title>
+<meta name="description" content="百獸台：派對猜詞主持台。一部 iPad 控場，一人背向屏幕猜詞、全隊負責描述，主持按「犯規／跳過／正確」判定。">
+<title>百獸台</title>
 <style>
   /* Hallmark · redesign: Apple (iPadOS dark) · scope: app · v3.0.0
      critique · host console as a system app: black ground, one blue action, content over chrome
@@ -66,8 +66,12 @@
     background:radial-gradient(circle, var(--spot) 0%, transparent 62%);
     animation:breathe 7s ease-in-out infinite}
   @keyframes breathe{0%,100%{transform:scale(.92); opacity:.75} 50%{transform:scale(1.06); opacity:1}}
-  .landing{position:relative; z-index:1; flex:1; display:grid; grid-template-rows:1fr auto;
+  .landing{position:relative; z-index:1; flex:1; display:grid; grid-template-rows:1fr auto auto;
     justify-items:center; align-items:center; text-align:center}
+  .landing-art{width:min(980px,94vw); height:auto; display:block; pointer-events:none;
+    margin:clamp(10px,2.4vh,28px) auto clamp(10px,2vh,22px);
+    animation:rise .62s .34s var(--ease) both}
+  @media (max-height:600px){ .landing-art{display:none} }
   .landing-main{display:flex; flex-direction:column; align-items:center}
   .landing-title{margin:14px 0 0; font-family:var(--font-display); font-weight:700;
     font-size:clamp(76px,16vh,168px); letter-spacing:-.045em; line-height:.98;
@@ -610,10 +614,11 @@
   <section class="view active" id="v-home">
     <div class="landing">
       <div class="landing-main">
-      <h1 class="landing-title">大電視</h1>
+      <h1 class="landing-title">百獸台</h1>
       <button class="btn-primary landing-go" id="btnEnter">開始</button>
       <a class="landing-link" id="btnEditHome" href="/edit">編輯題目</a>
       </div>
+      <img class="landing-art" src="/art/beasts.webp" alt="" aria-hidden="true" decoding="async">
       <div class="landing-foot">
         <span class="landing-credit">© 2026 Leung Tung Lam · MIT License</span>
         <span class="brand-links">

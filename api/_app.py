@@ -1,5 +1,5 @@
 """
-大電視 · Vercel API（FastAPI + Postgres）
+百獸台 · Vercel API（FastAPI + Postgres）
 ------------------------------------------------------------------
 題目就係一段純文字，冇分類、冇組合、冇 token。
 
@@ -23,7 +23,7 @@ ROOT = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
 DATABASE_URL = os.environ.get("DATABASE_URL") or os.environ.get("POSTGRES_URL") or ""
 SEED = os.path.join(ROOT, "samples", "hk-icebreaker.json")
 
-app = FastAPI(title="大電視 API", docs_url=None, redoc_url=None, openapi_url=None)
+app = FastAPI(title="百獸台 API", docs_url=None, redoc_url=None, openapi_url=None)
 
 
 @app.exception_handler(Exception)
