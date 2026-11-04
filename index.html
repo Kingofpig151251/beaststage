@@ -524,20 +524,6 @@
     100%{transform:translate(0,0) rotate(0)}
   }
 
-  .mute-btn{position:fixed; z-index:80; top:18px; right:max(18px, env(safe-area-inset-right));
-    width:44px; height:44px; padding:0; display:grid; place-items:center; border-radius:50%;
-    background:var(--fill); color:var(--ink); transition:background-color var(--dur)}
-  .mute-btn:active{background:var(--fill-2)}
-  .mute-btn svg{width:22px; height:22px; fill:none; stroke:currentColor; stroke-width:1.8;
-    stroke-linecap:round; stroke-linejoin:round}
-  .mute-btn .i-mute{display:none}
-  .mute-btn[aria-pressed="true"] .i-sound{display:none}
-  .mute-btn[aria-pressed="true"] .i-mute{display:block}
-  body[data-view="play"] .mute-btn{top:8px}
-  body[data-view="play"] .flash-top{padding-right:calc(max(18px, env(safe-area-inset-right)) + 52px)}
-  body[data-view="setup"] .mute-btn{top:22px}
-  body[data-view="setup"] .setup-top{padding-right:52px}
-
   .rules{display:flex; flex-direction:column; gap:2px; margin-top:8px}
   .rule{display:grid; grid-template-columns:minmax(0,1fr) auto; align-items:center; gap:16px;
     padding:14px 4px; border-bottom:var(--hair) solid var(--sep)}
@@ -590,10 +576,6 @@
 </head>
 <body>
 <script>document.documentElement.classList.add("js");</script>
-<button class="mute-btn" id="btnMute" aria-label="靜音" aria-pressed="false" title="靜音（M）">
-  <svg class="i-sound" viewBox="0 0 24 24" aria-hidden="true"><path d="M11 5 6.5 9H3v6h3.5L11 19z"/><path d="M15.5 8.5a5 5 0 0 1 0 7"/><path d="M18 6a8.5 8.5 0 0 1 0 12"/></svg>
-  <svg class="i-mute" viewBox="0 0 24 24" aria-hidden="true"><path d="M11 5 6.5 9H3v6h3.5L11 19z"/><path d="m16 9 5 6"/><path d="m21 9-5 6"/></svg>
-</button>
 <div class="wrap">
 
   <!-- ========== 主頁 ========== -->
@@ -849,8 +831,7 @@ let cfg  = Object.assign({
   sec:60,
   allowSkip:true,      // 可否跳過
   skipPenalty:false,   // 跳過扣 1 分
-  foulPenalty:false,   // 犯規扣 1 分
-  muted:false          // 靜音
+  foulPenalty:false    // 犯規扣 1 分
 }, store.get(K_CFG, {}));
 cfg.allowSkip = cfg.allowSkip !== false;
 cfg.skipPenalty = !!cfg.skipPenalty;
@@ -1208,7 +1189,6 @@ async function loadSfx(){
   }));
 }
 function sfx(name, vol=0.85){
-  if(MUTED) return false;
   const c = audioCtx(), buf = SFX[name];
   if(!c || !buf) return false;
   const src = c.createBufferSource(), g = c.createGain();
@@ -1218,23 +1198,11 @@ function sfx(name, vol=0.85){
   return true;
 }
 
-/* 靜音：任何頁面都可用（右下角浮動掣 / M 鍵） */
-let MUTED = !!cfg.muted;
-function applyMute(){
-  const b = $("#btnMute"); if(!b) return;
-  b.setAttribute("aria-pressed", String(MUTED));
-  b.setAttribute("aria-label", MUTED ? "取消靜音" : "靜音");
-  b.title = MUTED ? "取消靜音（M）" : "靜音（M）";
-  if(MUTED){ stopBgm(); stopDrum(); }
-  else if(document.body.dataset.view === "result" && RES && RES.done) bgm("champion", 0.42);
-}
-
 /* 冠軍頁背景音樂：無縫 loop，離開結果頁／重開一局即停
    loop = true 之外再加一層保險：ended 即重新接上，
    並喺頁面返前景／context 被暫停時自動 resume，避免個別瀏覽器中斷 */
 let BGM = null, BGM_WANT = null;
 function bgm(name, vol=0.42){
-  if(MUTED) return;
   stopBgm();
   if(!SFX[name]) return;
   BGM_WANT = { name, vol };
@@ -1666,7 +1634,6 @@ function clearReveal(){
 
 /* 密集鼓聲：越掃越急 */
 function drumRoll(dur, from=0.86, to=1.30, vol=0.5){
-  if(MUTED) return;
   const c = audioCtx(), buf = SFX.drums;
   if(!c || !buf) return;
   stopDrum();
@@ -1754,9 +1721,6 @@ function syncRules(){
   row.classList.toggle("off", !cfg.allowSkip);
   $("#swSkipPen").disabled = !cfg.allowSkip;
 }
-$("#btnMute").onclick = ()=>{ MUTED = !MUTED; cfg.muted = MUTED; saveCfg(); applyMute(); };
-applyMute();
-
 $("#swSkip").onclick = ()=>{
   cfg.allowSkip = !cfg.allowSkip;
   if(!cfg.allowSkip) cfg.skipPenalty = false;
@@ -1856,8 +1820,6 @@ document.addEventListener("keydown", e=>{
     if(G.phase === "running") judge("skip");
   }else if(e.key === "Escape"){
     e.preventDefault(); $("#btnPause").click();
-  }else if(e.key === "m" || e.key === "M"){
-    e.preventDefault(); $("#btnMute").click();
   }
 });
 
