@@ -283,7 +283,7 @@
   .turn-mark svg{display:block; width:1em; height:1em}
   .turn-name{font-size:16px; font-weight:600; white-space:nowrap; overflow:hidden; text-overflow:ellipsis}
   .icon-btn .i-back{display:none}
-  .icon-btn[data-mode="back"] .i-home{display:none}
+  .icon-btn[data-mode="back"] .i-close{display:none}
   .icon-btn[data-mode="back"] .i-back{display:block}
 
   .ring{position:relative; width:64px; height:64px; padding:0; display:grid; place-items:center;
@@ -697,8 +697,8 @@
   <!-- ========== 遊戲 ========== -->
   <section class="view" id="v-play">
     <div class="flash-top">
-      <button class="icon-btn stroke" id="btnExit" data-mode="exit" aria-label="返回主頁" title="返回主頁">
-        <svg class="i-home" viewBox="0 0 24 24" aria-hidden="true"><path d="M4 10.6 12 4.2l8 6.4V19a1.6 1.6 0 0 1-1.6 1.6H5.6A1.6 1.6 0 0 1 4 19z"/></svg>
+      <button class="icon-btn stroke" id="btnExit" data-mode="exit" aria-label="退出遊戲" title="退出遊戲">
+        <svg class="i-close" viewBox="0 0 24 24" aria-hidden="true"><path d="M6.4 6.4 17.6 17.6"/><path d="M17.6 6.4 6.4 17.6"/></svg>
         <svg class="i-back" viewBox="0 0 24 24" aria-hidden="true"><path d="M14.5 5 7.5 12l7 7"/></svg>
       </button>
       <div class="turn-chip" id="turnChip" aria-live="polite">
@@ -1164,8 +1164,8 @@ function syncExitLabel(){
   const b = $("#btnExit"); if(!b) return;
   const back = isPristine();
   b.dataset.mode = back ? "back" : "exit";
-  b.setAttribute("aria-label", back ? "上一步" : "返回主頁");
-  b.setAttribute("title", back ? "上一步（Esc）" : "返回主頁");
+  b.setAttribute("aria-label", back ? "上一步" : "退出遊戲");
+  b.setAttribute("title", back ? "上一步（Esc）" : "退出遊戲");
 }
 
 function enterReady(){
