@@ -30,6 +30,8 @@
     --on-accent:#FFFFFF; --focus-ring:rgba(0,113,227,.85);
     --bar-bg:rgba(255,255,255,.84); --flash-ok:rgba(52,199,89,.16); --toast-bg:rgba(28,28,30,.92);
     --toast-ink:#FFFFFF;
+    /* stage */
+    --dim:rgba(0,0,0,.62); --vignette:rgba(0,0,0,.45); --beam-hi:rgba(255,255,255,.92); --beam-mid:rgba(255,255,255,.30);
     /* geometry */
     --r-xl:22px; --r-lg:16px; --r-md:12px; --r-sm:8px; --pill:999px;
     --hair:1px;
@@ -444,6 +446,25 @@
   .confetti i{position:absolute; top:-24px; width:8px; height:13px; border-radius:2px;
     animation-name:fall; animation-timing-function:linear; animation-iteration-count:infinite}
 
+  .spot{position:absolute; inset:0; z-index:4; pointer-events:none; opacity:0;
+    background:var(--dim); transition:opacity .3s var(--ease)}
+  .spot.on{opacity:1}
+  .spot.out{opacity:0; transition:opacity .5s var(--ease)}
+  .spot.on{box-shadow:inset 0 0 180px 70px var(--vignette)}
+  .spot i{position:absolute; left:0; top:0; width:min(30vw,210px); height:min(66vh,560px);
+    border-radius:50% 50% 46% 46% / 62% 62% 38% 38%; mix-blend-mode:screen;
+    background:radial-gradient(ellipse at 50% 92%,
+      var(--beam-hi), var(--beam-mid) 46%, transparent 74%);
+    filter:blur(14px); transition:transform .28s ease-out; transform-origin:50% 100%;
+    transform:translate3d(50vw,50vh,0) translate(-50%,-100%)}
+  .spot i::after{content:""; position:absolute; left:50%; bottom:-2%; width:190%; height:20%;
+    transform:translateX(-50%); border-radius:50%;
+    background:radial-gradient(ellipse at 50% 50%, var(--beam-hi), transparent 72%);
+    filter:blur(9px)}
+  .spot.converge i{transition:transform .46s cubic-bezier(.2,.85,.12,1)}
+  .dim .rank{opacity:.14; transition:opacity .3s var(--ease)}
+  .dim .res-head{opacity:.22; transition:opacity .3s var(--ease)}
+
   .rank{position:relative; z-index:2; display:flex; flex-direction:column; gap:2px}
   .rk{position:relative; display:grid; grid-template-columns:26px 44px minmax(0,1fr) auto;
     align-items:center; gap:12px; padding:10px 14px; border-radius:14px;
@@ -478,6 +499,10 @@
     font-weight:700; letter-spacing:-.02em}
   .rk.is-champ .st{font-size:15px}
   .rk.is-champ .pt{font-size:clamp(32px,5.4vh,46px); color:var(--tc)}
+  .rank.compact .rk.is-champ{padding:10px 14px}
+  .rank.compact .rk.is-champ .st{display:none}
+  .rank.compact .rk.is-champ .nm{font-size:clamp(20px,3.4vh,26px)}
+  .rank.compact .rk.is-champ .pt{font-size:clamp(24px,4vh,32px)}
 
   .result-actions{display:flex; gap:12px; margin-top:22px; flex-wrap:wrap;
     opacity:0; pointer-events:none; transition:opacity .45s var(--ease)}
@@ -647,6 +672,7 @@
   <!-- ========== 結果 ========== -->
   <section class="view" id="v-result">
     <div class="confetti" id="confetti" aria-hidden="true"></div>
+    <div class="spot" id="spot" aria-hidden="true"><i></i><i></i><i></i></div>
     <div class="res-head">
       <h1>最終排名</h1>
       <p class="kv" id="rSub" style="margin:0 0 14px"></p>
@@ -1086,7 +1112,7 @@ function audioCtx(){
 const SFX_SRC = { ding: "/sfx/dingdong.mp3", whoosh: "/sfx/whoosh.mp3",
                    countdown: "/sfx/countdown.mp3", whistle: "/sfx/whistle.mp3",
                    settle: "/sfx/settle.mp3", champion: "/sfx/champion.mp3",
-                   tick: "/sfx/tick.mp3" };
+                   tick: "/sfx/tick.mp3", drums: "/sfx/drums.mp3", snare: "/sfx/snare.mp3" };
 const SFX = {};
 let SFX_LOADING = false;
 async function loadSfx(){
@@ -1388,8 +1414,10 @@ function endGame(){
     return { ...t, rank };
   });
 
+  const champs = ranked.filter(t=>t.rank === 1).length;
+  $("#rankList").classList.toggle("compact", champs >= 4);
   $("#rankList").innerHTML = ranked.map(t=>`
-    <div class="rk" style="--tc:${t.color}">
+    <div class="rk" data-champ="${t.rank === 1 ? 1 : 0}" style="--tc:${t.color}">
       <div class="no">${t.rank}</div>
       <div class="rk-tile"><span class="rk-mark">${ICONS[t.id] || ""}</span></div>
       <div class="nm"><span class="crown">${tied && t.score === topScore ? "並列第一" : "冠軍"}</span>${esc(t.name)}
@@ -1406,53 +1434,115 @@ function endGame(){
   startReveal(ranked);
 }
 
-/* ---------- 逐格揭榜 ---------- */
-let RES = null;
+/* ---------- 逐格揭榜 + 舞台聚光燈 ---------- */
+let RES = null, DRUM = null;
 
 function startReveal(ranked){
   const rows = [...document.querySelectorAll("#rankList .rk")];
   if(!rows.length) return;
-  const champ = rows[0], pts = champ.querySelector(".pt");
-  const finalScore = +pts.dataset.score;
-  RES = { rows, ranked, timers: [], done: false };
+  const champs = rows.filter(r=>r.dataset.champ === "1");
+  RES = { rows, ranked, champs, timers: [], done: false };
   if(REDUCE){ finishReveal(); return; }
-  pts.textContent = "0";
+  champs.forEach(r=>{ r.querySelector(".pt").textContent = "0"; });
 
-  const STEP = 700, PAUSE = 800;
+  const rest = rows.filter(r=>r.dataset.champ !== "1");
+  const STEP = 700;
   let t = 420;                                   // 等幕布拉開
-  for(let i = rows.length - 1; i >= 1; i--){     // 由最後一名開始，由下而上
-    const row = rows[i];
+  for(let i = rest.length - 1; i >= 0; i--){     // 由最後一名開始，由下而上
+    const row = rest[i];
     RES.timers.push(setTimeout(()=>{ row.classList.add("in"); sfx("tick", 0.5); }, t));
     t += STEP;
   }
-  t += PAUSE;                                    // 冠軍前留白，全場最緊張一刻
-  RES.timers.push(setTimeout(()=>{
-    champ.classList.add("is-champ", "in");
-    sfx("tick", 0.65);
-    burstConfetti();
-    countUp(pts, finalScore);
-    bgm("champion", 0.42);
-  }, t));
-  RES.timers.push(setTimeout(finishReveal, t + 1000));
+  RES.timers.push(setTimeout(startSpotlight, t + 260));   // 留一拍，然後燈光亂掃
+}
+
+/* 掃射 → 收束 → 揭曉 */
+function startSpotlight(){
+  if(!RES || RES.done) return;
+  const view = $("#v-result"), spot = $("#spot");
+  if(!spot || !view) return revealChamps();
+  const vr = view.getBoundingClientRect();
+  const target = RES.champs[0].getBoundingClientRect();
+  const cx = target.left - vr.left + target.width / 2;
+  const cy = target.top - vr.top + Math.min(target.height, 110) / 2;
+
+  view.classList.add("dim");
+  spot.classList.remove("out", "converge");
+  spot.classList.add("on");
+  const beams = [...spot.querySelectorAll("i")];
+  const BEAT = 280, SWEEPS = 8;
+
+  drumRoll(BEAT * SWEEPS / 1000 + 0.46);
+
+  let n = 0;
+  const sweep = ()=>{
+    if(!RES || RES.done) return;
+    beams.forEach((b,i)=>{
+      const x = vr.width * (0.12 + Math.random() * 0.76);
+      const y = vr.height * (0.12 + Math.random() * 0.72);
+      const rot = (i - 1) * 7;
+      b.style.transform = `translate3d(${x}px,${y}px,0) translate(-50%,-100%) rotate(${rot}deg)`;
+    });
+    n++;
+    if(n < SWEEPS) RES.timers.push(setTimeout(sweep, BEAT));
+    else{
+      spot.classList.add("converge");
+      beams.forEach((b,i)=>{
+        const dx = (i - 1) * 34, dy = (i - 1) * 22;
+        const rot = (i - 1) * 4;
+        b.style.transform = `translate3d(${cx + dx}px,${cy + dy}px,0) translate(-50%,-100%) rotate(${rot}deg) scale(1.12)`;
+      });
+      RES.timers.push(setTimeout(()=>{
+        stopDrum();
+        sfx("snare", 0.9);
+        revealChamps();
+      }, 460));
+    }
+  };
+  sweep();
+}
+
+/* 同分時逐張亮（0.12s 間隔） */
+function revealChamps(){
+  if(!RES || RES.done) return;
+  const view = $("#v-result"), spot = $("#spot");
+  RES.champs.forEach((row,i)=>{
+    RES.timers.push(setTimeout(()=>{
+      row.classList.add("is-champ", "in");
+      const p = row.querySelector(".pt");
+      countUp(p, +p.dataset.score);
+      sfx("tick", 0.62);
+    }, i * 120));
+  });
+  burstConfetti();
+  bgm("champion", 0.42);
+  if(view) view.classList.remove("dim");
+  if(spot){ spot.classList.add("out"); }
+  RES.timers.push(setTimeout(finishReveal, RES.champs.length * 120 + 950));
 }
 
 function finishReveal(){
   if(!RES || RES.done) return;
   RES.done = true;
   RES.timers.forEach(clearTimeout); RES.timers = [];
-  const champ = RES.rows[0], pts = champ.querySelector(".pt");
-  if(!champ.classList.contains("is-champ")){
-    champ.classList.add("is-champ");
-    pts.textContent = pts.dataset.score;
-    burstConfetti();
-    bgm("champion", 0.42);
-  }
+  stopDrum();
+  const view = $("#v-result"), spot = $("#spot");
+  RES.champs.forEach(row=>{
+    if(!row.classList.contains("is-champ")) row.classList.add("is-champ", "in");
+    const p = row.querySelector(".pt");
+    if(p) p.textContent = p.dataset.score;
+  });
   RES.rows.forEach(r=>r.classList.add("in"));
+  if(view) view.classList.remove("dim");
+  if(spot) spot.classList.remove("on", "converge");
+  burstConfetti();
+  bgm("champion", 0.42);
   const acts = $("#v-result .result-actions");
   if(acts) acts.classList.add("on");
 }
 
 function clearReveal(){
+  stopDrum();
   if(!RES) return;
   RES.timers.forEach(clearTimeout);
   RES = null;
@@ -1460,6 +1550,29 @@ function clearReveal(){
   if(acts) acts.classList.remove("on");
   const box = $("#confetti");
   if(box){ box.classList.remove("on"); box.innerHTML = ""; }
+  const view = $("#v-result"), spot = $("#spot");
+  if(view) view.classList.remove("dim");
+  if(spot) spot.classList.remove("on", "converge", "out");
+}
+
+/* 密集鼓聲：越掃越急 */
+function drumRoll(dur, from=0.86, to=1.30, vol=0.5){
+  const c = audioCtx(), buf = SFX.drums;
+  if(!c || !buf) return;
+  stopDrum();
+  const src = c.createBufferSource(), g = c.createGain();
+  src.buffer = buf; src.loop = true;
+  src.playbackRate.setValueAtTime(from, c.currentTime);
+  src.playbackRate.linearRampToValueAtTime(to, c.currentTime + dur);
+  g.gain.value = vol;
+  src.connect(g).connect(c.destination);
+  src.start();
+  DRUM = src;
+}
+function stopDrum(){
+  if(!DRUM) return;
+  try{ DRUM.stop(); }catch(e){}
+  DRUM = null;
 }
 
 function countUp(el, to, ms=800){

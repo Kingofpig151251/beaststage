@@ -24,8 +24,11 @@
 7. **落閘**：重用開場同一對藍幕，由上下夾埋（0.46s）+ 悶響，幕一合即打出「時間到！」
 8. **回合結算**：同一塊幕上顯示隊名 + 本回合「對 N · 跳過 M」+ 得分（數字累加），**停住唔會自己走**，按「繼續」或 → 幕才打開，露出下一隊準備畫面
 9. **結果頁**：逐格揭榜——由最後一名開始、由下而上每 0.7s 彈出一行（配一下 tick）；
-   揭完第二名後停 0.8 秒，冠軍隨即在原位放大成卡片（隊色光暈、動物圖示擺動、分數 0 數到最終值），
-   彩帶由頂一直落下，Celebration BGM 同時起；按 → 或點畫面可即時跳到冠軍，再按 → 返回主頁
+   揭完第二名後全場壓暗、三束舞台聚光燈隨密集鼓聲亂掃（鼓聲由 0.86× 加速到 1.30×），
+   2.4 秒後收束到冠軍位置，一下 snare 重擊，冠軍卡片原地放大（隊色光暈、動物圖示擺動、分數 0 數到最終值），
+   彩帶由頂一直落下，Celebration BGM 同時起；
+   **同分時每個並列第一都各自有一張冠軍卡**（逐張相隔 0.12s 亮起），4 隊以上自動轉緊湊版；
+   按 → 或點畫面可即時跳到冠軍，再按 → 返回主頁
 
 出題畫面只有一個大字：冇分數、冇類別、冇剩題數。
 
@@ -88,7 +91,7 @@ PUT  /api/text      整份取代（開放寫入，/edit 用）
   **倒數**＝賽車起步錄音（`sfx/countdown.mp3`）／**時間到**＝球證哨三吹（`sfx/whistle.mp3`）／
   **結算卡**＝銅管 fanfare（`sfx/settle.mp3`，2.9s）／**冠軍**＝Celebration 背景音樂（`sfx/champion.mp3`，16.7s 無縫 loop）
 - 倒數錄音三個起音正好在 0／1／2 秒、GO 在 3 秒，同畫面每拍 1 秒天生對齊，所以整段照播、不逐拍發聲
-- 七個 mp3 合共約 **240KB**，`index.html` 大小不變；第一次觸控時用 `decodeAudioData` 一次過預載，之後播放零延遲
+- 十個 mp3 合共約 **300KB**，`index.html` 大小不變；第一次觸控時用 `decodeAudioData` 一次過預載，之後播放零延遲
 - 冠軍 BGM 以 `loop = true` 無限循環，返回主頁或再開一局即停；音量 0.42，不蓋過現場講話
 - 系統開了「減少動態效果」時：動畫時長壓到近 0，倒數改 0.7s 一拍；幕照合、照停，等人按「繼續」；
   結果頁則跳過逐格揭曉，直接顯示完整排名（沒有彩帶）
@@ -104,6 +107,8 @@ sfx/whistle.mp3            時間到：球證哨三吹
 sfx/settle.mp3             結算卡：銅管 fanfare（2.9s）
 sfx/champion.mp3           冠軍揭曉：Celebration loop（16.7s）
 sfx/tick.mp3               結果頁每行揭曉時的一下短音
+sfx/drums.mp3              聚光燈亂掃時的密集鼓聲（可加速）
+sfx/snare.mp3              燈光收束、冠軍鎖定的一下重擊
 edit.html                  題目編輯（一個 textarea + 自動儲存）
 api/_app.py                Vercel 後端（FastAPI + Postgres，2 個路由）
 api/[...path].py / index.py  路由入口
@@ -151,6 +156,9 @@ samples/hk-icebreaker.json 首次 seed 題庫
 - **倒數音效**：`sfx/countdown.mp3` 來自 OpenGameArt《race start countdown》（CC0 1.0）。
 - **時間到哨子**：`sfx/whistle.mp3` 由 SpliceSound 裁判哨（CC0）剪成三吹。
 - **結算 fanfare**：`sfx/settle.mp3` 來自 OpenGameArt《Classic fanfare lick》（CC0 1.0）。
+- **結果頁鼓聲**：`sfx/drums.mp3` 為 OpenGameArt《Horde War Drums》（William Hector，CC0 1.0）節錄；
+  `sfx/snare.mp3` 為 OpenGameArt《An interesting snare drum sound》（CC0 1.0）。
+- **結果頁 tick**：`sfx/tick.mp3` 來自 Kenney《UI Audio》（CC0 1.0）。
 - **冠軍 BGM**：`sfx/champion.mp3` 為 Kevin MacLeod《Celebration》節錄（[incompetech.com](https://incompetech.com)），
   以 **CC BY 4.0** 授權使用，已按授權要求在此署名；16.7 秒（8 小節，114.8 BPM）經交叉淡化做成無縫 loop。
 - **依賴**：見 `requirements.txt`（FastAPI、psycopg 等），各自依原授權（MIT / BSD / Apache-2.0）。
