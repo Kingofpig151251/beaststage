@@ -465,9 +465,10 @@
   #v-result{position:relative; overflow:hidden}
   #v-result.active{display:flex; flex-direction:column; justify-content:center;
     min-height:calc(100dvh - 56px)}
-  .res-head{position:relative; z-index:3}
-  #v-result h1{margin-bottom:4px}
-  #rSub{margin:0 0 14px}
+  .res-head{position:relative; z-index:3; text-align:center;
+    margin:0 0 clamp(16px,2.6vh,28px)}
+  #v-result h1{margin:0; font-size:clamp(30px,4.8vh,44px)}
+  #rSub{margin:8px 0 0; font-size:15px}
 
   .confetti{position:absolute; inset:0; z-index:1; overflow:hidden; pointer-events:none; display:none}
   .confetti.on{display:block}
