@@ -20,7 +20,7 @@
     color-scheme:light;
     /* ground */
     --bg:#F2F2F7; --surface:#FFFFFF; --surface-2:#E9E9EE; --fill:rgba(118,118,128,.12);
-    --fill-2:rgba(118,118,128,.20); --fill-3:rgba(118,118,128,.10); --spot:rgba(0,113,227,.10); --sheet-veil:rgba(0,0,0,.28); --vs-shadow:rgba(0,0,0,.18);
+    --fill-2:rgba(118,118,128,.20); --fill-3:rgba(118,118,128,.10); --spot:rgba(0,113,227,.10); --sheet-veil:rgba(0,0,0,.42); --vs-shadow:rgba(0,0,0,.18);
     /* ink */
     --ink:#000000; --ink-2:rgba(60,60,67,.72); --ink-3:rgba(60,60,67,.40);
     --sep:rgba(60,60,67,.18);
@@ -163,6 +163,13 @@
   .sheet-wrap{position:fixed; inset:0; z-index:70; display:none; place-items:end center;
     background:var(--sheet-veil); padding:0 16px calc(16px + env(safe-area-inset-bottom))}
   .sheet-wrap.on{display:grid}
+  .sheet-note{margin:0; font-size:15px; color:var(--ink-2); line-height:1.5}
+  .sheet-actions{display:flex; gap:12px}
+  .sheet-btn{flex:1 1 0; min-height:50px; border:0; border-radius:var(--r-lg); font:inherit;
+    font-size:17px; font-weight:600; background:var(--fill); color:var(--ink); cursor:pointer}
+  .sheet-btn:active{background:var(--fill-2)}
+  .sheet-btn.danger{background:color-mix(in oklab, var(--red) 16%, transparent); color:var(--red)}
+  .sheet-btn.danger:active{background:color-mix(in oklab, var(--red) 26%, transparent)}
   .sheet-card{width:min(560px,100%); background:var(--surface); border-radius:var(--r-xl);
     padding:20px; display:flex; flex-direction:column; gap:16px}
   .sheet-title{font-size:17px; font-weight:600; color:var(--ink-2)}
@@ -309,6 +316,8 @@
   .question.fx-ok{animation:fxOk .32s var(--ease)}
   .question.fx-skip{animation:fxSkip .28s var(--ease)}
   .question.fx-bad{animation:fxBad .46s var(--ease)}
+  .question.fx-down .card-word{animation:wordOutDown .2s var(--ease) forwards}
+  @keyframes wordOutDown{to{transform:translateY(52px); opacity:0}}
   @keyframes fxOk{0%{background:transparent} 40%{background:var(--flash-ok)} 100%{background:transparent}}
   @keyframes fxSkip{0%,100%{transform:translateX(0)} 25%{transform:translateX(-8px)} 75%{transform:translateX(8px)}}
   @keyframes fxBad{
@@ -781,6 +790,17 @@
 </div>
 
 
+<div class="sheet-wrap" id="exitSheet" role="dialog" aria-modal="true" aria-labelledby="exitTitle">
+  <div class="sheet-card">
+    <div class="sheet-title" id="exitTitle">退出遊戲？</div>
+    <p class="sheet-note">本局成績將不會記錄。</p>
+    <div class="sheet-actions">
+      <button class="sheet-btn" id="exitCancel">取消</button>
+      <button class="sheet-btn danger" id="exitConfirm">退出</button>
+    </div>
+  </div>
+</div>
+
 <div class="sheet-wrap" id="animalSheet" role="dialog" aria-modal="true" aria-label="選擇隊色">
   <div class="sheet-card">
     <div class="sheet-title">選擇動物與隊色</div>
@@ -947,10 +967,15 @@ function fxScore(delta){
   q.appendChild(el);
   setTimeout(()=>el.remove(), 900);
 }
-function fxMiss(bad){
+function fxFoul(bad){
   const q = document.querySelector(".question");
-  q.classList.remove("fx-ok","fx-skip","fx-bad"); void q.offsetWidth;
+  q.classList.remove("fx-ok","fx-skip","fx-bad","fx-down"); void q.offsetWidth;
   q.classList.add(bad ? "fx-bad" : "fx-skip");
+}
+function fxSkipDown(){
+  const q = document.querySelector(".question");
+  q.classList.remove("fx-ok","fx-skip","fx-bad","fx-down"); void q.offsetWidth;
+  q.classList.add("fx-down");
 }
 
 /* ================= 主頁 / 設定流程 ================= */
@@ -1412,11 +1437,22 @@ function judge(kind){
   const t = G.teams[G.turn];
   let delta = 0;
   if(kind === "ok"){ t.ok++; delta = 1; fxOk(); sfx("ding"); }
-  else if(kind === "skip"){ t.skip++; if(G.skipPenalty) delta = -1; fxMiss(G.skipPenalty); sfx("whoosh", 0.75); }
-  else { t.foul++; if(G.foulPenalty) delta = -1; fxMiss(G.foulPenalty); sfx("snare", 0.45); }
+  else if(kind === "skip"){ t.skip++; if(G.skipPenalty) delta = -1; fxSkipDown(); sfx("whoosh", 0.75); }
+  else { t.foul++; if(G.foulPenalty) delta = -1; fxFoul(G.foulPenalty); sfx("snare", 0.45); }
   if(delta) fxScore(delta);
   t.score += delta;
   G.judged++;
+
+  if(kind === "skip"){                       // 等文字滑走，再換下一題
+    setTimeout(()=>{
+      if(!G || G.phase !== "running") return;
+      const q = document.querySelector(".question");
+      if(q) q.classList.remove("fx-down");
+      G.cur = drawItem();
+      renderPlay();
+    }, 190);
+    return;
+  }
   G.cur = drawItem();
   renderPlay();
 }
@@ -1634,7 +1670,7 @@ function finishReveal(){
   });
   RES.rows.forEach(r=>r.classList.add("in"));
   burstConfetti();
-  bgm("champion", 0.42);
+  if(!BGM_WANT) bgm("champion", 0.42);   // 已經喺 flip 時起咗就唔重播
   const acts = $("#v-result .result-actions");
   if(acts) acts.classList.add("on");
 }
@@ -1762,11 +1798,8 @@ function backToSetup(){
   goStep(2, -1);
 }
 
-$("#btnExit").onclick = ()=>{
+function doExit(){
   stopBgm();
-  if(!G) { showView("v-home"); renderHome(); return; }
-  if(isPristine()){ backToSetup(); return; }   // 未開始過 → 上一步回設定
-  if(!confirm("確定退出遊戲？本局成績將不會記錄。")) return;
   clearTurnEnd();
   clearInterval(G.timerId);
   G.timerToken++;
@@ -1775,6 +1808,23 @@ $("#btnExit").onclick = ()=>{
   document.body.classList.remove("is-ready");
   showView("v-home");
   renderHome();
+}
+
+function askExit(){
+  const sheet = $("#exitSheet");
+  sheet.classList.add("on");
+  setTimeout(()=>$("#exitCancel").focus({preventScroll:true}), 40);
+}
+function closeExit(){ $("#exitSheet").classList.remove("on"); }
+
+$("#exitCancel").onclick = closeExit;
+$("#exitConfirm").onclick = ()=>{ closeExit(); doExit(); };
+$("#exitSheet").addEventListener("click", e=>{ if(e.target.id === "exitSheet") closeExit(); });
+
+$("#btnExit").onclick = ()=>{
+  if(!G){ stopBgm(); showView("v-home"); renderHome(); return; }
+  if(isPristine()){ backToSetup(); return; }   // 未開始過 → 上一步回設定
+  askExit();                                   // 遊戲中 → 自訂確認面板
 };
 
 function setPauseIcon(p){
@@ -1837,7 +1887,9 @@ document.addEventListener("keydown", e=>{
     e.preventDefault();
     if(G.phase === "running") judge("skip");
   }else if(e.key === "Escape"){
-    e.preventDefault(); $("#btnPause").click();
+    e.preventDefault();
+    if($("#exitSheet").classList.contains("on")){ closeExit(); return; }
+    $("#btnPause").click();
   }
 });
 
