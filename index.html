@@ -431,50 +431,64 @@
     padding:0 8px; border-radius:8px; font-family:var(--font-mono); font-size:16px; line-height:1;
     background:color-mix(in oklab, var(--blue) 16%, transparent); opacity:1}
 
-  /* ---------- result ---------- */
+  /* ---------- result：逐格揭榜 ---------- */
+  #v-result{position:relative; overflow:hidden}
+  #v-result.active{display:flex; flex-direction:column; justify-content:center;
+    min-height:calc(100dvh - 56px)}
+  .res-head{position:relative; z-index:3}
   #v-result h1{margin-bottom:4px}
-  #rSub{margin:0 0 20px}
-  .champ{background:var(--surface); border-radius:var(--r-xl); padding:24px 24px 22px;
-    display:grid; grid-template-columns:minmax(0,1fr) auto; align-items:end; gap:4px 16px}
-  .champ.tied{background:var(--surface-2)}
-  .champ-label{grid-column:1; font-size:15px; font-weight:600; color:var(--blue); letter-spacing:.01em}
-  .champ-tile{display:inline-grid; place-items:center; width:clamp(52px,7vh,68px); aspect-ratio:1;
-    border-radius:14px; margin-right:14px; vertical-align:-.16em;
-    background:color-mix(in oklab, var(--tc) 14%, transparent);
-    box-shadow:inset 0 0 0 1px color-mix(in oklab, var(--tc) 34%, transparent)}
-  .champ-mark{display:block; font-size:clamp(30px,4.4vh,42px); line-height:1; color:var(--tc)}
-  .champ-mark svg{display:block; width:1em; height:1em}
+  #rSub{margin:0 0 14px}
+
+  .confetti{position:absolute; inset:0; z-index:1; overflow:hidden; pointer-events:none; display:none}
+  .confetti.on{display:block}
+  .confetti i{position:absolute; top:-24px; width:8px; height:13px; border-radius:2px;
+    animation-name:fall; animation-timing-function:linear; animation-iteration-count:infinite}
+
+  .rank{position:relative; z-index:2; display:flex; flex-direction:column; gap:2px}
+  .rk{position:relative; display:grid; grid-template-columns:26px 44px minmax(0,1fr) auto;
+    align-items:center; gap:12px; padding:10px 14px; border-radius:14px;
+    transition:opacity .26s var(--ease), transform .34s var(--ease),
+               background .34s var(--ease), padding .34s var(--ease), border-radius .34s var(--ease)}
+  .js .rk{opacity:0; transform:translateY(16px) scale(.985)}
+  .js .rk.in{opacity:1; transform:none}
+  .rk .no{font-size:15px; color:var(--ink-3); font-variant-numeric:tabular-nums}
   .rk-tile{width:44px; height:44px; border-radius:12px; display:grid; place-items:center;
     background:color-mix(in oklab, var(--tc) 14%, transparent);
     box-shadow:inset 0 0 0 1px color-mix(in oklab, var(--tc) 34%, transparent); flex:0 0 auto}
   .rk-tile .rk-mark{display:block; font-size:24px; line-height:1; color:var(--tc)}
   .rk-mark svg{display:block; width:1em; height:1em}
-  .champ-name{grid-column:1; font-family:var(--font-display); font-size:clamp(30px,5vh,46px);
-    font-weight:700; letter-spacing:-.02em; line-height:1.05}
-  .champ-meta{grid-column:1; font-size:15px; color:var(--ink-2); margin-top:4px}
-  .champ-score{grid-column:2; grid-row:1 / span 3; align-self:center; font-family:var(--font-display);
-    font-size:clamp(40px,7vh,64px); font-weight:700; letter-spacing:-.03em; font-variant-numeric:tabular-nums}
-  .champ-score em{display:block; font-size:13px; font-style:normal; font-weight:500; color:var(--ink-2);
-    letter-spacing:0; text-align:right; margin-bottom:4px}
-  .champ-score span{font-size:20px; font-weight:600; color:var(--ink-2); margin-left:4px}
+  .rk .nm{font-size:17px; font-weight:500; line-height:1.2}
+  .rk .st{font-size:14px; color:var(--ink-2); margin-top:2px}
+  .rk .pt{font-family:var(--font-display); font-size:22px; font-weight:600;
+    font-variant-numeric:tabular-nums; transition:font-size .34s var(--ease), color .34s var(--ease)}
+  .rk .crown{display:none}
 
-  .rank{margin-top:24px; padding:0 24px}
-  .rank-h{font-size:15px; font-weight:600; color:var(--ink-2); margin:0 0 4px}
-  .rk{position:relative; display:grid; grid-template-columns:26px 44px minmax(0,1fr) auto; align-items:center;
-    gap:12px; padding:12px 0}
-  .rk::after{content:""; position:absolute; left:82px; right:0; bottom:0; height:var(--hair);
-    background:var(--sep)}
-  .rk:last-child::after{display:none}
-  .rk .no{font-size:15px; color:var(--ink-3); font-variant-numeric:tabular-nums}
-  .rk .nm{font-size:17px; font-weight:500}
-  .rk .st{font-size:15px; color:var(--ink-2); margin-top:4px}
-  .rk .pt{font-family:var(--font-display); font-size:22px; font-weight:600; font-variant-numeric:tabular-nums}
-  .rk.first .pt{color:var(--blue)}
+  /* 冠軍：同一行原地放大 */
+  .rk.is-champ{background:var(--surface); margin:10px 0 4px; padding:16px 14px;
+    border-radius:22px; box-shadow:inset 0 0 0 1px color-mix(in oklab, var(--tc) 20%, transparent)}
+  .rk.is-champ::before{content:""; position:absolute; inset:-28px -12px; border-radius:34px; z-index:-1;
+    background:radial-gradient(58% 70% at 50% 50%, color-mix(in oklab, var(--tc) 30%, transparent), transparent 72%);
+    filter:blur(16px); animation:champGlow 2.8s ease-in-out infinite}
+  .rk.is-champ .crown{display:block; font-size:14px; font-weight:600; color:var(--tc);
+    margin-bottom:2px}
+  .rk.is-champ .rk-tile{border-radius:16px}
+  .rk.is-champ .rk-tile .rk-mark{font-size:34px; animation:sway 2.8s ease-in-out infinite}
+  .rk.is-champ .nm{font-family:var(--font-display); font-size:clamp(24px,4.4vh,34px);
+    font-weight:700; letter-spacing:-.02em}
+  .rk.is-champ .st{font-size:15px}
+  .rk.is-champ .pt{font-size:clamp(32px,5.4vh,46px); color:var(--tc)}
 
-  .result-actions{display:flex; gap:12px; margin-top:32px; flex-wrap:wrap}
+  .result-actions{display:flex; gap:12px; margin-top:22px; flex-wrap:wrap;
+    opacity:0; pointer-events:none; transition:opacity .45s var(--ease)}
+  .result-actions.on{opacity:1; pointer-events:auto}
   .result-actions .btn-big{flex:1 1 100%; max-width:none; min-height:52px; padding:0 22px; font-size:17px}
 
-  /* ---------- toast ---------- */
+  @keyframes fall{from{transform:translate3d(0,0,0) rotate(0)}
+    to{transform:translate3d(var(--dx,0px),108vh,0) rotate(var(--rot,540deg))}}
+  @keyframes champGlow{0%,100%{opacity:.5; transform:scale(.97)} 50%{opacity:1; transform:scale(1.04)}}
+  @keyframes sway{0%,100%{transform:rotate(-4deg)} 50%{transform:rotate(4deg)}}
+
+/* ---------- toast ---------- */
   .toast{position:fixed; left:50%; bottom:calc(24px + env(safe-area-inset-bottom)); z-index:90;
     transform:translate(-50%,10px); opacity:0; pointer-events:none;
     background:var(--toast-bg);
@@ -630,9 +644,11 @@
 
   <!-- ========== 結果 ========== -->
   <section class="view" id="v-result">
-    <h1>結果</h1>
-    <p class="kv" id="rSub" style="margin:6px 0 0"></p>
-    <div id="champBox"></div>
+    <div class="confetti" id="confetti" aria-hidden="true"></div>
+    <div class="res-head">
+      <h1>最終排名</h1>
+      <p class="kv" id="rSub" style="margin:0 0 14px"></p>
+    </div>
     <div class="rank" id="rankList"></div>
     <div class="result-actions">
       <button class="btn-primary btn-big" id="btnBackHome">返回主頁</button>
@@ -1067,7 +1083,8 @@ function audioCtx(){
 /* 音檔：判定用真音源（門鐘／子彈），其餘場合仍用合成音 */
 const SFX_SRC = { ding: "/sfx/dingdong.mp3", whoosh: "/sfx/whoosh.mp3",
                    countdown: "/sfx/countdown.mp3", whistle: "/sfx/whistle.mp3",
-                   settle: "/sfx/settle.mp3", champion: "/sfx/champion.mp3" };
+                   settle: "/sfx/settle.mp3", champion: "/sfx/champion.mp3",
+                   tick: "/sfx/tick.mp3" };
 const SFX = {};
 let SFX_LOADING = false;
 async function loadSfx(){
@@ -1361,31 +1378,116 @@ function endGame(){
   const okTotal = G.teams.reduce((s,t)=>s+t.ok,0);
   $("#rSub").textContent = `全場答對 ${okTotal} 題 · 總分 ${total}`;
 
-  const top = sorted[0];
-  const winners = sorted.filter(t=>t.score === top.score);
-  const tied = winners.length > 1;
-  $("#champBox").innerHTML = `
-    <div class="champ ${tied ? "tied" : ""}">
-      <div class="champ-label">${tied ? "並列第一" : "冠軍"}</div>
-      <div class="champ-name" style="--tc:${top.color}">
-        <span class="champ-tile"><span class="champ-mark">${ICONS[top.id] || ""}</span></span>${winners.map(t=>esc(t.name)).join(" · ")}</div>
-      <div class="champ-score"><em>總分</em>${top.score}<span>分</span></div>
-      <div class="champ-meta">對 ${top.ok} · 跳 ${top.skip}</div>
-    </div>`;
+  const topScore = sorted[0].score;
+  const tied = sorted.filter(t=>t.score === topScore).length > 1;
+  let rank = 0, prev = null;
+  const ranked = sorted.map((t,i)=>{
+    if(t.score !== prev){ rank = i + 1; prev = t.score; }
+    return { ...t, rank };
+  });
 
-  const rest = sorted.slice(winners.length);
-  $("#rankList").innerHTML = rest.length ? `
-    <div class="rank-h">其餘名次</div>` + rest.map((t,idx)=>`
+  $("#rankList").innerHTML = ranked.map(t=>`
     <div class="rk" style="--tc:${t.color}">
-      <div class="no">${idx+winners.length+1}</div>
+      <div class="no">${t.rank}</div>
       <div class="rk-tile"><span class="rk-mark">${ICONS[t.id] || ""}</span></div>
-      <div class="nm">${esc(t.name)}
+      <div class="nm"><span class="crown">${tied && t.score === topScore ? "並列第一" : "冠軍"}</span>${esc(t.name)}
         <div class="st">對 ${t.ok} · 跳 ${t.skip}</div>
       </div>
-      <div class="pt">${t.score}</div>
-    </div>`).join("") : "";
+      <div class="pt" data-score="${t.score}">${t.score}</div>
+    </div>`).join("");
+
+  $("#confetti").innerHTML = "";
+  $("#confetti").classList.remove("on");
+  const acts = $("#v-result .result-actions");
+  if(acts) acts.classList.remove("on");
   showView("v-result");
-  bgm("champion", 0.42);
+  startReveal(ranked);
+}
+
+/* ---------- 逐格揭榜 ---------- */
+let RES = null;
+
+function startReveal(ranked){
+  const rows = [...document.querySelectorAll("#rankList .rk")];
+  if(!rows.length) return;
+  const champ = rows[0], pts = champ.querySelector(".pt");
+  const finalScore = +pts.dataset.score;
+  RES = { rows, ranked, timers: [], done: false };
+  if(REDUCE){ finishReveal(); return; }
+  pts.textContent = "0";
+
+  const STEP = 700, PAUSE = 800;
+  let t = 420;                                   // 等幕布拉開
+  for(let i = rows.length - 1; i >= 1; i--){     // 由最後一名開始，由下而上
+    const row = rows[i];
+    RES.timers.push(setTimeout(()=>{ row.classList.add("in"); sfx("tick", 0.5); }, t));
+    t += STEP;
+  }
+  t += PAUSE;                                    // 冠軍前留白，全場最緊張一刻
+  RES.timers.push(setTimeout(()=>{
+    champ.classList.add("is-champ", "in");
+    sfx("tick", 0.65);
+    burstConfetti();
+    countUp(pts, finalScore);
+    bgm("champion", 0.42);
+  }, t));
+  RES.timers.push(setTimeout(finishReveal, t + 1000));
+}
+
+function finishReveal(){
+  if(!RES || RES.done) return;
+  RES.done = true;
+  RES.timers.forEach(clearTimeout); RES.timers = [];
+  const champ = RES.rows[0], pts = champ.querySelector(".pt");
+  if(!champ.classList.contains("is-champ")){
+    champ.classList.add("is-champ");
+    pts.textContent = pts.dataset.score;
+    burstConfetti();
+    bgm("champion", 0.42);
+  }
+  RES.rows.forEach(r=>r.classList.add("in"));
+  const acts = $("#v-result .result-actions");
+  if(acts) acts.classList.add("on");
+}
+
+function clearReveal(){
+  if(!RES) return;
+  RES.timers.forEach(clearTimeout);
+  RES = null;
+  const acts = $("#v-result .result-actions");
+  if(acts) acts.classList.remove("on");
+  const box = $("#confetti");
+  if(box){ box.classList.remove("on"); box.innerHTML = ""; }
+}
+
+function countUp(el, to, ms=800){
+  if(REDUCE || !to){ el.textContent = to; return; }
+  const t0 = performance.now();
+  const step = now=>{
+    const k = Math.min((now - t0) / ms, 1);
+    el.textContent = Math.round(to * (1 - Math.pow(1 - k, 3)));
+    if(k < 1) requestAnimationFrame(step);
+  };
+  requestAnimationFrame(step);
+}
+
+function burstConfetti(){
+  if(REDUCE || !RES) return;
+  const box = $("#confetti"); if(!box) return;
+  const colors = [...new Set(RES.ranked.map(t=>t.color))];
+  box.innerHTML = Array.from({length:54}, (_,i)=>{
+    const c = colors[i % colors.length];
+    const left = Math.round(Math.random() * 94) + 2;
+    const dx = Math.round((Math.random() - .5) * 120);
+    const dur = (3 + Math.random() * 3).toFixed(2);
+    const delay = (Math.random() * 3).toFixed(2);
+    const rot = Math.round(360 + Math.random() * 720);
+    const w = 6 + Math.round(Math.random() * 5);
+    const hh = 10 + Math.round(Math.random() * 8);
+    return `<i style="left:${left}%;width:${w}px;height:${hh}px;background:${c};--dx:${dx}px;--rot:${rot}deg;`
+         + `animation-duration:${dur}s;animation-delay:-${delay}s"></i>`;
+  }).join("");
+  box.classList.add("on");
 }
 
 /* ================= 事件 ================= */
@@ -1463,7 +1565,20 @@ $("#btnPause").onclick = ()=>{
   renderTimer();
 };
 
-$("#btnBackHome").onclick = ()=>{ stopBgm(); showView("v-home"); renderHome(); };
+$("#btnBackHome").onclick = ()=>{ stopBgm(); clearReveal(); showView("v-home"); renderHome(); };
+
+/* 結果頁：右方向鍵＝跳到冠軍／返回主頁；點畫面亦可快轉 */
+document.addEventListener("keydown", e=>{
+  if(!$("#v-result").classList.contains("active")) return;
+  if(e.key !== "ArrowRight") return;
+  e.preventDefault();
+  if(RES && !RES.done) finishReveal();
+  else $("#btnBackHome").click();
+});
+$("#v-result").addEventListener("click", e=>{
+  if(e.target.closest("button")) return;
+  if(RES && !RES.done) finishReveal();
+});
 
 /* 鍵盤：設定流程 */
 document.addEventListener("keydown", e=>{
