@@ -151,7 +151,7 @@ async function load(){
 async function save(){
   clearTimeout(saveTimer);
   const text = $("#text").value;
-  if(text === lastSaved) return;
+  if(text === lastSaved){ setState("", ""); return; }   // 改完又改返一樣 → 唔使存，狀態亦要收走
   setState("busy", "儲存中…");
   try{
     const r = await fetch("/api/text", {

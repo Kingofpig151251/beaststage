@@ -28,24 +28,16 @@
     --blue:#0071E3; --blue-press:#005FBF;
     --blue-fill:var(--blue); --blue-fill-press:var(--blue-press); --green:#34C759; --red:#FF3B30; --amber:#FF9F0A;
     --on-accent:#FFFFFF; --focus-ring:rgba(0,113,227,.85);
-    --bar-bg:rgba(255,255,255,.84); --flash-ok:rgba(52,199,89,.16); --toast-bg:rgba(28,28,30,.92);
+    --flash-ok:rgba(52,199,89,.16); --toast-bg:rgba(28,28,30,.92);
     --toast-ink:#FFFFFF; --flash-bad:rgba(255,59,48,.15);
-    /* stage */
-    --dim:rgba(0,0,0,.62); --vignette:rgba(0,0,0,.45); --beam-hi:rgba(255,255,255,.92); --beam-mid:rgba(255,255,255,.30);
     /* geometry */
-    --r-xl:22px; --r-lg:16px; --r-md:12px; --r-sm:8px; --pill:999px;
+    --r-xl:22px; --r-lg:16px; --r-md:12px; --pill:999px;
     --hair:1px;
     /* motion */
     --dur:.28s; --ease:cubic-bezier(.32,.72,0,1);
-    /* legacy aliases（舊規則仍然引用） */
-    --paper:var(--bg); --paper-2:var(--surface); --paper-3:var(--surface-2);
-    --muted:var(--ink-2); --rule:var(--sep); --accent:var(--blue); --accent-2:var(--green);
-    --accent-ink:#FFFFFF; --focus:var(--blue); --bar:1px; --radius:var(--r-lg);
-    --shadow:none; --shade:#000;
     --font-display:-apple-system,BlinkMacSystemFont,system-ui,"SF Pro Display","PingFang HK","Noto Sans HK",sans-serif;
     --font-body:-apple-system,BlinkMacSystemFont,system-ui,"SF Pro Text","PingFang HK","Noto Sans HK",sans-serif;
     --font-mono:ui-monospace,"SF Mono",Menlo,monospace;
-    --font-emoji:"Apple Color Emoji","Segoe UI Emoji","Noto Color Emoji",sans-serif;
   }
 
   *{box-sizing:border-box}
@@ -194,8 +186,6 @@
   .sheet-cancel{min-height:48px; border-radius:var(--r-md); background:var(--fill); color:var(--ink);
     font-size:17px; font-weight:600}
 
-  .bigcount .unit{font-size:clamp(22px,3.2vh,32px); font-weight:600; color:var(--ink-2); margin-left:10px}
-
   .setup-foot{display:flex; flex-direction:column; align-items:center; gap:12px; padding:12px 0 8px}
   .setup-foot .btn-primary{min-width:260px; min-height:56px; font-size:19px; border-radius:var(--pill)}
 
@@ -255,10 +245,6 @@
   input:focus-visible,textarea:focus-visible,select:focus-visible,button:focus-visible,a:focus-visible{
     outline:2px solid var(--focus-ring); outline-offset:3px}
 
-
-  .qcount .unit{font-size:15px; font-weight:500; color:var(--ink-2); letter-spacing:0}
-  .qedit:active{background:var(--fill-2)}
-
   /* ---------- buttons ---------- */
   button{font-family:inherit; font-size:17px; font-weight:500; color:var(--ink); background:transparent;
     border:0; border-radius:var(--r-md); padding:12px 18px; min-height:44px; cursor:pointer;
@@ -267,7 +253,6 @@
   button:disabled{opacity:.35; cursor:not-allowed; transform:none}
   .btn-primary{background:var(--blue-fill); color:var(--on-accent); font-weight:600}
   .btn-primary:active{background:var(--blue-fill-press)}
-  .btn-quiet:active{background:var(--fill-2)}
   .btn-big{width:100%; padding:17px 18px; font-size:19px; font-weight:600}
 
 
@@ -608,7 +593,6 @@
     h1{font-size:30px}
   }
   @media (max-width:700px){
-    .setup{gap:12px}
     .result-actions .btn-big{flex:1 1 100%}
   }
   @media (prefers-reduced-motion: reduce){
@@ -1293,9 +1277,8 @@ function startBgm(){
   BGM = src;
 }
 function stopBgm(){
-  const want = BGM_WANT; BGM_WANT = null;
+  BGM_WANT = null;
   if(BGM){ try{ BGM.onended = null; BGM.stop(); }catch(e){} BGM = null; }
-  return want;
 }
 document.addEventListener("visibilitychange", ()=>{
   if(document.hidden || !BGM_WANT) return;
@@ -1308,10 +1291,12 @@ document.addEventListener("keydown", loadSfx, {once:true});
 
 /* 按「準備好」→ 獨立倒數過場（3、2、1、開始）→ 出題兼起錶 */
 const REDUCE = window.matchMedia("(prefers-reduced-motion: reduce)").matches;
+let CD_TIMER = 0;                       // 倒數 interval：退出／上一步要清走
 const CD_CIRC = 339.3;                 // 2πr，r = 54
 
 function startRound(){
   if(!G || G.phase !== "ready") return;
+  clearInterval(CD_TIMER);
   G.phase = "countdown";
   $("#btnReady").style.display = "none";
   const t = G.teams[G.turn];
@@ -1333,12 +1318,12 @@ function startRound(){
   let n = 3;
   paint(n);
   sfx("countdown", 0.9);        // 真實錄音：0／1／2 秒三響，3 秒 GO，同畫面每拍 1 秒對齊
-  const tick = setInterval(()=>{
+  CD_TIMER = setInterval(()=>{
     n--;
     if(n > 0){ paint(n); }
     else if(n === 0){ paint("開始"); }
     else {
-      clearInterval(tick);
+      clearInterval(CD_TIMER); CD_TIMER = 0;
       box.classList.remove("on");
       hideReady();
       beginRunning();
@@ -1347,11 +1332,13 @@ function startRound(){
 }
 
 function beginRunning(){
+  if(!G) return;                       // 倒數期間被退出
   G.phase = "running";
   const t0 = G.teams[G.turn];
   G.base = { ok: t0.ok, skip: t0.skip, foul: t0.foul||0, score: t0.score };   // 回合起點，用嚟算本回合成績
   G.cur = drawItem();
   G.remaining = G.sec;
+  G.endsAt = Date.now() + G.sec * 1000;
   startTimer();
   renderPlay();
 }
@@ -1370,10 +1357,9 @@ function startTimer(){
   const id = setInterval(()=>{
     if(token !== G.timerToken){ clearInterval(id); return; }   // 舊局的計時器不得影響新局
     if(G.paused) return;
-    G.remaining = Math.max(0, G.remaining - 0.1);
+    G.remaining = Math.max(0, (G.endsAt - Date.now()) / 1000);  // 用時鐘差值，唔累積漂移
     renderTimer();
-    const sec = Math.ceil(G.remaining);
-    if(G.remaining<=0){ clearInterval(id); endTurn(); }
+    if(G.remaining <= 0){ clearInterval(id); endTurn(); }
   },100);
   G.timerId = id;
 }
@@ -1402,7 +1388,7 @@ function fitWord(text){
     for(let i=0;i<9;i++){
       const mid=(lo+hi)/2;
       el.style.fontSize=mid+"px";
-      const okW = oneLine ? el.scrollWidth<=boxW+1 : el.scrollWidth<=boxW+1;
+      const okW = el.scrollWidth<=boxW+1;
       if(okW && el.scrollHeight<=boxH+1) lo=mid; else hi=mid;
     }
     el.style.fontSize=Math.floor(lo)+"px";
@@ -1448,13 +1434,14 @@ const ACTIONS = {
 };
 function act(name){
   if(!ACTIONS[name]) return false;
-  if(!G || G.phase !== "running" || !G.cur) return false;
+  if(!G || G.phase !== "running" || !G.cur || G.locked) return false;
+  G.locked = true;                        // 190ms 內只認一次，防連按食題
+  setTimeout(()=>{ if(G) G.locked = false; }, 190);
   judge(name);
   return true;
 }
 
 function judge(kind){
-  if(!G || G.phase !== "running" || !G.cur) return;
   if(kind === "skip" && !G.allowSkip) return;
   const t = G.teams[G.turn];
   let delta = 0;
@@ -1484,6 +1471,7 @@ function resetTurnTimers(){
 /* 硬重置：退出遊戲／返回設定時用，連幕都收走 */
 function clearTurnEnd(){
   resetTurnTimers();
+  clearInterval(CD_TIMER); CD_TIMER = 0;
   const cd = $("#countdown"); if(cd) cd.classList.remove("on");
   const gate = $("#gate"); if(gate) gate.classList.remove("on","closed","text","settle","opening");
 }
@@ -1801,8 +1789,8 @@ $("#swSkipPen").onclick = ()=>{ if(!cfg.allowSkip) return; cfg.skipPenalty = !cf
 $("#swFoulPen").onclick = ()=>{ cfg.foulPenalty = !cfg.foulPenalty; saveCfg(); syncRules(); };
 syncRules();
 function isPristine(){
-  return !!G && G.phase === "ready" && G.turn === 0 && !G.judged
-    && G.teams.every(t=>t.score === 0 && !t.ok && !t.skip);
+  return !!G && (G.phase === "ready" || G.phase === "countdown") && G.turn === 0 && !G.judged
+    && G.teams.every(t=>t.score === 0 && !t.ok && !t.skip && !t.foul);
 }
 function backToSetup(){
   clearTurnEnd();
@@ -1827,12 +1815,23 @@ function doExit(){
   renderHome();
 }
 
+let EXIT_PAUSED = false;
 function askExit(){
   const sheet = $("#exitSheet");
   sheet.classList.add("on");
+  if(G && G.phase === "running" && !G.paused){    // 開面板即停錶，唔會喺對話框後面繼續倒數
+    G.paused = true; EXIT_PAUSED = true;
+    setPauseIcon(true); renderTimer();
+  }
   setTimeout(()=>$("#exitCancel").focus({preventScroll:true}), 40);
 }
-function closeExit(){ $("#exitSheet").classList.remove("on"); }
+function closeExit(){
+  $("#exitSheet").classList.remove("on");
+  if(EXIT_PAUSED){
+    EXIT_PAUSED = false;
+    if(G && G.phase === "running"){ G.paused = false; G.endsAt = Date.now() + G.remaining*1000; setPauseIcon(false); renderTimer(); }
+  }
+}
 
 $("#exitCancel").onclick = closeExit;
 $("#exitConfirm").onclick = ()=>{ closeExit(); doExit(); };
@@ -1856,6 +1855,7 @@ function setPauseIcon(p){
 $("#btnPause").onclick = ()=>{
   if(!G || G.phase!=="running") return;
   G.paused = !G.paused;
+  if(!G.paused) G.endsAt = Date.now() + G.remaining * 1000;
   setPauseIcon(G.paused);
   renderTimer();
 };
