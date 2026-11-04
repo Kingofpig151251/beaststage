@@ -145,7 +145,7 @@ async function save(){
   clearTimeout(saveTimer);
   const text = $("#text").value;
   if(text === lastSaved) return;
-  setState("busy", "正在儲存…");
+  setState("busy", "儲存中…");
   try{
     const r = await fetch("/api/text", {
       method: "PUT", headers: { "Content-Type": "application/json" },
