@@ -18,6 +18,7 @@
     --blue:#0071E3; --green:#34C759; --red:#FF3B30;
     --r-xl:22px; --r-lg:16px; --r-md:12px; --pill:999px;
     --focus-ring:rgba(0,113,227,.85); --vs-shadow:rgba(0,0,0,.18);
+    --thumb:rgba(60,60,67,.26); --thumb-2:rgba(60,60,67,.42);
     --dur:.22s; --ease:cubic-bezier(.32,.72,0,1);
     --font:-apple-system,BlinkMacSystemFont,system-ui,"PingFang HK","Noto Sans HK",sans-serif;
   }
@@ -64,12 +65,12 @@
     color:var(--ink); font-family:var(--font); font-size:17px; line-height:1.8;
     margin:0 6px; border-radius:calc(var(--r-xl) - 6px);
     padding:clamp(16px,2.4vh,22px) clamp(8px,1.4vw,10px) clamp(16px,2.4vh,22px) clamp(16px,2.6vw,22px);
-    scrollbar-width:thin; scrollbar-color:rgba(60,60,67,.28) transparent}
+    scrollbar-width:thin; scrollbar-color:var(--thumb) transparent}
   textarea::-webkit-scrollbar{width:11px}
   textarea::-webkit-scrollbar-track{background:transparent}
-  textarea::-webkit-scrollbar-thumb{background-color:rgba(60,60,67,.26); border-radius:999px;
+  textarea::-webkit-scrollbar-thumb{background-color:var(--thumb); border-radius:999px;
     border:3px solid transparent; background-clip:content-box}
-  textarea::-webkit-scrollbar-thumb:hover{background-color:rgba(60,60,67,.42)}
+  textarea::-webkit-scrollbar-thumb:hover{background-color:var(--thumb-2)}
   textarea::placeholder{color:var(--ink-3)}
   textarea:focus-visible{outline:2px solid var(--focus-ring); outline-offset:-2px}
 
