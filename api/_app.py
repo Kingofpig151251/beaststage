@@ -6,13 +6,20 @@
   GET  /api/text   → {"text": "...", "updated_at": "..."}
   PUT  /api/text   → 整份取代（無快照、無歷史）
 
+遙控（第二部裝置做主持）
+  POST /api/session            → {"id": "ABC123"}
+  GET  /api/session/{id}?since=N → {"state":{...}, "seq":N, "cmds":[{"seq":1,"kind":"ok"}]}
+  POST /api/session/{id}/cmd   → {"kind":"ok|skip|foul|ready|next|exit"} → {"seq":n}
+  PUT  /api/session/{id}/state → 螢幕推送狀態給遙控顯示
+
 環境變數
   DATABASE_URL   postgres://...（Neon / Vercel Marketplace 的 Postgres）
 """
 
 import json
 import os
-from datetime import datetime, timezone
+import secrets
+from datetime import datetime, timedelta, timezone
 
 import psycopg
 from psycopg.rows import dict_row
@@ -49,6 +56,16 @@ def conn():
 def ensure_schema():
     with conn() as c, c.cursor() as cur:
         cur.execute("CREATE TABLE IF NOT EXISTS meta (key TEXT PRIMARY KEY, value TEXT)")
+        cur.execute("""CREATE TABLE IF NOT EXISTS sess (
+            id TEXT PRIMARY KEY,
+            state JSONB NOT NULL DEFAULT '{}'::jsonb,
+            touched TIMESTAMPTZ NOT NULL DEFAULT now())""")
+        cur.execute("""CREATE TABLE IF NOT EXISTS cmd (
+            seq BIGSERIAL PRIMARY KEY,
+            sid TEXT NOT NULL,
+            kind TEXT NOT NULL,
+            ts TIMESTAMPTZ NOT NULL DEFAULT now())""")
+        cur.execute("CREATE INDEX IF NOT EXISTS cmd_sid_seq ON cmd(sid, seq)")
 
 
 _READY = {"ok": False}
@@ -118,3 +135,64 @@ async def text_put(request: Request):
         put_meta(cur, "text", text)
         put_meta(cur, "updated_at", now())
     return {"ok": True, "chars": len(text)}
+
+# ------------------------------------------------------------------ 遙控
+KINDS = {"ok", "skip", "foul", "ready", "next", "exit"}
+ALPHABET = "ABCDEFGHJKLMNPQRSTUVWXYZ23456789"   # 無 I/O/0/1，避免讀錯
+
+
+@app.post("/api/session")
+def session_new():
+    schema()
+    sid = "".join(secrets.choice(ALPHABET) for _ in range(6))
+    with conn() as c, c.cursor() as cur:
+        cur.execute("DELETE FROM cmd WHERE ts < now() - interval '2 hours'")
+        cur.execute("DELETE FROM sess WHERE touched < now() - interval '2 hours'")
+        cur.execute("INSERT INTO sess(id) VALUES(%s)", (sid,))
+    return {"id": sid}
+
+
+@app.get("/api/session/{sid}")
+def session_get(sid: str, since: int = 0):
+    schema()
+    with conn() as c, c.cursor() as cur:
+        cur.execute("SELECT state FROM sess WHERE id=%s", (sid,))
+        row = cur.fetchone()
+        if not row:
+            return JSONResponse({"error": "session 唔存在或已過期"}, status_code=404)
+        cur.execute("SELECT seq, kind FROM cmd WHERE sid=%s AND seq>%s ORDER BY seq", (sid, since))
+        cmds = [{"seq": r["seq"], "kind": r["kind"]} for r in cur.fetchall()]
+        cur.execute("UPDATE sess SET touched=now() WHERE id=%s", (sid,))
+    return {"state": row["state"], "seq": cmds[-1]["seq"] if cmds else since, "cmds": cmds}
+
+
+@app.post("/api/session/{sid}/cmd")
+async def session_cmd(sid: str, request: Request):
+    schema()
+    body = await request.json()
+    kind = body.get("kind")
+    if kind not in KINDS:
+        return JSONResponse({"error": "kind 唔合法"}, status_code=400)
+    with conn() as c, c.cursor() as cur:
+        cur.execute("SELECT 1 FROM sess WHERE id=%s", (sid,))
+        if not cur.fetchone():
+            return JSONResponse({"error": "session 唔存在或已過期"}, status_code=404)
+        cur.execute("INSERT INTO cmd(sid, kind) VALUES(%s,%s) RETURNING seq", (sid, kind))
+        seq = cur.fetchone()["seq"]
+        cur.execute("UPDATE sess SET touched=now() WHERE id=%s", (sid,))
+    return {"seq": seq}
+
+
+@app.put("/api/session/{sid}/state")
+async def session_state(sid: str, request: Request):
+    schema()
+    body = await request.json()
+    state = body.get("state")
+    if not isinstance(state, dict):
+        return JSONResponse({"error": "state 要係物件"}, status_code=400)
+    with conn() as c, c.cursor() as cur:
+        cur.execute("UPDATE sess SET state=%s::jsonb, touched=now() WHERE id=%s",
+                    (json.dumps(state, ensure_ascii=False), sid))
+        if cur.rowcount == 0:
+            return JSONResponse({"error": "session 唔存在或已過期"}, status_code=404)
+    return {"ok": True}

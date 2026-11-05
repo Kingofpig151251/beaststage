@@ -415,6 +415,13 @@
   .readyMark svg,.readyMark .mark-img{display:block; width:1em; height:1em; margin:0 auto}
   .readyTeam{font-family:var(--font-display); font-weight:700; font-size:clamp(52px,13vh,140px);
     letter-spacing:-.03em; line-height:1.02; margin:10px 0 16px}
+  .remote-mini{display:flex; align-items:center; gap:12px; padding:8px 12px; border-radius:16px;
+    background:var(--surface); box-shadow:inset 0 0 0 1px var(--sep)}
+  .rm-qr{width:84px; height:84px; flex:none; display:grid; place-items:center}
+  .rm-qr svg{width:100%; height:100%; display:block}
+  .rm-txt{display:flex; flex-direction:column; gap:2px; text-align:left}
+  .rm-txt b{font-size:14px}
+  .rm-txt span{font-size:14px; color:var(--ink-2); font-variant-numeric:tabular-nums}
   .readyScores{display:flex; gap:12px; flex-wrap:wrap; justify-content:center; margin-top:clamp(20px,3.4vh,32px)}
   .readyScores .score-tile{display:flex; flex-direction:column; align-items:center; gap:2px;
     min-width:96px; padding:10px 14px; border-radius:var(--r-md);
@@ -824,6 +831,10 @@
         <div class="readyMark" id="rdMark" aria-hidden="true"></div>
         <div class="readyTeam" id="rdTeam"></div>
         <div class="readyScores" id="rdScores"></div>
+        <div class="remote-mini" id="remoteMini" hidden>
+          <div class="rm-qr" id="qrBox"></div>
+          <div class="rm-txt"><b>手機做主持</b><span id="rmCode">待連線</span></div>
+        </div>
         <button id="btnReady">準備好</button>
       </div>
     </div>
@@ -1238,6 +1249,7 @@ function launchGame(){
 /* ================= 遊戲流程 ================= */
 function startGame(){
   stopBgm();
+  sessionStop(); sessionStart();
   if(G){ clearInterval(G.timerId); G.timerToken++; }   // 清除上一局殘留的計時器
   const names = Array.from({length:cfg.teams},(_,i)=> teamName(i));
   const looks = Array.from({length:cfg.teams},(_,i)=>{ const a = animalAt(i); return { id:a.id, color:a.color }; });
@@ -1519,6 +1531,92 @@ const ACTIONS = {
   skip: { key: "ArrowDown",  dir: "down"  },   // 跳過
   ok:   { key: "ArrowRight", dir: "right" }    // 正確
 };
+/* ---------- 遙控（第二部裝置）---------- */
+let SID = null, CMD_SEQ = 0, SID_TIMER = 0, PUSH_TIMER = 0;
+
+async function sessionStart(){
+  try{
+    const r = await fetch("/api/session", {method:"POST"});
+    if(!r.ok) return;
+    const d = await r.json();
+    SID = d.id; CMD_SEQ = 0;
+    $("#rmCode").textContent = SID;
+    $("#remoteMini").hidden = false;
+    drawQR(location.origin + "/remote?s=" + SID);
+    sessionPoll();
+    clearInterval(PUSH_TIMER); PUSH_TIMER = setInterval(sessionPush, 1000);
+    sessionPush();
+  }catch(e){}
+}
+
+function sessionStop(){
+  SID = null;
+  clearTimeout(SID_TIMER); clearInterval(PUSH_TIMER);
+  const b = $("#remoteMini"); if(b) b.hidden = true;
+}
+
+function loadQR(){
+  if(window.qrcode) return Promise.resolve();
+  return new Promise((res, rej)=>{
+    const el = document.createElement("script");
+    el.src = "/vendor/qrcode.js"; el.onload = res; el.onerror = rej;
+    document.head.appendChild(el);
+  });
+}
+
+function drawQR(url){
+  loadQR().then(()=>{
+    const qr = window.qrcode(0, "M");
+    qr.addData(url); qr.make();
+    $("#qrBox").innerHTML = qr.createSvgTag({cellSize: 4, margin: 0});
+  }).catch(()=>{ $("#qrBox").textContent = "QR 載入失敗"; });
+}
+
+const CMD_APPLY = {
+  ok: ()=> G && G.phase === "running" && act("ok"),
+  skip: ()=> G && G.phase === "running" && act("skip"),
+  foul: ()=> G && G.phase === "running" && act("foul"),
+  ready: ()=> G && G.phase === "ready" && startRound(),
+  next: ()=> G && G.phase === "interstitial" && closeTurnEnd(),
+  exit: ()=> G && askExit()
+};
+
+async function sessionPoll(){
+  clearTimeout(SID_TIMER);
+  if(!SID) return;
+  try{
+    const r = await fetch("/api/session/" + SID + "?since=" + CMD_SEQ, {cache:"no-store"});
+    if(r.ok){
+      const d = await r.json();
+      (d.cmds || []).forEach(c=>{
+        CMD_SEQ = Math.max(CMD_SEQ, c.seq);
+        const fn = CMD_APPLY[c.kind];
+        if(fn) fn();
+      });
+    }
+  }catch(e){}
+  if(SID) SID_TIMER = setTimeout(sessionPoll, 260);
+}
+
+async function sessionPush(){
+  if(!SID) return;
+  const t = G && G.teams[G.turn];
+  const state = G ? {
+    phase: G.phase,
+    turn: G.turn,
+    remaining: Math.max(0, Math.round(G.remaining || 0)),
+    allowSkip: G.allowSkip,
+    team: t ? { id: t.id, name: t.name, color: t.color, score: t.score } : null,
+    label: G.phase === "ready" ? "準備中" : G.phase === "interstitial" ? "本回合結算" : G.phase === "countdown" ? "倒數中" : ""
+  } : { phase: "idle" };
+  try{
+    await fetch("/api/session/" + SID + "/state", {
+      method:"PUT", headers:{"Content-Type":"application/json"},
+      body: JSON.stringify({state})
+    });
+  }catch(e){}
+}
+
 function act(name){
   if(!ACTIONS[name]) return false;
   if(!G || G.phase !== "running" || !G.cur || G.locked) return false;
@@ -1881,6 +1979,7 @@ function isPristine(){
     && G.teams.every(t=>t.score === 0 && !t.ok && !t.skip && !t.foul);
 }
 function backToSetup(){
+  sessionStop();
   clearTurnEnd();
   clearInterval(G.timerId);
   G.timerToken++;
@@ -1893,6 +1992,7 @@ function backToSetup(){
 
 function doExit(){
   stopBgm();
+  sessionStop();
   clearTurnEnd();
   clearInterval(G.timerId);
   G.timerToken++;
@@ -1948,7 +2048,7 @@ $("#btnPause").onclick = ()=>{
   renderTimer();
 };
 
-$("#btnBackHome").onclick = ()=>{ stopBgm(); clearReveal(); showView("v-home"); renderHome(); };
+$("#btnBackHome").onclick = ()=>{ sessionStop(); stopBgm(); clearReveal(); showView("v-home"); renderHome(); };
 
 /* 結果頁：右方向鍵＝跳到冠軍／返回主頁；點畫面亦可快轉 */
 document.addEventListener("keydown", e=>{
