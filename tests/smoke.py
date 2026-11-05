@@ -104,8 +104,8 @@ async def main(url, shot):
 
             print("\n[1] 首頁")
             check("8 隻動物有渲染", await T.js("document.querySelectorAll('.beast').length") == 8)
-            check("動物圖全部載入", await T.js(
-                "[...document.querySelectorAll('.beast img')].every(i=>i.complete && i.naturalWidth>0)"))
+            img_ok = await _poll(T, "[...document.querySelectorAll('.beast img')].every(i=>i.complete && i.naturalWidth>0)", 12)
+            check("動物圖全部載入", img_ok)
             check("標題非空", bool(await T.js("document.querySelector('.landing-title').textContent.trim()")))
 
             print("\n[2] 設定五步")
