@@ -95,6 +95,15 @@ GET  /api/text      題目（讀）
 PUT  /api/text      整份取代（開放寫入，/edit 用）
 ```
 
+## 開發：smoke test
+
+```bash
+python3 -m http.server 8899 --bind 0.0.0.0      # 先開預覽
+python3 tests/smoke.py                           # 20 項斷言（首頁→設定→8 隊→一回合→結果頁）
+```
+
+用 headless Chrome + CDP；`fetch` 在頁面載入前打樁，**不會碰 production 題庫**。改動前後各跑一次。
+
 ## 安裝成 App（PWA）
 
 `manifest.json` + `sw.js`：加到主畫面後以 standalone 開啟，冇網址列／分頁列——手機橫屏直接多返 60–80px 高度。

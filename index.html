@@ -1474,7 +1474,25 @@ function launchGame(){
 
 /* ================= 題庫管理（離線用） ================= */
 /* ================= 遊戲流程 ================= */
+let WAKE = null;
+async function wakeOn(){
+  if(!("wakeLock" in navigator)) return;
+  try{
+    WAKE = await navigator.wakeLock.request("screen");
+    WAKE.addEventListener("release", ()=>{ WAKE = null; });
+  }catch(e){ /* 省電模式／低電量會拒絕，靜默降級 */ }
+}
+function wakeOff(){
+  if(!WAKE) return;
+  try{ WAKE.release(); }catch(e){}
+  WAKE = null;
+}
+document.addEventListener("visibilitychange", ()=>{
+  if(document.visibilityState === "visible" && G && (G.phase === "running" || G.phase === "ready" || G.phase === "countdown")) wakeOn();
+});
+
 function startGame(){
+  wakeOn();
   stopBgm();
   if(G){ clearInterval(G.timerId); G.timerToken++; }   // 清除上一局殘留的計時器
   const names = Array.from({length:cfg.teams},(_,i)=> teamName(i));
@@ -1843,7 +1861,7 @@ function slamGate(then){
   gate.classList.add("on");
   void gate.offsetWidth;                        // 先讓 display 生效，過場才播得出
   gate.classList.add("closed");
-  sfx("whistle", 0.85);                         // 球證哨：落閘即吹
+  [0, 850, 1700].forEach((d,i)=>setTimeout(()=>sfx("whistle", i===2?0.9:0.78), d));  // 球證三吹：短、短、長
   const HIT  = REDUCE ? 80  : 560;              // 幕合埋（0.46s）之後見字
   const CARD = REDUCE ? 300 : 1250;             // 停一停，轉結算卡
   setTimeout(()=>{ gate.classList.add("text"); }, HIT);
@@ -1917,6 +1935,7 @@ function endGame(){
   clearInterval(G.timerId);
   G.timerToken++;
   G.phase = "done";
+  wakeOff();
   hideReady();
   const sorted = G.teams.map((t,i)=>({...t,i})).sort((a,b)=> b.score-a.score || b.ok-a.ok);
   const total = G.teams.reduce((s,t)=>s+t.score,0);
@@ -2189,7 +2208,7 @@ function backToSetup(){clearTurnEnd();
 }
 
 function doExit(){
-  stopBgm();clearTurnEnd();
+  stopBgm();clearTurnEnd();wakeOff();
   clearInterval(G.timerId);
   G.timerToken++;
   G = null;
