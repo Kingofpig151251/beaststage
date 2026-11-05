@@ -1450,7 +1450,7 @@ function beginRunning(){
   G.cur = drawItem();
   G.remaining = G.sec;
   G.endsAt = Date.now() + G.sec * 1000;
-  TILT.base = null; TILT.since = 0; TILT.cool = 0;    // 每回合重新對準
+  TILT.base = null; TILT.since = 0; TILT.cool = 0; TILT.armed = true;   // 每回合重新對準
   startTimer();
   renderPlay();
 }
@@ -1554,7 +1554,7 @@ function act(name){
 }
 
 /* ---------- 體感（陀螺儀）：傾斜 iPad 判定 ---------- */
-const TILT = { on:false, base:null, since:0, cool:0, gotEvent:false };
+const TILT = { on:false, base:null, since:0, cool:0, gotEvent:false, armed:true };
 const TILT_DEG = 18, TILT_HOLD = 150, TILT_COOL = 600;
 
 function tiltSupported(){ return typeof DeviceOrientationEvent !== "undefined"; }
@@ -1584,13 +1584,20 @@ async function tiltOn(){
   TILT.base = null; TILT.since = 0; TILT.cool = 0; TILT.gotEvent = false;
   // 收不到事件＝瀏覽器有 API 但唔供資料（常見於 App 內建瀏覽器）
   setTimeout(()=>{
-    if(TILT.on && !TILT.gotEvent){ toast("收不到體感資料，請改用 Safari"); tiltOff(); cfg.tilt = false; saveCfg(); syncRules(); }
-  }, 2500);
+    if(TILT.on && !TILT.gotEvent) toast("收不到體感資料，請確認瀏覽器支援動作感測");
+  }, 6000);
   return true;
 }
 function tiltOff(){
   if(TILT.on){ window.removeEventListener("deviceorientation", onTilt); TILT.on = false; }
   TILT.base = null; TILT.since = 0;
+}
+
+function screenAngle(){
+  const o = (typeof screen !== "undefined") ? screen.orientation : null;
+  if(o && typeof o.angle === "number") return o.angle;
+  if(typeof window.orientation === "number") return ((window.orientation % 360) + 360) % 360;
+  return 0;
 }
 
 function onTilt(e){
@@ -1599,18 +1606,33 @@ function onTilt(e){
   if(!G || G.phase !== "running") return;
   const { beta, gamma } = e;
   if(beta == null || gamma == null) return;
-  if(!TILT.base){ TILT.base = { beta, gamma }; return; }   // 以第一幀為中位
+  if(!TILT.base){ TILT.base = { beta, gamma, angle: screenAngle() }; return; }   // 以第一幀為中位
   const now = performance.now();
   if(now < TILT.cool) return;
+  if(TILT.base.angle !== screenAngle()){ TILT.base = { beta, gamma, angle: screenAngle() }; return; }  // 轉向即重新對準
   const db = beta - TILT.base.beta, dg = gamma - TILT.base.gamma;
+  // 把 device 軸旋轉到螢幕座標：橫屏時左右／前後軸會對調
+  const a = screenAngle() * Math.PI / 180;
+  const sx =  dg * Math.cos(a) + db * Math.sin(a);
+  const sy = -dg * Math.sin(a) + db * Math.cos(a);
+  // 未回正前唔接受新指令：避免「傾斜觸發後回正」被當成相反方向
+  if(!TILT.armed){
+    if(Math.abs(sx) < TILT_DEG * 0.45 && Math.abs(sy) < TILT_DEG * 0.45) TILT.armed = true;
+    return;
+  }
+  // 靜止時慢速跟隨，抵消長時間漂移
+  if(Math.abs(sx) < 6 && Math.abs(sy) < 6 && Math.abs(db) < 6 && Math.abs(dg) < 6){
+    TILT.base.beta  += db * 0.05;
+    TILT.base.gamma += dg * 0.05;
+  }
   let dir = null;
-  if(Math.abs(dg) >= TILT_DEG) dir = dg > 0 ? "ok" : "foul";   // 右＝正確、左＝犯規
-  else if(db >= TILT_DEG) dir = "skip";                        // 向下（前傾）＝跳過
+  if(Math.abs(sx) >= TILT_DEG) dir = sx > 0 ? "ok" : "foul";   // 螢幕右＝正確、左＝犯規
+  else if(sy >= TILT_DEG) dir = "skip";                        // 螢幕向下（前傾）＝跳過
   if(!dir){ TILT.since = 0; return; }
   if(!TILT.since) TILT.since = now;
   if(now - TILT.since < TILT_HOLD) return;                     // 要維持 150ms 才算
   TILT.since = 0; TILT.cool = now + TILT_COOL;
-  TILT.base = { beta, gamma };                                 // 重新對準，回正唔會觸發相反動作
+  TILT.armed = false;                                           // 要回正（<8°）才再接受指令
   tiltFlash(dir);
   act(dir);
 }
@@ -2133,6 +2155,7 @@ setInterval(()=>{ if(!REMOTE.ok && !G) pullText(); }, 15000);
 document.addEventListener("visibilitychange", ()=>{
   if(!document.hidden && !G && document.body.dataset.view === "home") pullText();
 });
+window.addEventListener("orientationchange", ()=>{ TILT.base = null; TILT.since = 0; });
 window.addEventListener("focus", ()=>{
   if(!G && document.body.dataset.view === "home") pullText();
 });
