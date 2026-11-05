@@ -436,7 +436,10 @@
   /* 鏡像模式（手機）：唔顯示入口與設定，只用遊戲畫面 */
   body.is-mirror #v-home, body.is-mirror #v-setup{display:none}
   body.is-mirror .flash-top{justify-content:center}
-  body.is-mirror #btnPause{pointer-events:none}
+  .rtc-dot{position:fixed; right:10px; bottom:calc(10px + env(safe-area-inset-bottom)); width:7px; height:7px;
+    border-radius:50%; background:var(--ink-3); pointer-events:none; z-index:60}
+  .rtc-dot.live{background:var(--green)}
+
   .sstep .remote-mini{margin-top:6px; --rm:132px; padding:14px 18px; gap:18px}
   .sstep .remote-mini .rm-txt b{font-size:17px}
   .sstep .remote-mini .rm-txt span{font-size:15px}
@@ -878,6 +881,7 @@
       <div class="card-word" id="pText"></div>
     </main>
 
+    <span class="rtc-dot" id="rtcDot" hidden></span>
     <div class="flash-hud" id="hud">
       <button class="key key-foul" data-judge="foul" aria-label="犯規" title="犯規（←）">犯規</button>
       <button class="key key-pass" data-judge="skip" aria-label="跳過" title="跳過（↓）">跳過</button>
@@ -1716,10 +1720,14 @@ const CMD_APPLY = {
   foul: ()=> G && G.phase === "running" && act("foul"),
   ready: ()=> G && G.phase === "ready" && startRound(),
   next: ()=> G && G.phase === "interstitial" && closeTurnEnd(),
-  exit: ()=> G && askExit(),
   sdp: (c)=>{ const a = c && c.data && c.data.answer;
               if(a && RTC.pc) RTC.pc.setRemoteDescription({type:"answer", sdp:a}).catch(()=>{}); },
-  "need-offer": ()=>{ if(!RTC.on) rtcHost(); }
+  "need-offer": ()=>{ if(!RTC.on) rtcHost(); },
+  pause: ()=>{ if(G && G.phase === "running" && !G.paused) $("#btnPause").click(); },
+  resume: ()=>{ if(G && G.phase === "running" && G.paused) $("#btnPause").click(); },
+  end:   ()=>{ if(G && G.phase === "running") endTurn(); },
+  start: ()=>{ if(!G) launchGame(); },
+  exit:  ()=>{ if(G) doExit(); }
 };
 
 async function sessionPoll(){
@@ -1735,7 +1743,7 @@ async function sessionPoll(){
       });
     }
   }catch(e){}
-  if(SID) SID_TIMER = setTimeout(sessionPoll, 180);
+  if(SID) SID_TIMER = setTimeout(sessionPoll, RTC.on ? 2000 : 120);
 }
 
 function buildState(){
@@ -1744,6 +1752,7 @@ function buildState(){
     phase: G.phase,
     turn: G.turn, rounds: G.rounds,
     remaining: Math.max(0, Math.round(G.remaining || 0)),
+    paused: !!G.paused,
     allowSkip: G.allowSkip, skipLeft: G.skipLeft, skipCap: G.skipCap,
     skipPenalty: G.skipPenalty, foulPenalty: G.foulPenalty,
     order: G.order,
@@ -2203,10 +2212,11 @@ function closeExit(){
 }
 
 $("#exitCancel").onclick = closeExit;
-$("#exitConfirm").onclick = ()=>{ closeExit(); doExit(); };
+$("#exitConfirm").onclick = ()=>{ closeExit(); MIRROR ? mirrorCmd("exit") : doExit(); };
 $("#exitSheet").addEventListener("click", e=>{ if(e.target.id === "exitSheet") closeExit(); });
 
 $("#btnExit").onclick = ()=>{
+  if(MIRROR){ askExit(); return; }          // 手機端顯示同一塊確認面板，確認後送 exit
   if(!G){ stopBgm(); showView("v-home"); renderHome(); return; }
   if(isPristine()){ backToSetup(); return; }   // 未開始過 → 上一步回設定
   askExit();                                   // 遊戲中 → 自訂確認面板
@@ -2222,6 +2232,7 @@ function setPauseIcon(p){
   else if(G) renderTimer();
 }
 $("#btnPause").onclick = ()=>{
+  if(MIRROR){ mirrorCmd(MR && MR.paused ? "resume" : "pause"); return; }
   if(!G || G.phase!=="running") return;
   G.paused = !G.paused;
   if(!G.paused) G.endsAt = Date.now() + G.remaining * 1000;
@@ -2304,7 +2315,11 @@ document.addEventListener("pointerdown", e=>{
 
 /* ---------- WebRTC：配對後兩部機直連，唔再經雲端 ---------- */
 const RTC = { pc:null, dc:null, on:false, offer:"", joined:"", supported: (typeof RTCPeerConnection === "function") };
-const ICE = { iceServers: [{ urls: "stun:stun.l.google.com:19302" }] };
+const ICE = { iceServers: [
+  { urls: "stun:stun.l.google.com:19302" },
+  { urls: "stun:stun1.l.google.com:19302" },
+  { urls: "stun:stun.cloudflare.com:3478" }
+] };
 
 function rtcClose(){
   try{ if(RTC.dc) RTC.dc.close(); }catch(e){}
@@ -2322,8 +2337,8 @@ function waitIce(pc, ms){
 }
 
 function dcBind(ch, isHost){
-  ch.onopen = ()=>{ RTC.on = true; if(isHost){ sendDC({t:"state", s: buildState()}); } else { sendDC({t:"hello"}); } };
-  ch.onclose = ()=>{ RTC.on = false;
+  ch.onopen = ()=>{ RTC.on = true; syncRtcDot(); if(isHost){ sendDC({t:"state", s: buildState()}); } else { sendDC({t:"hello"}); } };
+  ch.onclose = ()=>{ RTC.on = false; syncRtcDot();
     if(isHost){ setTimeout(()=>{ if(SID && !RTC.on) rtcHost(); }, 800); }   // 斷線自動出新 offer
   };
   ch.onerror = ()=>{ RTC.on = false; };
@@ -2352,11 +2367,11 @@ async function rtcHost(){
     rtcClose();
     const pc = new RTCPeerConnection(ICE);
     RTC.pc = pc;
-    pc.onconnectionstatechange = ()=>{ RTC.on = pc.connectionState === "connected"; };
+    pc.onconnectionstatechange = ()=>{ RTC.on = pc.connectionState === "connected"; syncRtcDot(); };
     const ch = pc.createDataChannel("ctl", {ordered:true});
     RTC.dc = ch; dcBind(ch, true);
     await pc.setLocalDescription(await pc.createOffer());
-    await waitIce(pc, 1200);
+    await waitIce(pc, 2500);
     RTC.offer = (pc.localDescription || {}).sdp || "";
     sessionPush();
   }catch(e){ RTC.offer = ""; }
@@ -2370,11 +2385,11 @@ async function rtcJoin(offerSdp){
     rtcClose();
     const pc = new RTCPeerConnection(ICE);
     RTC.pc = pc;
-    pc.onconnectionstatechange = ()=>{ RTC.on = pc.connectionState === "connected"; };
+    pc.onconnectionstatechange = ()=>{ RTC.on = pc.connectionState === "connected"; syncRtcDot(); };
     pc.ondatachannel = e=>{ RTC.dc = e.channel; dcBind(e.channel, false); };
     await pc.setRemoteDescription({type:"offer", sdp:offerSdp});
     await pc.setLocalDescription(await pc.createAnswer());
-    await waitIce(pc, 1200);
+    await waitIce(pc, 2500);
     await fetch("/api/cmd", {
       method:"POST", headers:{"Content-Type":"application/json"},
       body: JSON.stringify({ id: MIRROR, kind: "sdp", data: { answer: (pc.localDescription||{}).sdp || "" } })
@@ -2435,6 +2450,8 @@ function mirrorPaint(st){
          <em class="pill-mark">${ICONS[t.id] || ""}</em>
          <span class="score-name">${esc(t.name)}</span><b>${t.score}</b></div>`).join("");
     const mini = ready.querySelector(".remote-mini"); if(mini) mini.hidden = true;
+    const rb = document.getElementById("btnReady");
+    if(rb){ rb.textContent = "準備好"; rb.style.display = ""; rb.onclick = ()=> mirrorCmd("ready"); }
     hud.style.visibility = "hidden";
     setMirrorWord("");
   }else if(phase === "running"){
@@ -2455,6 +2472,7 @@ function mirrorPaint(st){
     }
     const foul = $('[data-judge="foul"]');
     if(foul) foul.classList.toggle("bad", !!st.foulPenalty);
+    document.getElementById("btnPause").classList.toggle("paused", !!st.paused);
     tickMirrorClock();
   }else if(phase === "interstitial"){
     ready.style.display = "none";
@@ -2476,6 +2494,11 @@ function mirrorPaint(st){
     ready.style.display = "none";
     hud.style.visibility = "hidden";
     setMirrorWord("等待主持台開始");
+    $("#rdRound").textContent = ""; $("#rdTeam").textContent = "";
+    $("#rdMark").innerHTML = ""; $("#rdScores").innerHTML = "";
+    const b = document.getElementById("btnReady");
+    if(b){ b.textContent = "開始遊戲"; b.style.display = ""; b.onclick = ()=> mirrorCmd("start"); }
+    $("#readyOverlay").style.display = "flex";
   }
 }
 
@@ -2520,10 +2543,20 @@ async function mirrorPoll(){
   setTimeout(mirrorPoll, RTC.on ? 3000 : 180);
 }
 
+function syncRtcDot(){
+  const d = document.getElementById("rtcDot");
+  if(!d) return;
+  if(!MIRROR){ d.hidden = true; return; }
+  d.hidden = false;
+  d.classList.toggle("live", RTC.on);
+  d.setAttribute("title", RTC.on ? "直連" : "經雲端");
+}
+
 function mirrorBoot(){
   document.body.classList.add("is-mirror");
+  syncRtcDot();
   showView("v-play");
-  ["#v-home","#v-setup","#btnExit"].forEach(sel=>{
+  ["#v-home","#v-setup"].forEach(sel=>{
     const el = $(sel); if(el) el.style.display = "none";
   });
   mirrorPaint({ phase: "idle" });

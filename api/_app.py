@@ -183,7 +183,8 @@ async def text_put(request: Request):
 
 # ------------------------------------------------------------------ 遙控
 # 全部用單層路徑＋query／body 參數：Vercel 只穩定支援 /api/<one-segment>
-KINDS = {"ok", "skip", "foul", "ready", "next", "exit", "sdp", "need-offer"}
+KINDS = {"ok", "skip", "foul", "ready", "next", "exit", "sdp", "need-offer",
+         "pause", "resume", "end", "start"}
 ALPHABET = "ABCDEFGHJKLMNPQRSTUVWXYZ23456789"   # 無 I/O/0/1，避免讀錯
 
 
