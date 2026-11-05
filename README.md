@@ -95,6 +95,17 @@ GET  /api/text      題目（讀）
 PUT  /api/text      整份取代（開放寫入，/edit 用）
 ```
 
+## 設定頁密碼
+
+`/edit` 開頁要先輸入密碼（存在 Vercel 環境變數 `EDIT_KEY`，不在原始碼裡）。驗證在**伺服器**：
+
+- `PUT /api/text` 必須帶 `x-edit-key: <EDIT_KEY>`，否則回 **401 未授權**
+- `GET /api/text?check=1` 只驗密碼（回 `{ok, protected}`），不讀資料庫
+- `GET /api/text` 保持開放——主持台要靠它取題目
+
+密碼在該分頁的 sessionStorage 記住，關掉分頁就要再入一次。要改密碼：Vercel → Settings → Environment Variables → `EDIT_KEY`，改完重新部署。
+**未設 `EDIT_KEY` 時行為不變（完全開放）**，方便本地開發。
+
 ## 開發：smoke test
 
 ```bash
