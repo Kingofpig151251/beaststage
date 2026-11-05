@@ -196,7 +196,7 @@
   .namegrid{display:grid; grid-template-columns:repeat(auto-fit,minmax(240px,1fr)); gap:12px 16px;
     width:min(760px,100%)}
   .name-row{display:grid; grid-template-columns:56px minmax(0,1fr); gap:12px; align-items:center}
-  .animal-btn{position:relative; width:56px; height:56px; padding:0; border-radius:50%;
+  .animal-btn{position:relative; width:56px; height:56px; min-height:0; aspect-ratio:1; flex:none; padding:0; border-radius:50%;
     display:grid; place-items:center; line-height:1;
     background:color-mix(in oklab, var(--tc) 16%, transparent);
     box-shadow:inset 0 0 0 2px color-mix(in oklab, var(--tc) 62%, transparent)}
@@ -441,9 +441,14 @@
   .readyMark svg,.readyMark .mark-img{display:block; width:1em; height:1em; margin:0 auto}
   .readyTeam{font-family:var(--font-display); font-weight:700; font-size:clamp(52px,13vh,140px);
     letter-spacing:-.03em; line-height:1.02; margin:10px 0 16px}
-  .readyScores{display:flex; gap:12px; flex-wrap:wrap; justify-content:center; margin-top:clamp(20px,3.4vh,32px)}
+  .readyScores{display:grid; grid-template-columns:repeat(var(--cols,4), minmax(0,1fr));
+    gap:10px; justify-content:center; margin-top:clamp(16px,2.8vh,28px); width:min(620px,100%)}
+  .readyScores.many .score-tile{padding:7px 8px}
+  .readyScores.many .pill-mark{width:18px; height:18px; font-size:18px}
+  .readyScores.many .score-name{font-size:12px}
+  .readyScores.many b{font-size:15px}
   .readyScores .score-tile{display:flex; flex-direction:column; align-items:center; gap:2px;
-    min-width:96px; padding:10px 14px; border-radius:var(--r-md);
+    min-width:0; padding:9px 10px; border-radius:var(--r-md);
     background:var(--fill); box-shadow:inset 0 0 0 1px var(--sep)}
   .readyScores .score-tile.cur{background:color-mix(in oklab, var(--tc) 18%, var(--surface));
     box-shadow:inset 0 0 0 2.5px var(--tc)}
@@ -680,10 +685,10 @@
     .sstep-hint{font-size:12px; margin-top:2px}
     .chips{gap:6px}
     .chips button{min-height:26px; padding:0 9px; font-size:12px}
-    .namegrid{grid-template-columns:repeat(4,1fr); gap:4px}
-    .name-row{grid-template-columns:26px minmax(0,1fr); gap:4px}
-    .animal-btn{width:26px; height:26px}
-    .animal-mark{font-size:14px}
+    .namegrid{grid-template-columns:1fr 1fr; gap:6px 14px}
+    .name-row{grid-template-columns:30px minmax(0,1fr); gap:6px}
+    .animal-btn{width:30px; height:30px; aspect-ratio:1}
+    .animal-mark{font-size:16px}
     .animal-edit{display:none}
     .name-row input{min-height:24px; padding:1px 5px; font-size:12px}
     .sstep{gap:8px}
@@ -776,10 +781,10 @@
     .rule{padding:10px 4px}
   }
   @media (max-height:420px){
-    .namegrid{grid-template-columns:repeat(4,1fr); gap:4px}
-    .name-row{grid-template-columns:24px minmax(0,1fr); gap:4px}
-    .animal-btn{width:24px; height:24px}
-    .animal-mark{font-size:13px}
+    .namegrid{grid-template-columns:1fr 1fr; gap:4px 10px}
+    .name-row{grid-template-columns:26px minmax(0,1fr); gap:5px}
+    .animal-btn{width:26px; height:26px; aspect-ratio:1}
+    .animal-mark{font-size:14px}
     .name-row input{min-height:22px; padding:1px 5px; font-size:12px}
     .rank{display:grid; grid-template-columns:1fr 1fr; gap:2px 8px}
     .rk, .rk.is-champ, .rank.compact .rk.is-champ{padding:3px 7px}
@@ -826,6 +831,31 @@
     .sc-val{font-size:13px; min-width:2ch}
     .setup-foot{padding:4px 0 0}
     #btnNext{min-height:38px; padding:0 20px; font-size:15px}
+  }
+
+  /* 準備畫面：矮屏／8 隊都要見到「準備好」 */
+  @media (max-height:560px){
+    .readyCard{padding:6px 10px}
+    .readyRound{font-size:12px}
+    .readyMark{font-size:clamp(34px,7vh,56px); margin-bottom:2px}
+    .readyTeam{font-size:clamp(26px,6.4vh,46px); margin:6px 0 10px}
+    .readyScores{margin-top:8px; gap:8px}
+    .readyScores .score-tile{padding:6px 8px; gap:1px}
+    .readyScores .pill-mark{width:16px; height:16px; font-size:16px}
+    .readyScores .score-name{font-size:11px}
+    .readyScores b{font-size:14px}
+    .readyCard button{margin-top:10px; min-height:44px; padding:0 30px; font-size:17px}
+  }
+
+  /* 極矮（橫屏手機 + 瀏覽器工具列）：準備畫面再收一級 */
+  @media (max-height:340px){
+    .readyMark{display:none}
+    .readyTeam{font-size:clamp(22px,5.6vh,34px); margin:4px 0 6px}
+    .readyScores{margin-top:6px; gap:6px}
+    .readyScores .score-tile{padding:4px 6px}
+    .readyScores .pill-mark{width:14px; height:14px; font-size:14px}
+    .readyScores b{font-size:13px}
+    .readyCard button{margin-top:6px; min-height:38px; font-size:15px}
   }
 </style>
 </head>
@@ -1514,6 +1544,8 @@ function enterReady(){
   $("#rdTeam").textContent = cur.name;
   $("#rdTeam").style.setProperty("--tc", cur.color);
   $("#readyOverlay").style.setProperty("--tc", cur.color);
+  $("#rdScores").style.setProperty("--cols", String(Math.min(4, G.teams.length)));
+  $("#rdScores").classList.toggle("many", G.teams.length > 4);
   $("#rdScores").innerHTML = G.teams.map((t,i)=>
     `<div class="score-tile${i===G.order[G.turn]?" cur":""}" style="--tc:${t.color}">
        <em class="pill-mark">${ICONS[t.id] || ""}</em>
