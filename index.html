@@ -68,14 +68,38 @@
   @keyframes breathe{0%,100%{transform:scale(.92); opacity:.75} 50%{transform:scale(1.06); opacity:1}}
   .landing{position:relative; z-index:1; flex:1; display:grid; grid-template-rows:1fr auto auto;
     justify-items:center; align-items:center; text-align:center}
-  .landing-art{width:min(980px,94vw); height:auto; display:block; pointer-events:none;
-    margin:clamp(10px,2.4vh,28px) auto clamp(10px,2vh,22px);
-    animation:rise .62s .34s var(--ease) both}
-  @media (max-height:600px){ .landing-art{display:none} }
+  /* 散佈群像：八隻全身動物浮喺標題四周，唔排隊、唔裁切 */
+  .landing-beasts{position:absolute; inset:0; pointer-events:none; z-index:0}
+  .beast{position:absolute; left:var(--x); top:var(--y);
+    width:calc(var(--k,1) * clamp(54px, 8.6vmin, 112px));
+    transform:translate(-50%,-50%) rotate(var(--r,0deg));
+    animation:beastFloat var(--d,8s) ease-in-out calc(var(--i,0s) + .5s) infinite alternate}
+  .beast img{display:block; width:100%; height:auto; opacity:0;
+    animation:beastIn .5s var(--ease) var(--i,0s) both}
+  @keyframes beastIn{to{opacity:1; transform:scale(1)}}
+  @keyframes beastFloat{
+    from{transform:translate(-50%,-50%) rotate(var(--r,0deg)) translateY(-7px)}
+    to{transform:translate(-50%,-50%) rotate(var(--r,0deg)) translateY(7px)}}
+  /* 橫向：動物退到左右兩側，中軸留給標題 */
+  @media (min-aspect-ratio: 1/1){
+    .beast{left:var(--xl,var(--x)); top:var(--yl,var(--y));
+      width:calc(var(--k,1) * clamp(50px, 10.5vmin, 104px))}
+  }
+  /* 手機：只留四角四隻動物，避免同大標題打架 */
+  @media (max-width:560px){
+    .beast{width:calc(var(--k,1) * clamp(44px, 12.5vw, 72px))}
+    .beast:nth-child(1){left:13%; top:11%}
+    .beast:nth-child(2){left:87%; top:9%}
+    .beast:nth-child(3){left:12%; top:84%}
+    .beast:nth-child(4){left:88%; top:82%}
+    .beast:nth-child(n+5){display:none}
+  }
+  @media (max-height:560px){ .landing-beasts{display:none} }
   .landing-main{display:flex; flex-direction:column; align-items:center}
   .landing-title{margin:14px 0 0; font-family:var(--font-display); font-weight:700;
     font-size:clamp(76px,16vh,168px); letter-spacing:-.045em; line-height:.98;
     animation:rise .62s .06s var(--ease) both}
+  @media (max-width:560px){ .landing-title{font-size:clamp(58px, 26vw, 116px); letter-spacing:-.03em} }
   .landing-sub{margin:clamp(12px,1.9vh,18px) 0 0; font-size:clamp(17px,2.5vh,22px);
     font-weight:500; color:var(--ink-2); letter-spacing:.02em;
     animation:rise .62s .12s var(--ease) both}
@@ -623,7 +647,16 @@
       <button class="btn-primary landing-go" id="btnEnter">開始</button>
       <a class="landing-link" id="btnEditHome" href="/edit">編輯題目</a>
       </div>
-      <img class="landing-art" src="/art/beasts.webp" alt="" aria-hidden="true" decoding="async">
+      <div class="landing-beasts" aria-hidden="true">
+        <span class="beast" style="--x:13%;--y:15%;--xl:9%;--yl:22%;--k:1.00;--r:-9deg;--d:7.4s;--i:.00s"><img src="/art/team/turtle.webp" alt=""></span>
+        <span class="beast" style="--x:87%;--y:13%;--xl:91%;--yl:18%;--k:1.12;--r:10deg;--d:8.6s;--i:.06s"><img src="/art/team/fox.webp" alt=""></span>
+        <span class="beast" style="--x:7%;--y:64%;--xl:5%;--yl:63%;--k:.96;--r:-5deg;--d:9.2s;--i:.12s"><img src="/art/team/whale.webp" alt=""></span>
+        <span class="beast" style="--x:93%;--y:60%;--xl:95%;--yl:60%;--k:.90;--r:7deg;--d:6.8s;--i:.18s"><img src="/art/team/octopus.webp" alt=""></span>
+        <span class="beast" style="--x:19%;--y:78%;--xl:17%;--yl:87%;--k:.78;--r:6deg;--d:7.8s;--i:.24s"><img src="/art/team/bee.webp" alt=""></span>
+        <span class="beast" style="--x:81%;--y:80%;--xl:83%;--yl:85%;--k:.84;--r:-7deg;--d:8.2s;--i:.30s"><img src="/art/team/flamingo.webp" alt=""></span>
+        <span class="beast" style="--x:37%;--y:89%;--xl:27%;--yl:11%;--k:.92;--r:5deg;--d:9.6s;--i:.36s"><img src="/art/team/dolphin.webp" alt=""></span>
+        <span class="beast" style="--x:63%;--y:91%;--xl:73%;--yl:11%;--k:.86;--r:-4deg;--d:7.0s;--i:.42s"><img src="/art/team/bear.webp" alt=""></span>
+      </div>
       <div class="landing-foot">
         <span class="landing-credit">© 2026 Leung Tung Lam · MIT License</span>
         <span class="brand-links">

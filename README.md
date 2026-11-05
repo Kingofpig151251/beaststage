@@ -105,7 +105,6 @@ PUT  /api/text      整份取代（開放寫入，/edit 用）
 
 ```
 index.html                 主持台（單檔，含 SVG 圖示）
-art/beasts.webp            首頁插畫：八隻動物探頭（AI 生成，SenseNova）
 art/team/*.webp            八個隊伍圖示（256×256 透明底，同一批生成圖裁出）
 sfx/dingdong.mp3           判定「對」：門鐘叮噹
 sfx/whoosh.mp3             判定「跳過」：子彈飛過
@@ -155,8 +154,8 @@ samples/hk-icebreaker.json 首次 seed 題庫
 
 **圖像**
 
-首頁的八動物插畫與八個隊伍圖示由 **SenseNova**（`sensenova-u1.5-lite`）生成，經裁切與去背處理後存為
-`art/beasts.webp`（橫幅）與 `art/team/*.webp`（八個隊伍圖示，256×256 透明底）。
+八隻動物（首頁散佈插畫與隊伍圖示共用同一套）由 **SenseNova**（`sensenova-u1.5-lite`）生成，
+經去背處理後存為 `art/team/*.webp`（256×256 透明底，完整全身）。
 
 **第三方素材**
 
