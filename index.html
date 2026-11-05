@@ -202,6 +202,8 @@
     background:var(--sheet-veil); padding:0 16px calc(16px + env(safe-area-inset-bottom))}
   .sheet-wrap.on{display:grid}
   .sheet-note{margin:0; font-size:15px; color:var(--ink-2); line-height:1.5}
+  .sheet-btn.primary{background:var(--blue); color:var(--on-accent)}
+  .sheet-steps{margin:0 0 18px; padding-left:20px; color:var(--ink-2); font-size:14px; line-height:1.7}
   .sheet-actions{display:flex; gap:12px}
   .sheet-btn{flex:1 1 0; min-height:50px; border:0; border-radius:var(--r-lg); font:inherit;
     font-size:17px; font-weight:600; background:var(--fill); color:var(--ink); cursor:pointer}
@@ -890,6 +892,22 @@
   </div>
 </div>
 
+<div class="sheet-wrap" id="tiltSheet" role="dialog" aria-modal="true" aria-labelledby="tiltTitle">
+  <div class="sheet-card">
+    <div class="sheet-title" id="tiltTitle">體感權限未開啟</div>
+    <p class="sheet-note" id="tiltNote">請在 Safari 開啟「動作與方向存取」，然後重新載入此頁。</p>
+    <ol class="sheet-steps" id="tiltSteps">
+      <li>設定 → Safari → 動作與方向存取 → 開啟</li>
+      <li>回到此頁，重新載入</li>
+      <li>再開一次「體感操作」</li>
+    </ol>
+    <div class="sheet-actions">
+      <button class="sheet-btn" id="tiltClose">知道了</button>
+      <button class="sheet-btn primary" id="tiltRetry">再試一次</button>
+    </div>
+  </div>
+</div>
+
 <div class="sheet-wrap" id="animalSheet" role="dialog" aria-modal="true" aria-label="選擇隊色">
   <div class="sheet-card">
     <div class="sheet-title">選擇動物與隊色</div>
@@ -1536,21 +1554,38 @@ function act(name){
 }
 
 /* ---------- 體感（陀螺儀）：傾斜 iPad 判定 ---------- */
-const TILT = { on:false, base:null, since:0, cool:0 };
+const TILT = { on:false, base:null, since:0, cool:0, gotEvent:false };
 const TILT_DEG = 18, TILT_HOLD = 150, TILT_COOL = 600;
 
 function tiltSupported(){ return typeof DeviceOrientationEvent !== "undefined"; }
 
+function tiltSheet(reason){
+  const note = $("#tiltNote"), steps = $("#tiltSteps");
+  if(reason === "unsupported"){
+    note.textContent = "此瀏覽器沒有提供體感資料，請改用 Safari 開啟本頁。";
+    steps.style.display = "none";
+  }else{
+    note.textContent = "Safari 未授權動作與方向存取，開啟後重新載入此頁再試。";
+    steps.style.display = "";
+  }
+  $("#tiltSheet").classList.add("on");
+}
+function closeTiltSheet(){ $("#tiltSheet").classList.remove("on"); }
+
 async function tiltOn(){
-  if(!tiltSupported()){ toast("此裝置不支援體感"); return false; }
+  if(!tiltSupported()){ tiltSheet("unsupported"); return false; }
   if(typeof DeviceOrientationEvent.requestPermission === "function"){
-    try{
-      const p = await DeviceOrientationEvent.requestPermission();
-      if(p !== "granted"){ toast("未獲授權使用體感"); return false; }
-    }catch(e){ toast("未獲授權使用體感"); return false; }
+    let p = "denied";
+    try{ p = await DeviceOrientationEvent.requestPermission(); }
+    catch(e){ p = "denied"; }
+    if(p !== "granted"){ tiltSheet("denied"); return false; }
   }
   if(!TILT.on){ window.addEventListener("deviceorientation", onTilt); TILT.on = true; }
-  TILT.base = null; TILT.since = 0; TILT.cool = 0;
+  TILT.base = null; TILT.since = 0; TILT.cool = 0; TILT.gotEvent = false;
+  // 收不到事件＝瀏覽器有 API 但唔供資料（常見於 App 內建瀏覽器）
+  setTimeout(()=>{
+    if(TILT.on && !TILT.gotEvent){ toast("收不到體感資料，請改用 Safari"); tiltOff(); cfg.tilt = false; saveCfg(); syncRules(); }
+  }, 2500);
   return true;
 }
 function tiltOff(){
@@ -1559,7 +1594,9 @@ function tiltOff(){
 }
 
 function onTilt(e){
-  if(!TILT.on || !G || G.phase !== "running") return;
+  if(!TILT.on) return;
+  TILT.gotEvent = true;
+  if(!G || G.phase !== "running") return;
   const { beta, gamma } = e;
   if(beta == null || gamma == null) return;
   if(!TILT.base){ TILT.base = { beta, gamma }; return; }   // 以第一幀為中位
@@ -1933,6 +1970,10 @@ $("#swSkip").onclick = ()=>{
 };
 $("#swSkipPen").onclick = ()=>{ if(!cfg.allowSkip) return; cfg.skipPenalty = !cfg.skipPenalty; saveCfg(); syncRules(); };
 $("#swFoulPen").onclick = ()=>{ cfg.foulPenalty = !cfg.foulPenalty; saveCfg(); syncRules(); };
+$("#tiltClose").onclick = closeTiltSheet;
+$("#tiltRetry").onclick = async ()=>{ closeTiltSheet(); const ok = await tiltOn(); cfg.tilt = ok; saveCfg(); syncRules(); };
+$("#tiltSheet").addEventListener("click", e=>{ if(e.target.id === "tiltSheet") closeTiltSheet(); });
+
 $("#swTilt").onclick = async ()=>{
   if(cfg.tilt){ cfg.tilt = false; tiltOff(); saveCfg(); syncRules(); return; }
   const ok = await tiltOn();          // iOS 一定要喺手勢內申請權限
