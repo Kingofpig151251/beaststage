@@ -1594,7 +1594,7 @@ function audioCtx(){
   return AC;
 }
 /* 音檔：判定用真音源（門鐘／子彈），其餘場合仍用合成音 */
-const SFX_SRC = { ding: "/sfx/dingdong.mp3", whoosh: "/sfx/whoosh.mp3", heart: "/sfx/hb.mp3",
+const SFX_SRC = { ding: "/sfx/dingdong.mp3", whoosh: "/sfx/whoosh.mp3", heart: "/sfx/hb2.mp3",
                    countdown: "/sfx/countdown.mp3", whistle: "/sfx/whistle.mp3",
                    settle: "/sfx/settle.mp3", champion: "/sfx/champion.mp3",
                    tick: "/sfx/tick.mp3", drums: "/sfx/drums.mp3", snare: "/sfx/snare.mp3",
@@ -1618,13 +1618,13 @@ async function loadSfx(keys){
   }));
   SFX_LOADING = false;
 }
-function sfx(name, vol=0.85, rate=1){
+function sfx(name, vol=0.85, rate=1, delay=0){
   const c = audioCtx(), buf = SFX[name];
   if(!c || !buf) return false;
   const src = c.createBufferSource(), g = c.createGain();
   src.buffer = buf; src.playbackRate.value = rate; g.gain.value = vol;
   src.connect(g).connect(c.destination);
-  src.start();
+  src.start(c.currentTime + Math.max(0, delay)/1000);
   return true;
 }
 
@@ -1741,8 +1741,8 @@ function startTimer(){
     if(secLeft !== G.tickAt && secLeft <= 10 && secLeft > 0){
       G.tickAt = secLeft;
       const v = 0.42 + (10 - secLeft) * 0.0533;                   // 10 秒 0.42 → 1 秒 0.90
-      sfx("heart", v);                                            // 心跳每拍
-      sfx("tick", v * 0.75);                                      // 滴答疊在心跳上（0.75 才聽得出兩層）
+      sfx("tick", v * 0.85);                                      // 第 0 秒：滴答（tick-tock 的「tick」）
+      sfx("heart", v, 1, 500);                                    // 半秒後：心跳（用 AudioContext 排程，唔用 setTimeout）
     }
     if(G.remaining <= 0){ clearInterval(id); endTurn(); }
   },100);
