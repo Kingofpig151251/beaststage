@@ -789,6 +789,38 @@
     #v-result .result-actions .btn-big{min-height:34px; padding:6px 12px; font-size:13px}
     .chips button{min-height:26px}
   }
+
+  /* 手機橫屏（瀏覽器 chrome 佔位後只剩 ~300px 高）：極簡壓縮，一屏完成 */
+  @media (max-height:340px){
+    body{padding:0}
+    .wrap{padding:4px 12px 6px; gap:0}
+    .setup-top{grid-template-columns:36px 1fr 36px; gap:8px}
+    .dots i{width:5px; height:5px}
+    .dots i.cur{width:8px; height:8px}
+    .stage{margin:2px 0}
+    .sstep{gap:6px}
+    .sstep-title{font-size:18px}
+    .bignum{gap:14px}
+    .bignum input{font-size:clamp(34px,9vh,48px)}
+    .bignum-unit{font-size:16px}
+    .round-btn{width:38px; height:38px; font-size:22px}
+    .sstep-hint{font-size:11px; margin:0}
+    .chips{gap:6px}
+    .chips button{min-height:26px; padding:0 9px; font-size:12px}
+    .namegrid{gap:4px}
+    .name-row{grid-template-columns:24px minmax(0,1fr); gap:4px}
+    .animal-btn{width:24px; height:24px}
+    .animal-mark{font-size:13px}
+    .name-row input{min-height:22px; padding:1px 5px; font-size:12px}
+    .rules{gap:0 10px}
+    .rule{padding:3px 2px}
+    .rule-txt b{font-size:13px}
+    .round-btn.sm{width:22px; height:22px; font-size:12px}
+    .mini-step.tight input{font-size:13px}
+    .sc-val{font-size:13px; min-width:2ch}
+    .setup-foot{padding:4px 0 0}
+    #btnNext{min-height:38px; padding:0 20px; font-size:15px}
+  }
 </style>
 </head>
 <body>
