@@ -156,7 +156,9 @@
   .js .sstep{opacity:0; transform:translateX(56px); pointer-events:none}
   .sstep{position:absolute; inset:0; display:flex; flex-direction:column; align-items:center;
     justify-content:center; gap:22px; text-align:center;
+    overflow-y:auto; overscroll-behavior:contain; padding:6px 0;
     transition:opacity .42s var(--ease), transform .42s var(--ease)}
+  @supports (justify-content: safe center){ .sstep{justify-content: safe center} }
   .js .sstep.on{opacity:1; transform:none; pointer-events:auto}
   .js .sstep.back{transform:translateX(-56px)}
   .sstep.on > *{animation:rise .5s var(--ease) both}
@@ -636,6 +638,15 @@
   @media (max-width:700px){
     .result-actions .btn-big{flex:1 1 100%}
   }
+  /* 極矮（手機橫向）：規則只留標題，四行一次過睇得完 */
+  @media (max-height:420px){
+    .sstep{gap:8px}
+    .sstep-title{font-size:22px}
+    .rules{display:grid; grid-template-columns:1fr 1fr; gap:0 16px; margin-top:0}
+    .rule{padding:7px 4px; border-bottom:0}
+    .rule-txt b{font-size:15px}
+    .rule-txt span{display:none}
+  }
   /* 矮螢幕（手機橫向、分割視窗）：壓縮首頁，避免內容被切 */
   @media (max-height:420px){
     body{padding:0}
@@ -646,6 +657,26 @@
     .landing-link{margin-top:10px; min-height:40px; padding:0 20px; font-size:15px}
     .landing-foot{padding-bottom:0}
     .landing-credit{font-size:11px}
+  }
+  /* 手機橫向／矮視窗：設定頁壓縮，唔會壓住圓點同「繼續」 */
+  @media (max-height:560px){
+    .sstep{gap:12px}
+    .sstep-title{font-size:clamp(24px,5.4vh,34px)}
+    .bignum{gap:clamp(12px,2.4vw,24px)}
+    .bignum input{font-size:clamp(52px,13vh,110px)}
+    .bignum-unit{font-size:clamp(18px,3vh,26px)}
+    .chips{gap:8px}
+    .chips button{min-height:44px; padding:0 18px; font-size:15px}
+    .namegrid{grid-template-columns:repeat(auto-fit,minmax(180px,1fr)); gap:8px 12px}
+    .name-row{grid-template-columns:44px minmax(0,1fr); gap:10px}
+    .animal-btn{width:44px; height:44px}
+    .animal-mark{font-size:22px}
+    .rules{margin-top:2px}
+    .rule{padding:8px 4px; gap:12px}
+    .rule-txt b{font-size:15px}
+    .rule-txt span{font-size:12px; margin-top:1px}
+    .setup-foot{padding:8px 0 6px; gap:8px}
+    .setup-foot .btn-primary{min-height:48px; min-width:200px; font-size:17px}
   }
   @media (prefers-reduced-motion: reduce){
     *,*::before,*::after{animation-duration:.001ms !important; animation-iteration-count:1 !important;
@@ -746,6 +777,10 @@
           <div class="rule" id="ruleFoulPen">
             <div class="rule-txt"><b>犯規扣 1 分</b><span>每犯規一次，該隊扣一分</span></div>
             <button class="switch" id="swFoulPen" role="switch" aria-checked="false" aria-label="犯規扣分"><i></i></button>
+          </div>
+          <div class="rule" id="ruleTilt">
+            <div class="rule-txt"><b>體感操作</b><span>傾斜 iPad：向左犯規、向下跳過、向右正確（預設關閉）</span></div>
+            <button class="switch" id="swTilt" role="switch" aria-checked="false" aria-label="體感操作"><i></i></button>
           </div>
         </div>
       </section>
@@ -925,11 +960,13 @@ let cfg  = Object.assign({
   sec:60,
   allowSkip:true,      // 可否跳過
   skipPenalty:false,   // 跳過扣 1 分
-  foulPenalty:false    // 犯規扣 1 分
+  foulPenalty:false,   // 犯規扣 1 分
+  tilt:false           // 體感操作（陀螺儀）
 }, store.get(K_CFG, K_CFG_OLD.reduce((acc,k)=>acc || store.get(k, null), null) || {}));
 cfg.allowSkip = cfg.allowSkip !== false;
 cfg.skipPenalty = !!cfg.skipPenalty;
 cfg.foulPenalty = !!cfg.foulPenalty;
+cfg.tilt = !!cfg.tilt;
 
 cfg.teams = Math.max(2, Math.min(8, Math.round(+cfg.teams || 2)));
 if(!Array.isArray(cfg.names)) cfg.names = ANIMALS.slice(0,8).map(a=>a.name);
@@ -1395,6 +1432,7 @@ function beginRunning(){
   G.cur = drawItem();
   G.remaining = G.sec;
   G.endsAt = Date.now() + G.sec * 1000;
+  TILT.base = null; TILT.since = 0; TILT.cool = 0;    // 每回合重新對準
   startTimer();
   renderPlay();
 }
@@ -1495,6 +1533,56 @@ function act(name){
   setTimeout(()=>{ if(G) G.locked = false; }, 190);
   judge(name);
   return true;
+}
+
+/* ---------- 體感（陀螺儀）：傾斜 iPad 判定 ---------- */
+const TILT = { on:false, base:null, since:0, cool:0 };
+const TILT_DEG = 18, TILT_HOLD = 150, TILT_COOL = 600;
+
+function tiltSupported(){ return typeof DeviceOrientationEvent !== "undefined"; }
+
+async function tiltOn(){
+  if(!tiltSupported()){ toast("此裝置不支援體感"); return false; }
+  if(typeof DeviceOrientationEvent.requestPermission === "function"){
+    try{
+      const p = await DeviceOrientationEvent.requestPermission();
+      if(p !== "granted"){ toast("未獲授權使用體感"); return false; }
+    }catch(e){ toast("未獲授權使用體感"); return false; }
+  }
+  if(!TILT.on){ window.addEventListener("deviceorientation", onTilt); TILT.on = true; }
+  TILT.base = null; TILT.since = 0; TILT.cool = 0;
+  return true;
+}
+function tiltOff(){
+  if(TILT.on){ window.removeEventListener("deviceorientation", onTilt); TILT.on = false; }
+  TILT.base = null; TILT.since = 0;
+}
+
+function onTilt(e){
+  if(!TILT.on || !G || G.phase !== "running") return;
+  const { beta, gamma } = e;
+  if(beta == null || gamma == null) return;
+  if(!TILT.base){ TILT.base = { beta, gamma }; return; }   // 以第一幀為中位
+  const now = performance.now();
+  if(now < TILT.cool) return;
+  const db = beta - TILT.base.beta, dg = gamma - TILT.base.gamma;
+  let dir = null;
+  if(Math.abs(dg) >= TILT_DEG) dir = dg > 0 ? "ok" : "foul";   // 右＝正確、左＝犯規
+  else if(db >= TILT_DEG) dir = "skip";                        // 向下（前傾）＝跳過
+  if(!dir){ TILT.since = 0; return; }
+  if(!TILT.since) TILT.since = now;
+  if(now - TILT.since < TILT_HOLD) return;                     // 要維持 150ms 才算
+  TILT.since = 0; TILT.cool = now + TILT_COOL;
+  TILT.base = { beta, gamma };                                 // 重新對準，回正唔會觸發相反動作
+  tiltFlash(dir);
+  act(dir);
+}
+
+function tiltFlash(dir){
+  const b = document.querySelector(`[data-judge="${dir}"]`);
+  if(!b) return;
+  b.classList.add("tilt-hit");
+  setTimeout(()=>b.classList.remove("tilt-hit"), 260);
 }
 
 function judge(kind){
@@ -1829,6 +1917,8 @@ $("#btnReady").onclick = startRound;
 
 /* 規則開關 */
 function syncRules(){
+  const t = $("#swTilt");
+  if(t) t.setAttribute("aria-checked", String(!!cfg.tilt));
   $("#swSkip").setAttribute("aria-checked", String(cfg.allowSkip));
   $("#swSkipPen").setAttribute("aria-checked", String(cfg.skipPenalty));
   $("#swFoulPen").setAttribute("aria-checked", String(cfg.foulPenalty));
@@ -1843,6 +1933,11 @@ $("#swSkip").onclick = ()=>{
 };
 $("#swSkipPen").onclick = ()=>{ if(!cfg.allowSkip) return; cfg.skipPenalty = !cfg.skipPenalty; saveCfg(); syncRules(); };
 $("#swFoulPen").onclick = ()=>{ cfg.foulPenalty = !cfg.foulPenalty; saveCfg(); syncRules(); };
+$("#swTilt").onclick = async ()=>{
+  if(cfg.tilt){ cfg.tilt = false; tiltOff(); saveCfg(); syncRules(); return; }
+  const ok = await tiltOn();          // iOS 一定要喺手勢內申請權限
+  cfg.tilt = ok; saveCfg(); syncRules();
+};
 syncRules();
 function isPristine(){
   return !!G && (G.phase === "ready" || G.phase === "countdown") && G.turn === 0 && !G.judged
