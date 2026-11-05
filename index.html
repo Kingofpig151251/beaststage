@@ -29,7 +29,7 @@
     --blue-fill:var(--blue); --blue-fill-press:var(--blue-press); --green:#34C759; --red:#FF3B30; --amber:#FF9F0A;
     --on-accent:#FFFFFF; --focus-ring:rgba(0,113,227,.85);
     --flash-ok:rgba(52,199,89,.16); --toast-bg:rgba(28,28,30,.92);
-    --toast-ink:#FFFFFF; --flash-bad:rgba(255,59,48,.15); --halo:rgba(255,255,255,.55);
+    --toast-ink:#FFFFFF; --flash-bad:rgba(255,59,48,.15); 
     /* geometry */
     --r-xl:22px; --r-lg:16px; --r-md:12px; --pill:999px;
     --hair:1px;
@@ -257,7 +257,7 @@
   .vs-team{flex:1 1 0; min-width:0; display:flex; flex-direction:column; align-items:center;
     gap:clamp(8px,1.4vh,16px); text-align:center}
   .vs-mark{font-size:var(--mark,72px); line-height:1; display:block;
-    filter:drop-shadow(0 2px 6px var(--vs-shadow)) drop-shadow(0 0 10px var(--halo))}
+    filter:drop-shadow(0 2px 6px var(--vs-shadow))}
   .vs-label{font-family:var(--font-display); font-weight:700; font-size:var(--label,40px);
     letter-spacing:-.02em; line-height:1.15;
     overflow-wrap:anywhere; text-wrap:balance}
@@ -275,12 +275,18 @@
   .round-btn:active{background:var(--fill-2)}
   .sstep-hint + .sstep-hint{margin-top:2px; text-wrap:pretty}
   .mini-step{display:flex; align-items:center; justify-content:center; gap:10px; margin:14px 0 6px}
-  .mini-step.tight{gap:6px; margin:0}
+  .mini-step.tight{gap:2px; margin:0}
   .mini-step input{width:2ch; min-height:0; padding:0; background:transparent; border:0; text-align:center;
     font-family:var(--font-display); font-size:28px; font-weight:700; font-variant-numeric:tabular-nums}
+  .mini-step.tight input{font-size:15px; font-weight:600; width:1.6ch; color:var(--ink)}
   .mini-step input::-webkit-outer-spin-button,.mini-step input::-webkit-inner-spin-button{-webkit-appearance:none; margin:0}
   .mini-step input:focus-visible{outline:2px solid var(--focus-ring); outline-offset:4px; border-radius:8px}
-  .round-btn.sm{width:40px; height:40px; font-size:24px}
+  /* 規則行內的小 stepper：視覺重量要同 42×24 的 switch 一致 */
+  .round-btn.sm{position:relative; width:24px; height:24px; min-height:0; padding:0;
+    font-size:14px; font-weight:500; color:var(--ink); background:var(--fill-2)}
+  .round-btn.sm::after{content:""; position:absolute; inset:-10px; border-radius:50%}   /* 44px 觸控區，視覺仍 24px */
+  .round-btn.sm:active{background:var(--sep)}
+  .round-btn.sm:disabled{background:var(--fill-3); color:var(--ink-3)}
   .round-btn:disabled{background:var(--fill-3); color:var(--ink-3); cursor:not-allowed; transform:none}
 
   /* 秒數 chips（第三步） */
@@ -976,7 +982,7 @@ const ICONS = Object.fromEntries(TEAM_IDS.map(id =>
 const ANIMALS = [
   { id:"turtle", name:"烏龜隊", color:"#34C759" },
   { id:"fox", name:"狐狸隊", color:"#FF9500" },
-  { id:"whale", name:"鯨魚隊", color:"#0A2F5C" },
+  { id:"whale", name:"鯨魚隊", color:"#0071E3" },
   { id:"octopus", name:"章魚隊", color:"#AF52DE" },
   { id:"bee", name:"蜜蜂隊", color:"#F5A300" },
   { id:"flamingo", name:"火烈鳥隊", color:"#FF2D55" },
