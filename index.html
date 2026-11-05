@@ -1657,7 +1657,12 @@ function renderTimer(){
 // 題目字自動撐滿字卡：優先單行（避免詞語被切開），字體過小時才容許斷行
 function fitWord(text){
   const el=$("#pText"), card=el.parentElement;
-  const boxW=card.clientWidth-36, boxH=card.clientHeight-72;
+  const cs=getComputedStyle(card);
+  const padW=(parseFloat(cs.paddingLeft)||0)+(parseFloat(cs.paddingRight)||0);
+  const padH=(parseFloat(cs.paddingTop)||0)+(parseFloat(cs.paddingBottom)||0);
+  // 用真正可用寬度（扣 padding），否則手機直向會算出過大、文字被切
+  const boxW=Math.min(el.clientWidth || 9999, card.clientWidth-padW)-4;
+  const boxH=card.clientHeight-padH-40;
   if(boxW<=40 || boxH<=40) return;
   const fit = (oneLine)=>{
     el.style.whiteSpace = oneLine ? "nowrap" : "normal";
