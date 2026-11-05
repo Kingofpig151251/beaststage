@@ -138,6 +138,8 @@ async def main(url, shot):
             check("準備畫面 8 張分數卡", await T.js("document.querySelectorAll('#rdScores .score-tile').length") == 8)
             check("「準備好」在畫面內", await T.js(
                 "(()=>{const b=document.getElementById('btnReady').getBoundingClientRect();return b.bottom<=innerHeight+1 && b.top>=0})()"))
+            bank = (await T.js("document.getElementById('rdBank').textContent")) or ""
+            check("準備畫面顯示題庫存量", "題庫" in bank and ("未用" in bank or "已用完" in bank), bank)
             check("回合顯示 1 / 8", (await T.js("document.querySelector('#rdRound, .readyRound')?.textContent || ''")).find("1") >= 0)
 
             print("\n[5] 一回合判定")

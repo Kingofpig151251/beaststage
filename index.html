@@ -440,6 +440,8 @@
   .readyCard{width:100%; height:100%; display:flex; flex-direction:column; align-items:center;
     justify-content:center; text-align:center; padding:clamp(24px,6vh,56px) clamp(20px,4vw,48px); gap:6px}
   .readyRound{font-size:15px; color:var(--ink-2); letter-spacing:.02em}
+  .readyBank{font-size:13px; color:var(--ink-3, var(--ink-2)); margin-top:2px}
+  .readyBank.low{color:var(--red)}
   .readyMark{font-size:clamp(54px,10vh,104px); line-height:1; color:var(--tc); margin-bottom:6px}
   .readyMark svg,.readyMark .mark-img{display:block; width:1em; height:1em; margin:0 auto}
   .readyTeam{font-family:var(--font-display); font-weight:700; font-size:clamp(52px,13vh,140px);
@@ -1017,6 +1019,7 @@
     <div class="ready" id="readyOverlay" style="display:none">
       <div class="readyCard">
         <div class="readyRound" id="rdRound"></div>
+        <div class="readyBank" id="rdBank"></div>
         <div class="readyMark" id="rdMark" aria-hidden="true"></div>
         <div class="readyTeam" id="rdTeam"></div>
         <div class="readyScores" id="rdScores"></div>
@@ -1560,6 +1563,9 @@ function enterReady(){
   G.paused = false;
   setPauseIcon(false);
   $("#rdRound").textContent = `第 ${G.turn+1} 回合，共 ${G.rounds} 回合`;
+  const left = G.pool.length, bank = $("#rdBank");
+  bank.textContent = left ? `題庫 ${lines.length} 題 · 未用 ${left}` : `題庫 ${lines.length} 題 · 已用完，之後會重用`;
+  bank.classList.toggle("low", !left);
   const cur = curTeam();
   $("#rdMark").innerHTML = ICONS[cur.id] || "";
   $("#rdTeam").textContent = cur.name;
