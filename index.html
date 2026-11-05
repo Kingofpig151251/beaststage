@@ -433,24 +433,6 @@
   .readyMark svg,.readyMark .mark-img{display:block; width:1em; height:1em; margin:0 auto}
   .readyTeam{font-family:var(--font-display); font-weight:700; font-size:clamp(52px,13vh,140px);
     letter-spacing:-.03em; line-height:1.02; margin:10px 0 16px}
-  /* 鏡像模式（手機）：唔顯示入口與設定，只用遊戲畫面 */
-  body.is-mirror #v-home, body.is-mirror #v-setup{display:none}
-  body.is-mirror .flash-top{justify-content:center}
-  .rtc-dot{position:fixed; right:10px; bottom:calc(10px + env(safe-area-inset-bottom)); width:7px; height:7px;
-    border-radius:50%; background:var(--ink-3); pointer-events:none; z-index:60}
-  .rtc-dot.live{background:var(--green)}
-
-  .sstep .remote-mini{margin-top:6px; --rm:132px; padding:14px 18px; gap:18px}
-  .sstep .remote-mini .rm-txt b{font-size:17px}
-  .sstep .remote-mini .rm-txt span{font-size:15px}
-  @media (max-height:560px){ .sstep .remote-mini{--rm:92px; padding:10px 14px; gap:12px} }
-  .remote-mini{display:flex; align-items:center; gap:12px; padding:8px 12px; border-radius:16px;
-    background:var(--surface); box-shadow:inset 0 0 0 1px var(--sep)}
-  .rm-qr{width:var(--rm,84px); height:var(--rm,84px); flex:none; display:grid; place-items:center}
-  .rm-qr svg{width:100%; height:100%; display:block}
-  .rm-txt{display:flex; flex-direction:column; gap:2px; text-align:left}
-  .rm-txt b{font-size:14px}
-  .rm-txt span{font-size:14px; color:var(--ink-2); font-variant-numeric:tabular-nums}
   .readyScores{display:flex; gap:12px; flex-wrap:wrap; justify-content:center; margin-top:clamp(20px,3.4vh,32px)}
   .readyScores .score-tile{display:flex; flex-direction:column; align-items:center; gap:2px;
     min-width:96px; padding:10px 14px; border-radius:var(--r-md);
@@ -769,22 +751,12 @@
       <button class="icon-btn" id="btnStepBack" aria-label="上一步" title="上一步（Esc）">
         <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M14.5 5 7.5 12l7 7"/></svg>
       </button>
-      <div class="dots" id="stepDots" aria-hidden="true"><i></i><i></i><i></i><i></i><i></i><i></i></div>
+      <div class="dots" id="stepDots" aria-hidden="true"><i></i><i></i><i></i><i></i><i></i></div>
       <span aria-hidden="true"></span>
     </div>
 
     <div class="stage" id="stepStage">
       <section class="sstep" data-step="0">
-        <h2 class="sstep-title">用手機做主持</h2>
-        <div class="remote-mini lg" data-remote hidden>
-          <div class="rm-qr" data-qr></div>
-          <div class="rm-txt"><b>手機掃描即配對</b><span data-rm-code>待連線</span></div>
-        </div>
-        <div class="sstep-hint">用手機相機掃描上面的 QR，手機會變成判定掣</div>
-        <div class="sstep-hint">想單機玩就直接按「繼續」，畫面按鈕照用</div>
-      </section>
-
-      <section class="sstep" data-step="1">
         <h2 class="sstep-title">有多少隊參賽？</h2>
         <div class="bignum">
           <button class="round-btn" id="teamMinus" aria-label="減少一隊">−</button>
@@ -794,7 +766,7 @@
         <div class="sstep-hint">最少 2 隊，最多 8 隊</div>
       </section>
 
-      <section class="sstep" data-step="2">
+      <section class="sstep" data-step="1">
         <h2 class="sstep-title">每隊出場幾回合？</h2>
         <div class="bignum">
           <button class="round-btn" id="rpMinus" aria-label="減少回合">−</button>
@@ -805,12 +777,12 @@
         <div class="sstep-hint" id="roundSum">4 隊 × 2 回合 = 共 8 回合</div>
       </section>
 
-      <section class="sstep" data-step="3">
+      <section class="sstep" data-step="2">
         <h2 class="sstep-title">為每一隊命名</h2>
         <div class="namegrid" id="nameList"></div>
       </section>
 
-      <section class="sstep" data-step="4">
+      <section class="sstep" data-step="3">
         <h2 class="sstep-title">每回合時間</h2>
         <div class="bignum bignum-sec">
           <input id="secInput" type="number" min="5" max="600" step="5" aria-label="每回合秒數">
@@ -824,7 +796,7 @@
         </div>
       </section>
 
-      <section class="sstep" data-step="5">
+      <section class="sstep" data-step="4">
         <h2 class="sstep-title">規則</h2>
         <div class="rules">
           <div class="rule" id="ruleSkip">
@@ -880,8 +852,6 @@
     <main class="card question" id="stage">
       <div class="card-word" id="pText"></div>
     </main>
-
-    <span class="rtc-dot" id="rtcDot" hidden></span>
     <div class="flash-hud" id="hud">
       <button class="key key-foul" data-judge="foul" aria-label="犯規" title="犯規（←）">犯規</button>
       <button class="key key-pass" data-judge="skip" aria-label="跳過" title="跳過（↓）">跳過</button>
@@ -894,10 +864,6 @@
         <div class="readyMark" id="rdMark" aria-hidden="true"></div>
         <div class="readyTeam" id="rdTeam"></div>
         <div class="readyScores" id="rdScores"></div>
-        <div class="remote-mini" data-remote hidden>
-          <div class="rm-qr" data-qr></div>
-          <div class="rm-txt"><b>手機做主持</b><span data-rm-code>待連線</span></div>
-        </div>
         <button id="btnReady">準備好</button>
       </div>
     </div>
@@ -1064,7 +1030,6 @@ let G = null;
 let REMOTE = { ok:false };
 
 const $ = s => document.querySelector(s);
-const MIRROR = (new URLSearchParams(location.search).get("m") || "").trim();   // 有值＝手機鏡像模式
 const $$ = s => Array.from(document.querySelectorAll(s));
 
 function esc(s){ return String(s).replace(/[&<>"']/g, c=>({"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;","'":"&#39;"}[c])); }
@@ -1170,7 +1135,7 @@ function fxSkipDown(){
 
 /* ================= 主頁 / 設定流程 ================= */
 const SETUP = { i:0 };
-const LAST_STEP = 5;
+const LAST_STEP = 4;
 
 function renderHome(){
   // 入口頁：一行現況
@@ -1293,8 +1258,7 @@ function goStep(i, dir){
   });
   $("#btnNext").textContent = SETUP.i < LAST_STEP ? "繼續" : "開始遊戲";
   syncNext();
-  if(SID) sessionPush();                 // 手機即時知設定行到第幾步
-  if(SETUP.i === 3){
+  if(SETUP.i === 2){
     const first = $("#nameList input");
     if(first) setTimeout(()=>first.focus({preventScroll:true}), 260);
   }
@@ -1302,7 +1266,6 @@ function goStep(i, dir){
 
 function startSetup(){
   renderSetup();
-  if(!SID) sessionStart();                 // 第一步就可以掃 QR 配對手機
   if(SETUP.busy) return;
   SETUP.busy = true;
   document.body.classList.add("is-entering");   // 入口放大淡出
@@ -1359,7 +1322,6 @@ function launchGame(){
 /* ================= 遊戲流程 ================= */
 function startGame(){
   stopBgm();
-  if(!SID) sessionStart();        // 沿用設定第一步已經配對嘅 session，唔好換新代碼
   if(G){ clearInterval(G.timerId); G.timerToken++; }   // 清除上一局殘留的計時器
   const names = Array.from({length:cfg.teams},(_,i)=> teamName(i));
   const looks = Array.from({length:cfg.teams},(_,i)=>{ const a = animalAt(i); return { id:a.id, color:a.color }; });
@@ -1437,7 +1399,6 @@ function enterReady(){
   document.body.classList.add("is-ready");
   renderPlay();
   syncExitLabel();
-  if(SID) sessionPush();
 }
 
 function hideReady(){
@@ -1527,7 +1488,6 @@ function startRound(){
   if(!G || G.phase !== "ready") return;
   clearInterval(CD_TIMER);
   G.phase = "countdown";
-  if(SID) sessionPush();
   $("#btnReady").style.display = "none";
   const t = curTeam();
   const box = $("#countdown"), num = $("#cdNum"), prog = $("#cdProg"), team = $("#cdTeam");
@@ -1572,7 +1532,6 @@ function beginRunning(){
   G.endsAt = Date.now() + G.sec * 1000;
   startTimer();
   renderPlay();
-  if(SID) sessionPush();
 }
 
 function drawItem(){
@@ -1664,121 +1623,6 @@ const ACTIONS = {
   skip: { key: "ArrowDown",  dir: "down"  },   // 跳過
   ok:   { key: "ArrowRight", dir: "right" }    // 正確
 };
-/* ---------- 遙控（第二部裝置）---------- */
-let SID = null, CMD_SEQ = 0, SID_TIMER = 0, PUSH_TIMER = 0;
-
-async function sessionStart(){
-  try{
-    const r = await fetch("/api/session", {method:"POST"});
-    if(!r.ok) return;
-    const d = await r.json();
-    SID = d.id; CMD_SEQ = 0;
-    document.querySelectorAll("[data-rm-code]").forEach(el=>{ el.textContent = SID; });
-    document.querySelectorAll("[data-remote]").forEach(el=>{ el.hidden = false; });
-    drawQR(location.origin + "/?m=" + SID);        // 手機開同一個畫面（鏡像模式）
-    if(!MIRROR) rtcHost();                         // 產生 offer 等手機接
-    sessionPoll();
-    clearInterval(PUSH_TIMER); PUSH_TIMER = setInterval(sessionPush, 1000);
-    sessionPush();
-  }catch(e){}
-}
-
-function sessionStop(){
-  rtcClose(); RTC.offer = ""; RTC.joined = "";
-  SID = null;
-  clearTimeout(SID_TIMER); clearInterval(PUSH_TIMER);
-  document.querySelectorAll("[data-remote]").forEach(el=>{ el.hidden = true; });
-}
-
-function loadQR(){
-  if(window.qrcode) return Promise.resolve();
-  return new Promise((res, rej)=>{
-    const el = document.createElement("script");
-    el.src = "/vendor/qrcode.js"; el.onload = res; el.onerror = rej;
-    document.head.appendChild(el);
-  });
-}
-
-function drawQR(url){
-  loadQR().then(()=>{
-    const qr = window.qrcode(0, "M");
-    qr.addData(url); qr.make();
-    const svg = qr.createSvgTag({cellSize: 4, margin: 0});
-    document.querySelectorAll("[data-qr]").forEach(el=>{ el.innerHTML = svg; });
-  }).catch(()=>{
-    document.querySelectorAll("[data-qr]").forEach(el=>{ el.textContent = "QR 載入失敗"; });
-  });
-}
-
-function applyCmd(c){
-  const fn = CMD_APPLY[c && c.kind];
-  if(fn) fn(c);
-}
-
-const CMD_APPLY = {
-  ok: ()=> G && G.phase === "running" && act("ok"),
-  skip: ()=> G && G.phase === "running" && act("skip"),
-  foul: ()=> G && G.phase === "running" && act("foul"),
-  ready: ()=> G && G.phase === "ready" && startRound(),
-  next: ()=> G && G.phase === "interstitial" && closeTurnEnd(),
-  sdp: (c)=>{ const a = c && c.data && c.data.answer;
-              if(a && RTC.pc) RTC.pc.setRemoteDescription({type:"answer", sdp:a}).catch(()=>{}); },
-  "need-offer": ()=>{ if(!RTC.on) rtcHost(); },
-  pause: ()=>{ if(G && G.phase === "running" && !G.paused) $("#btnPause").click(); },
-  resume: ()=>{ if(G && G.phase === "running" && G.paused) $("#btnPause").click(); },
-  end:   ()=>{ if(G && G.phase === "running") endTurn(); },
-  start: ()=>{ if(!G && SETUP.i >= LAST_STEP) launchGame(); },
-  exit:  ()=>{ if(G) doExit(); }
-};
-
-async function sessionPoll(){
-  clearTimeout(SID_TIMER);
-  if(!SID) return;
-  try{
-    const r = await fetch("/api/session?id=" + SID + "&since=" + CMD_SEQ, {cache:"no-store"});
-    if(r.ok){
-      const d = await r.json();
-      (d.cmds || []).forEach(c=>{
-        CMD_SEQ = Math.max(CMD_SEQ, c.seq);
-        applyCmd(c);
-      });
-    }
-  }catch(e){}
-  if(SID) SID_TIMER = setTimeout(sessionPoll, RTC.on ? 2000 : 120);
-}
-
-function buildState(){
-  const t = G && curTeam();
-  const st = G ? {
-    phase: G.phase,
-    turn: G.turn, rounds: G.rounds,
-    remaining: Math.max(0, Math.round(G.remaining || 0)),
-    paused: !!G.paused,
-    allowSkip: G.allowSkip, skipLeft: G.skipLeft, skipCap: G.skipCap,
-    skipPenalty: G.skipPenalty, foulPenalty: G.foulPenalty,
-    order: G.order,
-    word: G.cur ? G.cur.t : "",
-    teams: G.teams.map(x=>({ id:x.id, name:x.name, color:x.color, score:x.score, ok:x.ok, skip:x.skip, foul:x.foul||0 })),
-    team: t ? { id: t.id, name: t.name, color: t.color, score: t.score } : null,
-    settle: G.settle || null,
-    label: G.phase === "ready" ? "準備中" : G.phase === "interstitial" ? "本回合結算" : G.phase === "countdown" ? "倒數中" : ""
-  } : { phase: "idle", setup: { step: SETUP.i + 1, total: LAST_STEP + 1 } };
-  st.rtc = (!RTC.on && RTC.offer) ? { offer: RTC.offer } : null;
-  return st;
-}
-
-async function sessionPush(){
-  if(!SID) return;
-  const state = buildState();
-  sendDC({ t:"state", s: state });            // 直連即刻送
-  try{
-    await fetch("/api/state", {
-      method:"PUT", headers:{"Content-Type":"application/json"},
-      body: JSON.stringify({id: SID, state})
-    });
-  }catch(e){}
-}
-
 function act(name){
   if(!ACTIONS[name]) return false;
   if(!G || G.phase !== "running" || !G.cur || G.locked) return false;
@@ -1798,7 +1642,6 @@ function judge(kind){
   if(delta) fxScore(delta);
   t.score += delta;
   G.judged++;
-  if(SID) sessionPush();          // 鏡像即時跟住轉字
 
   setTimeout(()=>{                          // 三個判定都等文字滑走，再換下一題
     if(!G || G.phase !== "running") return;
@@ -1875,7 +1718,7 @@ function closeTurnEnd(){
   setTimeout(()=>{ gate.classList.remove("on","opening"); }, REDUCE ? 40 : 500);
 }
 
-$("#teNext").onclick = ()=> MIRROR ? mirrorCmd("next") : closeTurnEnd();
+$("#teNext").onclick = ()=> closeTurnEnd();
 
 function endTurn(){
   if(!G) return;
@@ -1901,7 +1744,6 @@ function endTurn(){
 
 function endGame(){
   if(!G) return;
-  setTimeout(()=>{ if(SID) sessionPush(); }, 30);
   resetTurnTimers();
   clearInterval(G.timerId);
   G.timerToken++;
@@ -2134,8 +1976,8 @@ $("#btnStepBack").onclick = ()=>{
 };
 $("#btnNext").onclick = ()=>{ if(SETUP.i < LAST_STEP) goStep(SETUP.i + 1, 1); else launchGame(); };
 
-$$("[data-judge]").forEach(b=>b.onclick=()=> MIRROR ? mirrorCmd(b.dataset.judge) : act(b.dataset.judge));
-$("#btnReady").onclick = ()=> MIRROR ? mirrorCmd("ready") : startRound();
+$$("[data-judge]").forEach(b=>b.onclick=()=> act(b.dataset.judge));
+$("#btnReady").onclick = startRound;
 
 /* 規則開關 */
 function syncRules(){
@@ -2169,9 +2011,7 @@ function isPristine(){
   return !!G && (G.phase === "ready" || G.phase === "countdown") && G.turn === 0 && !G.judged
     && G.teams.every(t=>t.score === 0 && !t.ok && !t.skip && !t.foul);
 }
-function backToSetup(){
-  sessionStop();
-  clearTurnEnd();
+function backToSetup(){clearTurnEnd();
   clearInterval(G.timerId);
   G.timerToken++;
   G = null;
@@ -2182,9 +2022,7 @@ function backToSetup(){
 }
 
 function doExit(){
-  stopBgm();
-  sessionStop();
-  clearTurnEnd();
+  stopBgm();clearTurnEnd();
   clearInterval(G.timerId);
   G.timerToken++;
   G = null;
@@ -2213,11 +2051,10 @@ function closeExit(){
 }
 
 $("#exitCancel").onclick = closeExit;
-$("#exitConfirm").onclick = ()=>{ closeExit(); MIRROR ? mirrorCmd("exit") : doExit(); };
+$("#exitConfirm").onclick = ()=>{ closeExit(); doExit(); };
 $("#exitSheet").addEventListener("click", e=>{ if(e.target.id === "exitSheet") closeExit(); });
 
 $("#btnExit").onclick = ()=>{
-  if(MIRROR){ askExit(); return; }          // 手機端顯示同一塊確認面板，確認後送 exit
   if(!G){ stopBgm(); showView("v-home"); renderHome(); return; }
   if(isPristine()){ backToSetup(); return; }   // 未開始過 → 上一步回設定
   askExit();                                   // 遊戲中 → 自訂確認面板
@@ -2233,7 +2070,6 @@ function setPauseIcon(p){
   else if(G) renderTimer();
 }
 $("#btnPause").onclick = ()=>{
-  if(MIRROR){ mirrorCmd(MR && MR.paused ? "resume" : "pause"); return; }
   if(!G || G.phase!=="running") return;
   G.paused = !G.paused;
   if(!G.paused) G.endsAt = Date.now() + G.remaining * 1000;
@@ -2314,263 +2150,9 @@ document.addEventListener("pointerdown", e=>{
   sfx("tap", 0.5);
 }, true);
 
-/* ---------- WebRTC：配對後兩部機直連，唔再經雲端 ---------- */
-const RTC = { pc:null, dc:null, on:false, offer:"", joined:"", supported: (typeof RTCPeerConnection === "function") };
-const ICE = { iceServers: [
-  { urls: "stun:stun.l.google.com:19302" },
-  { urls: "stun:stun.cloudflare.com:3478" },
-  // 直連唔通時（AP isolation／跨 VLAN）用中繼，延遲約 80–150ms，仍然遠快過雲端輪詢
-  { urls: "turn:openrelay.metered.ca:80", username: "openrelayproject", credential: "openrelayproject" },
-  { urls: "turn:openrelay.metered.ca:443", username: "openrelayproject", credential: "openrelayproject" },
-  { urls: "turn:openrelay.metered.ca:443?transport=tcp", username: "openrelayproject", credential: "openrelayproject" }
-] };
-
-function rtcClose(){
-  try{ if(RTC.dc) RTC.dc.close(); }catch(e){}
-  try{ if(RTC.pc) RTC.pc.close(); }catch(e){}
-  RTC.pc = null; RTC.dc = null; RTC.on = false;
-}
-
-function waitIce(pc, ms){
-  return new Promise(res=>{
-    if(pc.iceGatheringState === "complete") return res();
-    const h = ()=>{ if(pc.iceGatheringState === "complete"){ pc.removeEventListener("icegatheringstatechange", h); res(); } };
-    pc.addEventListener("icegatheringstatechange", h);
-    setTimeout(()=>{ pc.removeEventListener("icegatheringstatechange", h); res(); }, ms || 1200);
-  });
-}
-
-function dcBind(ch, isHost){
-  ch.onopen = ()=>{ RTC.on = true; syncRtcDot(); if(isHost){ sendDC({t:"state", s: buildState()}); } else { sendDC({t:"hello"}); } };
-  ch.onclose = ()=>{ RTC.on = false; syncRtcDot();
-    if(isHost){ setTimeout(()=>{ if(SID && !RTC.on) rtcHost(); }, 800); }   // 斷線自動出新 offer
-  };
-  ch.onerror = ()=>{ RTC.on = false; };
-  ch.onmessage = ev=>{
-    let m = null;
-    try{ m = JSON.parse(ev.data); }catch(e){ return; }
-    if(!m || !m.t) return;
-    if(m.t === "cmd" && !isHost){ /* 唔會發生 */ }
-    if(m.t === "cmd" && isHost){ applyCmd({kind: m.k}); }
-    if(m.t === "state" && !isHost){ mirrorPaint(m.s); }
-    if(m.t === "hello" && isHost){ sendDC({t:"state", s: buildState()}); }
-  };
-}
-
-function sendDC(obj){
-  if(RTC.dc && RTC.dc.readyState === "open"){
-    try{ RTC.dc.send(JSON.stringify(obj)); return true; }catch(e){}
-  }
-  return false;
-}
-
-/* 主持台：產生 offer，寫入 state 等手機嚟接 */
-async function rtcHost(){
-  if(!SID || !RTC.supported) return;
-  try{
-    rtcClose();
-    const pc = new RTCPeerConnection(ICE);
-    RTC.pc = pc;
-    pc.onconnectionstatechange = ()=>{ RTC.on = pc.connectionState === "connected"; syncRtcDot(); };
-    const ch = pc.createDataChannel("ctl", {ordered:true});
-    RTC.dc = ch; dcBind(ch, true);
-    await pc.setLocalDescription(await pc.createOffer());
-    await waitIce(pc, 2500);
-    RTC.offer = (pc.localDescription || {}).sdp || "";
-    sessionPush();
-  }catch(e){ RTC.offer = ""; }
-}
-
-/* 手機：收到 offer 就接，answer 經 /api/cmd 交返主持台 */
-async function rtcJoin(offerSdp){
-  if(!offerSdp || offerSdp === RTC.joined || !RTC.supported) return;
-  RTC.joined = offerSdp;
-  try{
-    rtcClose();
-    const pc = new RTCPeerConnection(ICE);
-    RTC.pc = pc;
-    pc.onconnectionstatechange = ()=>{ RTC.on = pc.connectionState === "connected"; syncRtcDot(); };
-    pc.ondatachannel = e=>{ RTC.dc = e.channel; dcBind(e.channel, false); };
-    await pc.setRemoteDescription({type:"offer", sdp:offerSdp});
-    await pc.setLocalDescription(await pc.createAnswer());
-    await waitIce(pc, 2500);
-    await fetch("/api/cmd", {
-      method:"POST", headers:{"Content-Type":"application/json"},
-      body: JSON.stringify({ id: MIRROR, kind: "sdp", data: { answer: (pc.localDescription||{}).sdp || "" } })
-    });
-  }catch(e){ RTC.joined = ""; }
-}
-
-/* 手機由背景返嚟：RTC 多數斷咗，重新要一個 offer */
-document.addEventListener("visibilitychange", ()=>{
-  if(!MIRROR || document.hidden || RTC.on) return;
-  RTC.joined = "";
-  fetch("/api/cmd", {method:"POST", headers:{"Content-Type":"application/json"},
-    body: JSON.stringify({id: MIRROR, kind:"need-offer"})}).catch(()=>{});
-});
-
-/* ---------- 鏡像模式：手機顯示同一套畫面，唔另做一套 ---------- */
-let MR = null, MR_AT = 0, MR_TIMER = 0;
-
-function mirrorCmd(kind){
-  if(!MIRROR) return;
-  if(sendDC({ t:"cmd", k: kind })){    // 直連：10–30ms
-    if(navigator.vibrate) navigator.vibrate(8);
-    return;
-  }
-  const card = document.querySelector(".question");
-  if(card && (kind === "ok" || kind === "skip" || kind === "foul")){
-    card.classList.remove("fx-ok","fx-skip","fx-bad");
-    void card.offsetWidth;
-    card.classList.add(kind === "ok" ? "fx-ok" : kind === "foul" ? "fx-bad" : "fx-skip");
-    setTimeout(()=>card.classList.remove("fx-ok","fx-skip","fx-bad"), 320);
-  }
-  fetch("/api/cmd", {
-    method:"POST", headers:{"Content-Type":"application/json"},
-    body: JSON.stringify({id: MIRROR, kind})
-  }).catch(()=>{});
-  if(navigator.vibrate) navigator.vibrate(10);
-}
-
-function mirrorPaint(st){
-  MR = st; MR_AT = Date.now();
-  const phase = st.phase || "idle";
-  const teams = st.teams || [];
-  const turnTeam = st.turn != null && st.order ? teams[st.order[st.turn]] : null;
-
-  document.body.classList.toggle("is-ready", phase === "ready");
-  const ready = $("#readyOverlay");
-  const gate = $("#gate");
-  const hud = $("#hud");
-
-  if(phase === "ready"){
-    if(gate) gate.classList.remove("on","closed","settle","text");
-    ready.style.display = "flex";
-    $("#rdRound").textContent = `第 ${(st.turn||0)+1} 回合，共 ${st.rounds||0} 回合`;
-    $("#rdMark").innerHTML = turnTeam ? (ICONS[turnTeam.id] || "") : "";
-    $("#rdTeam").textContent = turnTeam ? turnTeam.name : "";
-    $("#rdScores").innerHTML = teams.map((t,i)=>
-      `<div class="score-tile${st.order && i===st.order[st.turn] ? " cur" : ""}" style="--tc:${t.color}">
-         <em class="pill-mark">${ICONS[t.id] || ""}</em>
-         <span class="score-name">${esc(t.name)}</span><b>${t.score}</b></div>`).join("");
-    const mini = ready.querySelector(".remote-mini"); if(mini) mini.hidden = true;
-    const rb = document.getElementById("btnReady");
-    if(rb){ rb.textContent = "準備好"; rb.style.display = ""; rb.onclick = ()=> mirrorCmd("ready"); }
-    hud.style.visibility = "hidden";
-    setMirrorWord("");
-  }else if(phase === "running"){
-    ready.style.display = "none";
-    if(gate) gate.classList.remove("on","closed","settle","text");
-    hud.style.visibility = "visible";
-    if(turnTeam){
-      $("#turnChip").style.setProperty("--tc", turnTeam.color);
-      $("#turnMark").innerHTML = ICONS[turnTeam.id] || "";
-      $("#turnName").textContent = turnTeam.name;
-    }
-    setMirrorWord(st.word || "");
-    const sk = $('[data-judge="skip"]');
-    if(sk){
-      const left = st.skipLeft == null ? (st.skipCap || 3) : st.skipLeft;
-      sk.textContent = `跳過 ${left}/${st.skipCap || 3}`;
-      sk.disabled = !st.allowSkip || left <= 0;
-    }
-    const foul = $('[data-judge="foul"]');
-    if(foul) foul.classList.toggle("bad", !!st.foulPenalty);
-    document.getElementById("btnPause").classList.toggle("paused", !!st.paused);
-    tickMirrorClock();
-  }else if(phase === "interstitial"){
-    ready.style.display = "none";
-    hud.style.visibility = "hidden";
-    const s2 = st.settle || {};
-    if(gate){
-      gate.classList.add("on","closed","settle");
-      $("#teMark").innerHTML = ICONS[s2.id] || "";
-      $("#teName").textContent = s2.name || "";
-      $("#teScore").innerHTML = `${s2.score > 0 ? "+" : ""}${s2.score || 0}<em>分</em>`;
-      $("#teNext").disabled = false;
-    }
-  }else if(phase === "done"){
-    ready.style.display = "none";
-    if(gate) gate.classList.remove("on","closed","settle","text");
-    hud.style.visibility = "hidden";
-    setMirrorWord("比賽結束");
-  }else{
-    ready.style.display = "none";
-    hud.style.visibility = "hidden";
-    setMirrorWord("等待主持台開始");
-    $("#rdRound").textContent = st.setup ? `設定第 ${st.setup.step} / ${st.setup.total} 步` : "";
-    $("#rdTeam").textContent = "在 iPad 上設定";
-    $("#rdMark").innerHTML = ""; $("#rdScores").innerHTML = "";
-    const b = document.getElementById("btnReady");
-    if(b) b.style.display = "none";            // 開局唔由手機做
-    $("#readyOverlay").style.display = "flex";
-  }
-}
-
-function setMirrorWord(t){
-  const el = $("#pText");
-  if(!el) return;
-  el.textContent = t || "";
-  if(t) fitWord(t);
-}
-
-function tickMirrorClock(){
-  clearInterval(MR_TIMER);
-  const paint = ()=>{
-    if(!MR || MR.phase !== "running") return;
-    const secs = Math.max(0, Math.round(MR.remaining - (Date.now() - MR_AT) / 1000));
-    const c = $("#pClock"); if(c) c.textContent = secs;
-    const rr = $("#ringProg");
-    if(rr){
-      const frac = MR.remaining ? Math.max(0, Math.min(1, secs / MR.remaining)) : 0;
-      rr.style.strokeDasharray = String(CD_CIRC);
-      rr.style.strokeDashoffset = String(CD_CIRC * (1 - frac));
-    }
-  };
-  paint();
-  MR_TIMER = setInterval(paint, 200);
-}
-
-async function mirrorPoll(){
-  try{
-    const r = await fetch(`/api/session?id=${MIRROR}`, {cache:"no-store"});
-    if(r.ok){
-      const d = await r.json();
-      if(d.state && Object.keys(d.state).length){
-        if(d.state.rtc && d.state.rtc.offer && !RTC.on) rtcJoin(d.state.rtc.offer);
-        if(!RTC.on) mirrorPaint(d.state);
-      }
-      else setMirrorWord("等待主持台開始");
-    }else if(r.status === 404){
-      setMirrorWord("代碼已失效，請重新掃描 QR");
-    }
-  }catch(e){}
-  setTimeout(mirrorPoll, RTC.on ? 3000 : 180);
-}
-
-function syncRtcDot(){
-  const d = document.getElementById("rtcDot");
-  if(!d) return;
-  if(!MIRROR){ d.hidden = true; return; }
-  d.hidden = false;
-  d.classList.toggle("live", RTC.on);
-  d.setAttribute("title", RTC.on ? "直連" : "經雲端");
-}
-
-function mirrorBoot(){
-  document.body.classList.add("is-mirror");
-  syncRtcDot();
-  showView("v-play");
-  ["#v-home","#v-setup"].forEach(sel=>{
-    const el = $(sel); if(el) el.style.display = "none";
-  });
-  mirrorPaint({ phase: "idle" });
-  mirrorPoll();
-}
-
 /* ================= 啟動 ================= */
 /* 無法連接時每 15 秒自動重試，無需手動操作 */
-setInterval(()=>{ if(!REMOTE.ok && !G && !MIRROR) pullText(); }, 15000);
+setInterval(()=>{ if(!REMOTE.ok && !G) pullText(); }, 15000);
 
 /* 返回 App 或切換回前景時自動重新載入題目，無需重新開啟 */
 document.addEventListener("visibilitychange", ()=>{
@@ -2582,7 +2164,7 @@ window.addEventListener("focus", ()=>{
 
 document.body.dataset.view = "home";
 renderHome();
-if(MIRROR) mirrorBoot(); else pullText();
+pullText();
 window.__bigtv = { get G(){return G}, get lines(){return lines}, get cfg(){return cfg},
   startGame, startRound, enterReady, judge, endTurn, endGame, renderHome, renderPlay, showView };
 </script>

@@ -6,19 +6,12 @@
   GET  /api/text   → {"text": "...", "title": "...", "subtitle": "...", "updated_at": "..."}
   PUT  /api/text   → 整份取代（無快照、無歷史）；title／subtitle 可選
 
-遙控（第二部裝置做主持）
-  POST /api/session            → {"id": "ABC123"}
-  GET  /api/session/{id}?since=N → {"state":{...}, "seq":N, "cmds":[{"seq":1,"kind":"ok"}]}
-  POST /api/session/{id}/cmd   → {"kind":"ok|skip|foul|ready|next|exit"} → {"seq":n}
-  PUT  /api/session/{id}/state → 螢幕推送狀態給遙控顯示
-
 環境變數
   DATABASE_URL   postgres://...（Neon / Vercel Marketplace 的 Postgres）
 """
 
 import json
 import os
-import secrets
 from contextlib import contextmanager
 from datetime import datetime, timedelta, timezone
 
@@ -88,18 +81,6 @@ def db():
 def ensure_schema():
     with db() as (c, cur):
         cur.execute("CREATE TABLE IF NOT EXISTS meta (key TEXT PRIMARY KEY, value TEXT)")
-        cur.execute("""CREATE TABLE IF NOT EXISTS sess (
-            id TEXT PRIMARY KEY,
-            state JSONB NOT NULL DEFAULT '{}'::jsonb,
-            touched TIMESTAMPTZ NOT NULL DEFAULT now())""")
-        cur.execute("""CREATE TABLE IF NOT EXISTS cmd (
-            seq BIGSERIAL PRIMARY KEY,
-            sid TEXT NOT NULL,
-            kind TEXT NOT NULL,
-            data JSONB,
-            ts TIMESTAMPTZ NOT NULL DEFAULT now())""")
-        cur.execute("ALTER TABLE cmd ADD COLUMN IF NOT EXISTS data JSONB")
-        cur.execute("CREATE INDEX IF NOT EXISTS cmd_sid_seq ON cmd(sid, seq)")
 
 
 _READY = {"ok": False}
@@ -180,71 +161,3 @@ async def text_put(request: Request):
             put_meta(cur, "subtitle", subtitle.strip()[:36])
         put_meta(cur, "updated_at", now())
     return {"ok": True, "chars": len(text)}
-
-# ------------------------------------------------------------------ 遙控
-# 全部用單層路徑＋query／body 參數：Vercel 只穩定支援 /api/<one-segment>
-KINDS = {"ok", "skip", "foul", "ready", "next", "exit", "sdp", "need-offer",
-         "pause", "resume", "end", "start"}
-ALPHABET = "ABCDEFGHJKLMNPQRSTUVWXYZ23456789"   # 無 I/O/0/1，避免讀錯
-
-
-@app.post("/api/session")
-def session_new():
-    schema()
-    sid = "".join(secrets.choice(ALPHABET) for _ in range(6))
-    with db() as (c, cur):
-        cur.execute("DELETE FROM cmd WHERE ts < now() - interval '2 hours'")
-        cur.execute("DELETE FROM sess WHERE touched < now() - interval '2 hours'")
-        cur.execute("INSERT INTO sess(id) VALUES(%s)", (sid,))
-    return {"id": sid}
-
-
-@app.get("/api/session")
-def session_get(id: str = "", since: int = 0):
-    schema()
-    if not id:
-        return JSONResponse({"error": "缺少 id"}, status_code=400)
-    with db() as (c, cur):
-        cur.execute("SELECT state FROM sess WHERE id=%s", (id,))
-        row = cur.fetchone()
-        if not row:
-            return JSONResponse({"error": "session 唔存在或已過期"}, status_code=404)
-        cur.execute("SELECT seq, kind, data FROM cmd WHERE sid=%s AND seq>%s ORDER BY seq", (id, since))
-        cmds = [{"seq": r["seq"], "kind": r["kind"], "data": r["data"]} for r in cur.fetchall()]
-    return {"state": row["state"], "cmds": cmds}
-
-
-@app.post("/api/cmd")
-async def session_cmd(request: Request):
-    schema()
-    body = await request.json()
-    sid = body.get("id")
-    kind = body.get("kind")
-    if not sid or kind not in KINDS:
-        return JSONResponse({"error": "id 或 kind 唔合法"}, status_code=400)
-    with db() as (c, cur):
-        cur.execute("SELECT 1 FROM sess WHERE id=%s", (sid,))
-        if not cur.fetchone():
-            return JSONResponse({"error": "session 唔存在或已過期"}, status_code=404)
-        payload = body.get("data")
-        cur.execute("INSERT INTO cmd(sid, kind, data) VALUES(%s,%s,%s::jsonb) RETURNING seq",
-                    (sid, kind, json.dumps(payload, ensure_ascii=False) if payload is not None else None))
-        seq = cur.fetchone()["seq"]
-        cur.execute("UPDATE sess SET touched=now() WHERE id=%s", (sid,))
-    return {"seq": seq}
-
-
-@app.put("/api/state")
-async def session_state(request: Request):
-    schema()
-    body = await request.json()
-    sid = body.get("id")
-    state = body.get("state")
-    if not sid or not isinstance(state, dict):
-        return JSONResponse({"error": "id 或 state 唔合法"}, status_code=400)
-    with db() as (c, cur):
-        cur.execute("UPDATE sess SET state=%s::jsonb, touched=now() WHERE id=%s",
-                    (json.dumps(state, ensure_ascii=False), sid))
-        if cur.rowcount == 0:
-            return JSONResponse({"error": "session 唔存在或已過期"}, status_code=404)
-    return {"ok": True}
