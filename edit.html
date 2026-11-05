@@ -108,9 +108,34 @@
   @media (prefers-reduced-motion: reduce){
     *,*::before,*::after{animation-duration:.001ms !important; transition-duration:.001ms !important}
   }
+
+  /* 密碼閘：只係擋誤闖，真正保護在 API（PUT 要 x-edit-key） */
+  .gate{position:fixed; inset:0; z-index:60; display:none; place-items:center; padding:22px; background:var(--bg)}
+  .gate.on{display:grid}
+  .gate-card{width:min(360px,100%); background:var(--surface); border-radius:var(--r-xl);
+    box-shadow:inset 0 0 0 1px var(--sep), 0 18px 48px var(--vs-shadow);
+    padding:26px 22px 20px; display:flex; flex-direction:column; gap:8px}
+  .gate-card h2{margin:0; font-size:22px; letter-spacing:-.01em}
+  .gate-card p{margin:0; color:var(--ink-2); font-size:14px}
+  .gate-card input{font:inherit; font-size:17px; padding:12px 14px; border-radius:var(--r-md);
+    border:0; background:var(--fill); color:var(--ink); margin-top:6px}
+  .gate-card input:focus{outline:0; box-shadow:inset 0 0 0 2px var(--focus-ring)}
+  .gate-go{margin-top:10px; min-height:48px; border:0; border-radius:var(--r-lg);
+    background:var(--blue); color:var(--surface); font:inherit; font-size:17px; font-weight:600; cursor:pointer}
+  .gate-err{color:var(--red); font-size:14px; min-height:20px; margin-top:2px}
 </style>
 </head>
 <body>
+<div class="gate" id="gate">
+  <form class="gate-card" id="gateForm">
+    <h2>設定</h2>
+    <p>請輸入密碼</p>
+    <input id="gatePass" type="password" autocomplete="current-password" aria-label="密碼" placeholder="密碼">
+    <button type="submit" class="gate-go">進入</button>
+    <p class="gate-err" id="gateErr"></p>
+  </form>
+</div>
+
   <div class="wrap">
   <div class="top">
     <a class="back" href="/" aria-label="返回主持台" title="返回主持台">
@@ -153,6 +178,41 @@
 "use strict";
 const $ = s => document.querySelector(s);
 let saveTimer = null, lastSaved = "";
+const KEYNAME = "editkey";
+const editKey = () => sessionStorage.getItem(KEYNAME) || "";
+const withKey = (h) => { const o = Object.assign({}, h || {}); const k = editKey(); if(k) o["x-edit-key"] = k; return o; };
+
+async function checkKey(k){
+  try{
+    const r = await fetch("/api/text?check=1", { cache:"no-store", headers: k ? {"x-edit-key": k} : {} });
+    if(!r.ok) return { ok:false, protected:true };
+    return await r.json();
+  }catch(e){ return { ok:false, protected:true }; }
+}
+function showGate(msg){
+  $("#gate").classList.add("on");
+  $("#gateErr").textContent = msg || "";
+  setTimeout(()=>$("#gatePass").focus(), 60);
+}
+function hideGate(){ $("#gate").classList.remove("on"); }
+
+$("#gateForm").addEventListener("submit", async (e)=>{
+  e.preventDefault();
+  const p = $("#gatePass").value;
+  if(!p){ return; }
+  $("#gateErr").textContent = "";
+  const st = await checkKey(p);
+  if(st.ok){
+    sessionStorage.setItem(KEYNAME, p);
+    $("#gatePass").value = "";
+    hideGate();
+    load();
+  }else{
+    $("#gateErr").textContent = "密碼不正確";
+    $("#gatePass").select();
+  }
+});
+
 const sig = () => [$("#text").value, $("#brandTitle").value.trim(), $("#brandSub").value.trim()].join("\u0000");
 
 let stateTimer = null;
@@ -194,13 +254,14 @@ async function save(){
   setState("busy", "儲存中…");
   try{
     const r = await fetch("/api/text", {
-      method: "PUT", headers: { "Content-Type": "application/json" },
+      method: "PUT", headers: withKey({ "Content-Type": "application/json" }),
       body: JSON.stringify({
         text: $("#text").value,
         title: $("#brandTitle").value.trim(),
         subtitle: $("#brandSub").value.trim()
       })
     });
+    if(r.status === 401){ sessionStorage.removeItem(KEYNAME); showGate("密碼已失效，請重新輸入"); throw new Error("401"); }
     if(!r.ok) throw new Error("put");
     lastSaved = sig();
     setState("ok", "已儲存", true);          // 顯示 1.4 秒後自動消失
@@ -244,7 +305,13 @@ setInterval(()=>{ if(!document.hidden) poll(); }, 60000);
 document.addEventListener("visibilitychange", () => { if(!document.hidden) poll(); });
 window.addEventListener("focus", poll);
 
-load();
+/* 開頁：先驗密碼（伺服器未設 EDIT_KEY 就直接入） */
+(async ()=>{
+  const st = await checkKey(editKey());
+  if(st.ok){ hideGate(); load(); }
+  else if(!st.protected){ hideGate(); load(); }
+  else { showGate(editKey() ? "密碼已失效，請重新輸入" : ""); }
+})();
 </script>
 <script>
 if("serviceWorker" in navigator && location.protocol === "https:"){

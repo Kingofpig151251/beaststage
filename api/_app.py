@@ -22,6 +22,7 @@ from fastapi.responses import JSONResponse
 
 ROOT = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
 DATABASE_URL = os.environ.get("DATABASE_URL") or os.environ.get("POSTGRES_URL") or ""
+EDIT_KEY = os.environ.get("EDIT_KEY") or ""      # 未設＝維持開放（本地開發用）
 SEED = os.path.join(ROOT, "samples", "hk-icebreaker.json")
 
 app = FastAPI(title="百獸台 API", docs_url=None, redoc_url=None, openapi_url=None)
@@ -129,8 +130,17 @@ def read_text(cur):
 
 
 # ------------------------------------------------------------------ routes
+def key_ok(request):
+    """未設 EDIT_KEY 就唔檢查（本地開發／未配置環境變數時保持可用）。"""
+    if not EDIT_KEY:
+        return True
+    return request.headers.get("x-edit-key", "") == EDIT_KEY
+
+
 @app.get("/api/text")
-def text_get():
+def text_get(request: Request, check: int = 0):
+    if check:                                   # /api/text?check=1：只驗密碼，唔讀 DB
+        return {"ok": key_ok(request), "protected": bool(EDIT_KEY)}
     schema()
     with db() as (c, cur):
         text = read_text(cur)
@@ -142,6 +152,8 @@ def text_get():
 
 @app.put("/api/text")
 async def text_put(request: Request):
+    if not key_ok(request):
+        return JSONResponse({"error": "未授權"}, status_code=401)
     schema()
     body = await request.json()
     text = body.get("text")
