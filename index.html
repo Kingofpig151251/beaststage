@@ -282,6 +282,8 @@
   .mini-step input{width:2ch; min-height:0; padding:0; background:transparent; border:0; text-align:center;
     font-family:var(--font-display); font-size:28px; font-weight:700; font-variant-numeric:tabular-nums}
   .mini-step.tight input{font-size:15px; font-weight:600; width:1.6ch; color:var(--ink)}
+  .sc-val{min-width:2.4ch; text-align:center; font-size:16px; font-weight:600;
+    font-variant-numeric:tabular-nums; color:var(--ink)}
   .mini-step input::-webkit-outer-spin-button,.mini-step input::-webkit-inner-spin-button{-webkit-appearance:none; margin:0}
   .mini-step input:focus-visible{outline:2px solid var(--focus-ring); outline-offset:4px; border-radius:8px}
   /* 規則行內的小 stepper：視覺重量要同 42×24 的 switch 一致 */
@@ -890,7 +892,7 @@
             <div class="rule-txt"><b>每回合可跳</b><span>用完之後不能再跳</span></div>
             <div class="mini-step tight">
               <button class="round-btn sm" id="scMinus" aria-label="減少可跳次數">−</button>
-              <input id="scInput" type="number" inputmode="numeric" min="1" max="10" step="1" value="3" aria-label="每回合可跳次數">
+              <b class="sc-val" id="scVal" aria-live="polite" aria-label="每回合可跳次數">3</b>
               <button class="round-btn sm" id="scPlus" aria-label="增加可跳次數">+</button>
             </div>
           </div>
@@ -1086,7 +1088,8 @@ cfg.allowSkip = cfg.allowSkip !== false;
 cfg.skipPenalty = !!cfg.skipPenalty;
 cfg.foulPenalty = !!cfg.foulPenalty;
 cfg.roundsPer = Math.max(1, Math.min(5, Math.round(+cfg.roundsPer || 2)));
-cfg.skipCap = Math.max(1, Math.min(10, Math.round(+cfg.skipCap || 3)));
+cfg.skipCap = (cfg.skipCap === 0 || cfg.skipCap === "0") ? 0
+  : Math.max(1, Math.min(10, Math.round(+cfg.skipCap || 3)));   // 0 = 無限
 
 cfg.teams = Math.max(2, Math.min(8, Math.round(+cfg.teams || 2)));
 if(!Array.isArray(cfg.names)) cfg.names = ANIMALS.slice(0,8).map(a=>a.name);
@@ -1443,10 +1446,11 @@ function syncSkipBtn(){
   if(!b) return;
   const cap = G ? G.skipCap : SKIP_CAP;
   const left = G ? Math.max(0, G.skipLeft) : cap;
-  b.textContent = `跳過 ${left}/${cap}`;
-  b.disabled = !G || !G.allowSkip || left <= 0;
-  b.setAttribute("aria-label", `跳過，剩 ${left} 次`);
-  b.setAttribute("title", `跳過（↓）剩 ${left} 次`);
+  const inf = cap === 0;
+  b.textContent = inf ? "跳過 ∞" : `跳過 ${left}/${cap}`;
+  b.disabled = !G || !G.allowSkip || (!inf && left <= 0);
+  b.setAttribute("aria-label", inf ? "跳過，不限次數" : `跳過，剩 ${left} 次`);
+  b.setAttribute("title", inf ? "跳過（↓）不限次數" : `跳過（↓）剩 ${left} 次`);
 }
 
 /* 每隊出場前先停頓：不計時、不出題，待隊伍準備完成 */
@@ -1716,11 +1720,11 @@ function act(name){
 }
 
 function judge(kind){
-  if(kind === "skip" && (!G.allowSkip || G.skipLeft <= 0)) return;
+  if(kind === "skip" && (!G.allowSkip || (G.skipCap !== 0 && G.skipLeft <= 0))) return;
   const t = curTeam();
   let delta = 0;
   if(kind === "ok"){ t.ok++; delta = 1; fxOk(); sfx("ding"); }
-  else if(kind === "skip"){ t.skip++; G.skipLeft--; syncSkipBtn(); if(G.skipPenalty) delta = -1; fxSkipDown(); sfx("whoosh", 0.75); }
+  else if(kind === "skip"){ t.skip++; if(G.skipCap !== 0) G.skipLeft--; syncSkipBtn(); if(G.skipPenalty) delta = -1; fxSkipDown(); sfx("whoosh", 0.75); }
   else { t.foul++; if(G.foulPenalty) delta = -1; fxFoul(G.foulPenalty); sfx("snare", 0.45); }
   if(delta) fxScore(delta);
   t.score += delta;
@@ -2036,12 +2040,11 @@ $("#rpMinus").onclick  = ()=> setRounds(cfg.roundsPer - 1);
 $("#rpPlus").onclick   = ()=> setRounds(cfg.roundsPer + 1);
 
 function setSkipCap(n){
-  cfg.skipCap = Math.max(1, Math.min(10, Math.round(+n || 3)));
+  cfg.skipCap = (Number(n) === 0) ? 0 : Math.max(1, Math.min(10, Math.round(+n || 3)));
   saveCfg(); syncRules();
 }
-$("#scInput").onchange = e=> setSkipCap(e.target.value);
-$("#scMinus").onclick  = ()=> setSkipCap(cfg.skipCap - 1);
-$("#scPlus").onclick   = ()=> setSkipCap(cfg.skipCap + 1);
+$("#scMinus").onclick = ()=> setSkipCap(cfg.skipCap === 0 ? 10 : cfg.skipCap - 1);
+$("#scPlus").onclick  = ()=> setSkipCap(cfg.skipCap >= 10 ? 0 : cfg.skipCap + 1);   // 10 之後 = 無限
 
 $("#secInput").onchange  = e=>{ cfg.sec=Math.max(5,Math.min(600,+e.target.value||60)); saveCfg(); renderSetup(); };
 $$("#secChips button").forEach(b=>b.onclick = ()=>{
@@ -2070,15 +2073,14 @@ function syncRules(){
   const row = $("#ruleSkipPen");
   row.classList.toggle("off", !cfg.allowSkip);
   $("#swSkipPen").disabled = !cfg.allowSkip;
-  const cap = $("#scInput");
+  const cap = $("#scVal");
   if(cap){
-    cap.value = cfg.skipCap;
+    cap.textContent = cfg.skipCap === 0 ? "∞" : String(cfg.skipCap);
     $("#scMinus").disabled = cfg.skipCap <= 1;
     $("#scPlus").disabled  = cfg.skipCap >= 10;
     $("#ruleSkipCap").classList.toggle("off", !cfg.allowSkip);
-    $("#scInput").disabled = !cfg.allowSkip;
-    $("#scMinus").disabled = !cfg.allowSkip || cfg.skipCap <= 1;
-    $("#scPlus").disabled  = !cfg.allowSkip || cfg.skipCap >= 10;
+    $("#scMinus").disabled = !cfg.allowSkip;
+    $("#scPlus").disabled  = !cfg.allowSkip || cfg.skipCap === 0;
   }
 }
 $("#swSkip").onclick = ()=>{
