@@ -431,6 +431,8 @@
   .readyMark svg,.readyMark .mark-img{display:block; width:1em; height:1em; margin:0 auto}
   .readyTeam{font-family:var(--font-display); font-weight:700; font-size:clamp(52px,13vh,140px);
     letter-spacing:-.03em; line-height:1.02; margin:10px 0 16px}
+  .sstep .remote-mini{margin-top:14px}
+  @media (max-height:520px){ .sstep .remote-mini{display:none} }
   .remote-mini{display:flex; align-items:center; gap:12px; padding:8px 12px; border-radius:16px;
     background:var(--surface); box-shadow:inset 0 0 0 1px var(--sep)}
   .rm-qr{width:84px; height:84px; flex:none; display:grid; place-items:center}
@@ -623,6 +625,11 @@
     padding:14px 4px; border-bottom:var(--hair) solid var(--sep)}
   .rule:last-child{border-bottom:0}
   .rule.off{opacity:.38}
+  .rule.sub{position:relative; padding:0 4px 14px 22px; border-bottom:0}
+  .rule.sub::before{content:""; position:absolute; left:6px; top:1px; bottom:15px; width:2px;
+    border-radius:1px; background:var(--fill-2)}
+  .rule.sub .rule-txt b{font-size:15px; font-weight:500; color:var(--ink-2)}
+  .rule.sub .rule-txt span{display:none}
   .rule-txt b{display:block; font-size:17px; font-weight:600}
   .rule-txt span{display:block; font-size:14px; color:var(--ink-2); margin-top:2px}
   .switch{position:relative; width:42px; height:24px; min-height:0; padding:0; border-radius:var(--pill);
@@ -667,6 +674,9 @@
     .sstep-title{font-size:22px}
     .rules{display:grid; grid-template-columns:1fr 1fr; gap:0 16px; margin-top:0}
     .rule{padding:7px 4px; border-bottom:0}
+    .rule.sub{padding:7px 4px}
+    .rule.sub::before{display:none}
+    .rule.sub .rule-txt b{font-size:15px; color:var(--ink)}
     .rule-txt b{font-size:15px}
     .rule-txt span{display:none}
   }
@@ -765,6 +775,10 @@
           <button class="round-btn" id="teamPlus" aria-label="增加一隊">+</button>
         </div>
         <div class="sstep-hint">最少 2 隊，最多 8 隊</div>
+        <div class="remote-mini" data-remote hidden>
+          <div class="rm-qr" data-qr></div>
+          <div class="rm-txt"><b>手機做主持</b><span data-rm-code>待連線</span></div>
+        </div>
       </section>
 
       <section class="sstep" data-step="1">
@@ -804,7 +818,7 @@
             <div class="rule-txt"><b>可以跳過</b><span>主持可按「↓ 跳過」直接換下一題</span></div>
             <button class="switch" id="swSkip" role="switch" aria-checked="true" aria-label="可以跳過"><i></i></button>
           </div>
-          <div class="rule" id="ruleSkipCap">
+          <div class="rule sub" id="ruleSkipCap">
             <div class="rule-txt"><b>每回合可跳</b><span>用完之後不能再跳</span></div>
             <div class="mini-step tight">
               <button class="round-btn sm" id="scMinus" aria-label="減少可跳次數">−</button>
@@ -866,9 +880,9 @@
         <div class="readyMark" id="rdMark" aria-hidden="true"></div>
         <div class="readyTeam" id="rdTeam"></div>
         <div class="readyScores" id="rdScores"></div>
-        <div class="remote-mini" id="remoteMini" hidden>
-          <div class="rm-qr" id="qrBox"></div>
-          <div class="rm-txt"><b>手機做主持</b><span id="rmCode">待連線</span></div>
+        <div class="remote-mini" data-remote hidden>
+          <div class="rm-qr" data-qr></div>
+          <div class="rm-txt"><b>手機做主持</b><span data-rm-code>待連線</span></div>
         </div>
         <button id="btnReady">準備好</button>
       </div>
@@ -1256,6 +1270,7 @@ function goStep(i, dir){
 
 function startSetup(){
   renderSetup();
+  if(!SID) sessionStart();                 // 第一步就可以掃 QR 配對手機
   if(SETUP.busy) return;
   SETUP.busy = true;
   document.body.classList.add("is-entering");   // 入口放大淡出
@@ -1623,8 +1638,8 @@ async function sessionStart(){
     if(!r.ok) return;
     const d = await r.json();
     SID = d.id; CMD_SEQ = 0;
-    $("#rmCode").textContent = SID;
-    $("#remoteMini").hidden = false;
+    document.querySelectorAll("[data-rm-code]").forEach(el=>{ el.textContent = SID; });
+    document.querySelectorAll("[data-remote]").forEach(el=>{ el.hidden = false; });
     drawQR(location.origin + "/remote?s=" + SID);
     sessionPoll();
     clearInterval(PUSH_TIMER); PUSH_TIMER = setInterval(sessionPush, 1000);
@@ -1635,7 +1650,7 @@ async function sessionStart(){
 function sessionStop(){
   SID = null;
   clearTimeout(SID_TIMER); clearInterval(PUSH_TIMER);
-  const b = $("#remoteMini"); if(b) b.hidden = true;
+  document.querySelectorAll("[data-remote]").forEach(el=>{ el.hidden = true; });
 }
 
 function loadQR(){
@@ -1651,8 +1666,11 @@ function drawQR(url){
   loadQR().then(()=>{
     const qr = window.qrcode(0, "M");
     qr.addData(url); qr.make();
-    $("#qrBox").innerHTML = qr.createSvgTag({cellSize: 4, margin: 0});
-  }).catch(()=>{ $("#qrBox").textContent = "QR 載入失敗"; });
+    const svg = qr.createSvgTag({cellSize: 4, margin: 0});
+    document.querySelectorAll("[data-qr]").forEach(el=>{ el.innerHTML = svg; });
+  }).catch(()=>{
+    document.querySelectorAll("[data-qr]").forEach(el=>{ el.textContent = "QR 載入失敗"; });
+  });
 }
 
 const CMD_APPLY = {
@@ -2070,6 +2088,9 @@ function syncRules(){
     $("#scMinus").disabled = cfg.skipCap <= 1;
     $("#scPlus").disabled  = cfg.skipCap >= 10;
     $("#ruleSkipCap").classList.toggle("off", !cfg.allowSkip);
+    $("#scInput").disabled = !cfg.allowSkip;
+    $("#scMinus").disabled = !cfg.allowSkip || cfg.skipCap <= 1;
+    $("#scPlus").disabled  = !cfg.allowSkip || cfg.skipCap >= 10;
   }
 }
 $("#swSkip").onclick = ()=>{
