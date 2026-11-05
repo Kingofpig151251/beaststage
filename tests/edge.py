@@ -14,13 +14,15 @@ def check(name, cond, detail=""):
     RESULTS.append((name, bool(cond), detail))
     print(("  ✓ " if cond else "  ✗ ") + name + (f"   [{detail}]" if not cond else ""))
 
-async def session(url, cfg, fn, w=834, h=1194):
+async def session(url, cfg, fn, w=834, h=1194, fetch_js=None):
     port = random.randint(9900, 9999)
     prof = f"/tmp/edge-{os.getpid()}-{port}"
-    stub = ("localStorage.setItem('beaststage.cfg.v3', JSON.stringify(%s));"
-            "window.fetch=async u=>{const s=String(u);"
+    fetcher = fetch_js or ("async u=>{const s=String(u);"
             "if(s.startsWith('/api/text'))return{ok:true,json:async()=>({text:'甲\\n乙\\n丙',title:'',subtitle:''})};"
-            "return{ok:true,json:async()=>({})}};" % json.dumps(cfg))
+            "return{ok:true,json:async()=>({})}}")
+    stub = ("localStorage.setItem('beaststage.cfg.v3', JSON.stringify(%s));"
+            "window.__err=[];window.__fetchCount=0;addEventListener('error',e=>window.__err.push(String(e.message)));"
+            "window.fetch=%s;" % (json.dumps(cfg), fetcher))
     proc = await asyncio.create_subprocess_exec(
         CHROME, "--headless", "--no-sandbox", "--disable-gpu", "--hide-scrollbars",
         f"--remote-debugging-port={port}", f"--user-data-dir={prof}", f"--window-size={w},{h}", "about:blank",
@@ -54,6 +56,64 @@ async def _poll(T, expr, timeout):
         if await T.js(expr): return True
         await asyncio.sleep(0.12)
     return False
+
+
+# ⑥ 題庫未載入：唔可以卡死——按「重試載入」要有提示並重新 fetch
+async def t_emptybank(T):
+    await _poll(T, "!!document.getElementById('btnEnter')", 15)
+    check("題庫空：開始頁仍可用", await T.js("!!document.getElementById('btnEnter')"))
+    for _ in range(3):
+        await T.js("(()=>{const b=document.getElementById('btnEnter');if(b&&b.offsetParent)b.click()})()")
+        if await _poll(T, "!!document.querySelector('.sstep.on')", 3): break
+    label = (await T.js("document.getElementById('btnNext').textContent")) or ""
+    disabled = await T.js("!!document.getElementById('btnNext').disabled")
+    check("題庫空：掣改寫成「重試載入」", "重試" in label, label)
+    check("題庫空：掣唔係封死", disabled is False)
+    calls0 = await T.js("window.__fetchCount || 0")
+    await T.js("document.getElementById('btnNext').click()")
+    toast_on = await _poll(T, "document.getElementById('toast').classList.contains('on')", 2.0)
+    check("題庫空：按落去有提示", toast_on)
+    check("題庫空：有重新請求題庫", (await T.js("window.__fetchCount || 0")) > calls0)
+    check("題庫空：無 JS 例外", (await T.js("window.__err.length")) == 0)
+
+# ⑦ API 失敗：首頁仍可開、唔爆例外
+async def t_apifail(T):
+    await _poll(T, "!!document.getElementById('btnEnter')", 15)
+    check("API 失敗：首頁仍然可用", await T.js("!!document.getElementById('btnEnter')"))
+    check("API 失敗：無 JS 例外", (await T.js("window.__err.length")) == 0, str(await T.js("window.__err")))
+
+# ⑧ 時間到同判定撞：唔會雙計、唔會卡住
+async def t_endrace(T):
+    await start_game(T)
+    await _poll(T, "G && G.remaining <= 0.6", 20)
+    before = await T.js("curTeam().ok")
+    await T.js("act('ok')"); await T.js("act('ok')")     # 同一刻連按兩下
+    await asyncio.sleep(0.5)
+    after = await T.js("G ? curTeam().ok : null")
+    check("時間到邊界：最多加一次", (after is None) or (after - before <= 1), f"{before}→{after}")
+    check("時間到邊界：回合正常結束", await _poll(T, "G && (G.phase==='interstitial' || G.phase==='done')", 12))
+
+# ⑨ 連按同一鍵：260ms 內 5 次只算一次
+async def t_spam(T):
+    await start_game(T)
+    before = await T.js("curTeam().ok")
+    for _ in range(5):
+        await T.js("act('ok')")
+    await asyncio.sleep(0.6)
+    after = await T.js("curTeam().ok")
+    check("連按 5 次只加 1 題", after - before == 1, f"{before}→{after}")
+
+# ⑩ 跳過用完：掣變灰、再按無效
+async def t_skipcap(T):
+    await start_game(T)
+    n0 = await T.js("curTeam().skip")
+    await T.js("act('skip')"); await asyncio.sleep(0.45)
+    n1 = await T.js("curTeam().skip")
+    disabled = await T.js("!!document.querySelector('[data-judge=\"skip\"]').disabled")
+    await T.js("act('skip')"); await asyncio.sleep(0.45)
+    n2 = await T.js("curTeam().skip")
+    check("跳過 1 次後掣變灰", disabled)
+    check("用完再按唔會再跳", n2 == n1 == n0 + 1, f"{n0}→{n1}→{n2}")
 
 # ① 暫停 → 繼續：時間唔可以跳
 async def t_pause(T):
@@ -139,6 +199,23 @@ async def main(url):
 
     print("\n[4] 跳過 ∞")
     await session(url, {"teams": 2, "sec": 60, "roundsPer": 1, "skipCap": 0, "allowSkip": True}, t_inf)
+
+    print("\n[6] 題庫空")
+    await session(url, {"teams": 2, "sec": 30, "roundsPer": 1}, t_emptybank,
+                  fetch_js="async u=>{const s=String(u);if(s.startsWith('/api/text')){window.__fetchCount++;return{ok:true,json:async()=>({text:'',title:'',subtitle:''})}}return{ok:true,json:async()=>({})}}")
+
+    print("\n[7] API 失敗")
+    await session(url, {"teams": 2, "sec": 30, "roundsPer": 1}, t_apifail,
+                  fetch_js="async u=>{const s=String(u);if(s.startsWith('/api/text'))return{ok:false,json:async()=>({})};return{ok:true,json:async()=>({})}}")
+
+    print("\n[8] 時間到邊界")
+    await session(url, {"teams": 2, "sec": 3, "roundsPer": 1, "skipCap": 3, "allowSkip": True}, t_endrace)
+
+    print("\n[9] 連按")
+    await session(url, {"teams": 2, "sec": 60, "roundsPer": 1, "skipCap": 3, "allowSkip": True}, t_spam)
+
+    print("\n[10] 跳過用完")
+    await session(url, {"teams": 2, "sec": 60, "roundsPer": 1, "skipCap": 1, "allowSkip": True}, t_skipcap)
 
     print("\n[5] 全員同分")
     await session(url, {"teams": 8, "sec": 3, "roundsPer": 1, "skipCap": 3, "allowSkip": True}, t_tie)

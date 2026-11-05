@@ -1398,8 +1398,8 @@ function selectAnimal(id){
 function syncNext(){
   const ok = lines.length > 0;
   const next = $("#btnNext");
-  next.disabled = !ok;
-  next.textContent = SETUP.i < LAST_STEP ? "繼續" : (ok ? "開始遊戲" : "題目未連線");
+  next.disabled = false;                       // 題目未載入時唔可以靜靜封死（派對現場會卡住、又冇提示）
+  next.textContent = ok ? (SETUP.i < LAST_STEP ? "繼續" : "開始遊戲") : "重試載入";
 }
 
 function goStep(i, dir){
@@ -2193,7 +2193,10 @@ $("#btnStepBack").onclick = ()=>{
   if(SETUP.i === 0){ showView("v-home"); renderHome(); }
   else goStep(SETUP.i - 1, -1);
 };
-$("#btnNext").onclick = ()=>{ if(SETUP.i < LAST_STEP) goStep(SETUP.i + 1, 1); else launchGame(); };
+$("#btnNext").onclick = ()=>{
+  if(!lines.length){ toast("題目尚未載入，重新連線中…"); pullText(); return; }
+  if(SETUP.i < LAST_STEP) goStep(SETUP.i + 1, 1); else launchGame();
+};
 
 $$("[data-judge]").forEach(b=>b.onclick=()=> act(b.dataset.judge));
 $("#btnReady").onclick = startRound;
