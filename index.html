@@ -1293,6 +1293,7 @@ function goStep(i, dir){
   });
   $("#btnNext").textContent = SETUP.i < LAST_STEP ? "繼續" : "開始遊戲";
   syncNext();
+  if(SID) sessionPush();                 // 手機即時知設定行到第幾步
   if(SETUP.i === 3){
     const first = $("#nameList input");
     if(first) setTimeout(()=>first.focus({preventScroll:true}), 260);
@@ -1726,7 +1727,7 @@ const CMD_APPLY = {
   pause: ()=>{ if(G && G.phase === "running" && !G.paused) $("#btnPause").click(); },
   resume: ()=>{ if(G && G.phase === "running" && G.paused) $("#btnPause").click(); },
   end:   ()=>{ if(G && G.phase === "running") endTurn(); },
-  start: ()=>{ if(!G) launchGame(); },
+  start: ()=>{ if(!G && SETUP.i >= LAST_STEP) launchGame(); },
   exit:  ()=>{ if(G) doExit(); }
 };
 
@@ -1761,7 +1762,7 @@ function buildState(){
     team: t ? { id: t.id, name: t.name, color: t.color, score: t.score } : null,
     settle: G.settle || null,
     label: G.phase === "ready" ? "準備中" : G.phase === "interstitial" ? "本回合結算" : G.phase === "countdown" ? "倒數中" : ""
-  } : { phase: "idle" };
+  } : { phase: "idle", setup: { step: SETUP.i + 1, total: LAST_STEP + 1 } };
   st.rtc = (!RTC.on && RTC.offer) ? { offer: RTC.offer } : null;
   return st;
 }
@@ -2496,11 +2497,17 @@ function mirrorPaint(st){
   }else{
     ready.style.display = "none";
     hud.style.visibility = "hidden";
-    setMirrorWord("等待主持台開始");
-    $("#rdRound").textContent = ""; $("#rdTeam").textContent = "";
+    const readyToGo = !!(st.setup && st.setup.step >= st.setup.total);
+    setMirrorWord(readyToGo ? "可以開始" : "等待主持台設定完成");
+    $("#rdRound").textContent = st.setup ? `設定第 ${st.setup.step} / ${st.setup.total} 步` : "";
+    $("#rdTeam").textContent = readyToGo ? "" : "在 iPad 上完成設定";
     $("#rdMark").innerHTML = ""; $("#rdScores").innerHTML = "";
     const b = document.getElementById("btnReady");
-    if(b){ b.textContent = "開始遊戲"; b.style.display = ""; b.onclick = ()=> mirrorCmd("start"); }
+    if(b){
+      b.textContent = "開始遊戲";
+      b.style.display = readyToGo ? "" : "none";
+      b.onclick = ()=> mirrorCmd("start");
+    }
     $("#readyOverlay").style.display = "flex";
   }
 }
