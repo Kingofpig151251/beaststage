@@ -95,6 +95,16 @@ GET  /api/text      題目（讀）
 PUT  /api/text      整份取代（開放寫入，/edit 用）
 ```
 
+## 安裝成 App（PWA）
+
+`manifest.json` + `sw.js`：加到主畫面後以 standalone 開啟，冇網址列／分頁列——手機橫屏直接多返 60–80px 高度。
+
+- **iPad / iPhone（Safari）**：分享 → 加入主畫面 → 開啟
+- **Android（Chrome）**：右上選單 → 安裝應用程式（或等提示）
+- **桌面 Chrome / Edge**：網址列右邊的安裝圖示
+
+更新策略：HTML 用 network-first（有網一定攞最新版，離線用快取）；圖片音效用 cache-first；`/api/*` 完全不攔。換素材時把 `sw.js` 的 `CACHE` 版本號 +1。
+
 ## 窄屏（手機）
 
 手機不是主力，但**每一頁都唔需要滾動**：

@@ -10,6 +10,12 @@
 <meta name="author" content="Leung Tung Lam">
 <meta name="copyright" content="© 2026 Leung Tung Lam. MIT License.">
 <meta name="description" content="百獸台：派對猜詞主持台。一部 iPad 控場，一人背向屏幕猜詞、全隊負責描述，主持按「犯規／跳過／正確」判定。">
+<link rel="manifest" href="/manifest.json">
+<meta name="theme-color" content="#FFFFFF">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-status-bar-style" content="default">
+<meta name="apple-mobile-web-app-title" content="百獸台">
+<link rel="apple-touch-icon" href="/apple-touch-icon.png">
 <title>百獸台</title>
 <style>
   /* Hallmark · redesign: Apple (iPadOS dark) · scope: app · v3.0.0
@@ -1552,11 +1558,11 @@ async function loadSfx(){
     }catch(e){ /* 音檔拿不到就靜靜留空，唔影響流程 */ }
   }));
 }
-function sfx(name, vol=0.85){
+function sfx(name, vol=0.85, rate=1){
   const c = audioCtx(), buf = SFX[name];
   if(!c || !buf) return false;
   const src = c.createBufferSource(), g = c.createGain();
-  src.buffer = buf; g.gain.value = vol;
+  src.buffer = buf; src.playbackRate.value = rate; g.gain.value = vol;
   src.connect(g).connect(c.destination);
   src.start();
   return true;
@@ -1649,6 +1655,7 @@ function beginRunning(){
   G.cur = drawItem();
   G.remaining = G.sec;
   G.endsAt = Date.now() + G.sec * 1000;
+  G.tickAt = 0;
   startTimer();
   renderPlay();
 }
@@ -1669,6 +1676,12 @@ function startTimer(){
     if(G.paused) return;
     G.remaining = Math.max(0, (G.endsAt - Date.now()) / 1000);  // 用時鐘差值，唔累積漂移
     renderTimer();
+    const secLeft = Math.ceil(G.remaining);
+    if(secLeft !== G.tickAt && secLeft <= 10 && secLeft > 0){
+      G.tickAt = secLeft;
+      if(secLeft <= 3) sfx("tick", 0.9, 1.28);                     // 最後三秒：更急、更高
+      else sfx("tick", 0.42 + (10 - secLeft) * 0.045, 1);          // 由 10 秒起，越近越響
+    }
     if(G.remaining <= 0){ clearInterval(id); endTurn(); }
   },100);
   G.timerId = id;
@@ -2289,6 +2302,11 @@ renderHome();
 pullText();
 window.__bigtv = { get G(){return G}, get lines(){return lines}, get cfg(){return cfg},
   startGame, startRound, enterReady, judge, endTurn, endGame, renderHome, renderPlay, showView };
+</script>
+<script>
+if("serviceWorker" in navigator && location.protocol === "https:"){
+  addEventListener("load", ()=>{ navigator.serviceWorker.register("/sw.js").catch(()=>{}); });
+}
 </script>
 </body>
 </html>
