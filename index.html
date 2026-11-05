@@ -636,6 +636,17 @@
   @media (max-width:700px){
     .result-actions .btn-big{flex:1 1 100%}
   }
+  /* 矮螢幕（手機橫向、分割視窗）：壓縮首頁，避免內容被切 */
+  @media (max-height:420px){
+    body{padding:0}
+    .wrap{padding:8px 16px 10px}
+    .landing-title{font-size:clamp(40px, 13vh, 84px); margin-top:0}
+    .landing-sub{margin-top:6px; font-size:14px}
+    .landing-go{margin-top:14px; min-height:48px; min-width:200px; font-size:17px}
+    .landing-link{margin-top:10px; min-height:40px; padding:0 20px; font-size:15px}
+    .landing-foot{padding-bottom:0}
+    .landing-credit{font-size:11px}
+  }
   @media (prefers-reduced-motion: reduce){
     *,*::before,*::after{animation-duration:.001ms !important; animation-iteration-count:1 !important;
       transition-duration:.001ms !important}
