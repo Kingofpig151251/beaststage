@@ -75,13 +75,11 @@
     transform:translate(-50%,-50%) rotate(var(--r,0deg));
     animation:beastFloat var(--d,8s) ease-in-out calc(var(--i,0s) + .5s) infinite alternate}
   .beast .sway{display:block; transform:rotate(var(--r,0deg));
-    animation:beastSway calc(var(--d,8s) * .78) ease-in-out calc(var(--i,0s) + .2s) infinite alternate}
-  .beast img{display:block; width:100%; height:auto; opacity:0;
-    animation:beastIn .5s var(--ease) var(--i,0s) both}
+    animation:beastSway var(--d,8s) ease-in-out calc(var(--i,0s) + .5s) infinite alternate}
+  .beast img{display:block; width:100%; height:auto}
   @keyframes beastSway{
     from{transform:rotate(calc(var(--r,0deg) - 3.5deg))}
     to{transform:rotate(calc(var(--r,0deg) + 3.5deg))}}
-  @keyframes beastIn{to{opacity:1; transform:scale(1)}}
   @keyframes beastFloat{
     from{transform:translate(-50%,-50%) rotate(var(--r,0deg)) translateY(-7px)}
     to{transform:translate(-50%,-50%) rotate(var(--r,0deg)) translateY(7px)}}
