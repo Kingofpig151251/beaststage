@@ -151,6 +151,12 @@ async def main(url, shot):
             check("答中 3 次扣回跳過＋犯規 = 1 分", t["ok"] == 3 and t["score"] == 1, str(t))
             check("跳過／犯規有計數", t["skip"] == 1 and t["foul"] == 1, str(t))
             check("大字有題目", bool(await T.js("document.querySelector('#stage').textContent.trim()")))
+            fit = await T.js("""(()=>{const el=document.getElementById('pText'), c=el.parentElement;
+              const cs=getComputedStyle(c); const pw=(parseFloat(cs.paddingLeft)||0)+(parseFloat(cs.paddingRight)||0),
+                    ph=(parseFloat(cs.paddingTop)||0)+(parseFloat(cs.paddingBottom)||0);
+              return {overW: el.scrollWidth>(c.clientWidth-pw-4)+2, overH: el.scrollHeight>(c.clientHeight-ph-40)+2,
+                      fs: +getComputedStyle(el).fontSize.replace('px','')};})()""")
+            check("大字唔超出卡片", not fit["overW"] and not fit["overH"], str(fit))
 
             print("\n[6] 時間到 → 落閘 → 結算卡")
             await T.wait("G && G.phase==='interstitial'", 12, "回合結束")

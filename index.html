@@ -1768,9 +1768,12 @@ function fitWord(text){
   const padW=(parseFloat(cs.paddingLeft)||0)+(parseFloat(cs.paddingRight)||0);
   const padH=(parseFloat(cs.paddingTop)||0)+(parseFloat(cs.paddingBottom)||0);
   // 用真正可用寬度（扣 padding），否則手機直向會算出過大、文字被切
-  const boxW=Math.min(el.clientWidth || 9999, card.clientWidth-padW)-4;
+  // ⚠️ 唔可以用 el.clientWidth：#pText 係 flex 子項（shrink-to-fit），clientWidth 等於內容寬，
+  // 自己比自己永遠通過 → 字級只受高度限制，長題目會超出卡片被裁走（睇落似「冇題目」）。
+  const boxW = (card.clientWidth - padW) - 4;
   const boxH=card.clientHeight-padH-40;
-  if(boxW<=40 || boxH<=40) return;
+  if(boxW<=40 || boxH<=40){ el.style.fontSize=""; return; }   // 版面未就緒：清走舊字級，唔留殘影
+  el.style.maxWidth = boxW+"px";
   const fit = (oneLine)=>{
     el.style.whiteSpace = oneLine ? "nowrap" : "normal";
     el.style.wordBreak  = oneLine ? "keep-all" : "break-word";
@@ -1788,6 +1791,23 @@ function fitWord(text){
   if(one < 64) fit(false);          // 一行太細 → 寧願斷行做大
 }
 addEventListener("resize", ()=>{ if(G && G.phase==="running") fitWord($("#pText").textContent); });
+
+/* 卡片本身尺寸變咗（HUD 出現、轉向、Safari 工具列收合）而視窗冇 resize 事件時，
+   字級會停留在上一個版面算出的值而超出卡片 → 題目被裁走。用 ResizeObserver 補一次。 */
+let FITTING = false;
+if("ResizeObserver" in window){
+  const card = $("#pText").parentElement;
+  let lw = card.clientWidth, lh = card.clientHeight;
+  new ResizeObserver(()=>{
+    if(FITTING || !G || G.phase !== "running") return;
+    const w = card.clientWidth, h = card.clientHeight;
+    if(Math.abs(w-lw) < 3 && Math.abs(h-lh) < 3) return;    // 只理真正變形，避免字級變化自己觸發自己
+    lw = w; lh = h;
+    FITTING = true;
+    fitWord($("#pText").textContent);
+    FITTING = false;
+  }).observe(card);
+}
 
 function renderPlay(){
   syncExitLabel();
