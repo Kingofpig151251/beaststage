@@ -2497,17 +2497,12 @@ function mirrorPaint(st){
   }else{
     ready.style.display = "none";
     hud.style.visibility = "hidden";
-    const readyToGo = !!(st.setup && st.setup.step >= st.setup.total);
-    setMirrorWord(readyToGo ? "可以開始" : "等待主持台設定完成");
+    setMirrorWord("等待主持台開始");
     $("#rdRound").textContent = st.setup ? `設定第 ${st.setup.step} / ${st.setup.total} 步` : "";
-    $("#rdTeam").textContent = readyToGo ? "" : "在 iPad 上完成設定";
+    $("#rdTeam").textContent = "在 iPad 上設定";
     $("#rdMark").innerHTML = ""; $("#rdScores").innerHTML = "";
     const b = document.getElementById("btnReady");
-    if(b){
-      b.textContent = "開始遊戲";
-      b.style.display = readyToGo ? "" : "none";
-      b.onclick = ()=> mirrorCmd("start");
-    }
+    if(b) b.style.display = "none";            // 開局唔由手機做
     $("#readyOverlay").style.display = "flex";
   }
 }
