@@ -1872,7 +1872,7 @@ function slamGate(then){
   gate.classList.add("on");
   void gate.offsetWidth;                        // 先讓 display 生效，過場才播得出
   gate.classList.add("closed");
-  [0, 850, 1700].forEach((d,i)=>setTimeout(()=>sfx("whistle", i===2?0.9:0.78), d));  // 球證三吹：短、短、長
+  sfx("whistle", 0.85);                         // 球證哨：落閘即吹（單響，三吹版已否決）
   const HIT  = REDUCE ? 80  : 560;              // 幕合埋（0.46s）之後見字
   const CARD = REDUCE ? 300 : 1250;             // 停一停，轉結算卡
   setTimeout(()=>{ gate.classList.add("text"); }, HIT);
