@@ -2,8 +2,8 @@
 
 一個香港派對遊戲：主持用一部 iPad 控場，對錯由人手拍板——冇語音辨識、冇自動判定。
 
-- 主持台：<https://bigtv.vercel.app>
-- 題目編輯：<https://bigtv.vercel.app/edit>
+- 主持台：<https://beasttv.vercel.app>
+- 題目編輯：<https://beasttv.vercel.app/edit>
 - 原始碼：<https://github.com/Kingofpig151251/beaststage>
 
 ---
