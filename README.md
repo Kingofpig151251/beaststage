@@ -100,6 +100,7 @@ PUT  /api/text      整份取代（開放寫入，/edit 用）
 ```bash
 python3 -m http.server 8899 --bind 0.0.0.0      # 先開預覽
 python3 tests/smoke.py                           # 20 項斷言（首頁→設定→8 隊→一回合→結果頁）
+cd tests && python3 edge.py                      # 13 項邊界（暫停、退出、最短局、跳過 ∞、全員同分）
 ```
 
 用 headless Chrome + CDP；`fetch` 在頁面載入前打樁，**不會碰 production 題庫**。改動前後各跑一次。
