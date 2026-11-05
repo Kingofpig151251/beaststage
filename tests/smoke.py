@@ -162,8 +162,8 @@ async def main(url, shot):
 
             print("\n[7] 繼續 → 下一隊 → 全部打完")
             await T.js("document.getElementById('teNext').click()")
-            await asyncio.sleep(1.2)
-            check("回合索引已前進", (await T.js("G ? G.turn : -1")) >= 1)
+            await _poll(T, "G && G.turn >= 1", 6)          # 輪詢而非固定 sleep，避免過場時間浮動造成 flake
+            check("回合索引已前進", (await T.js("G ? G.turn : -1")) >= 1, f"turn={await T.js('G ? G.turn : -1')}")
             # 逐回合驅動：ready→countdown→running→interstitial→下一隊
             for _ in range(80):
                 ph = await T.js("G ? G.phase : 'none'")
@@ -189,6 +189,7 @@ async def main(url, shot):
             await asyncio.sleep(0.8)
             check("返回主頁有效", (await T.js("document.body.dataset.view")) == "home",
                   str(await T.js("document.body.dataset.view")))
+            check("返回主頁已清空舊局", (await T.js("G === null")) is True, str(await T.js("G && G.phase")))
             check("返回主頁無 JS 例外", (await T.js("window.__err.length")) == 0,
                   str(await T.js("window.__err")))
 

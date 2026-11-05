@@ -2275,7 +2275,11 @@ $("#btnPause").onclick = ()=>{
   renderTimer();
 };
 
-$("#btnBackHome").onclick = ()=>{ stopBgm(); clearReveal(); showView("v-home"); renderHome(); };
+$("#btnBackHome").onclick = ()=>{
+  stopBgm(); clearReveal(); wakeOff();
+  if(G){ clearInterval(G.timerId); G.timerToken++; G = null; }   // 清乾淨舊局，唔留 phase:'done' 殘留
+  showView("v-home"); renderHome();
+};
 
 /* 結果頁：右方向鍵＝跳到冠軍／返回主頁；點畫面亦可快轉 */
 document.addEventListener("keydown", e=>{
