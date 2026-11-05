@@ -433,6 +433,10 @@
   .readyMark svg,.readyMark .mark-img{display:block; width:1em; height:1em; margin:0 auto}
   .readyTeam{font-family:var(--font-display); font-weight:700; font-size:clamp(52px,13vh,140px);
     letter-spacing:-.03em; line-height:1.02; margin:10px 0 16px}
+  /* 鏡像模式（手機）：唔顯示入口與設定，只用遊戲畫面 */
+  body.is-mirror #v-home, body.is-mirror #v-setup{display:none}
+  body.is-mirror .flash-top{justify-content:center}
+  body.is-mirror #btnPause{pointer-events:none}
   .sstep .remote-mini{margin-top:6px; --rm:132px; padding:14px 18px; gap:18px}
   .sstep .remote-mini .rm-txt b{font-size:17px}
   .sstep .remote-mini .rm-txt span{font-size:15px}
@@ -1061,6 +1065,7 @@ let G = null;
 let REMOTE = { ok:false };
 
 const $ = s => document.querySelector(s);
+const MIRROR = (new URLSearchParams(location.search).get("m") || "").trim();   // 有值＝手機鏡像模式
 const $$ = s => Array.from(document.querySelectorAll(s));
 
 function esc(s){ return String(s).replace(/[&<>"']/g, c=>({"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;","'":"&#39;"}[c])); }
@@ -1432,6 +1437,7 @@ function enterReady(){
   document.body.classList.add("is-ready");
   renderPlay();
   syncExitLabel();
+  if(SID) sessionPush();
 }
 
 function hideReady(){
@@ -1667,7 +1673,7 @@ async function sessionStart(){
     SID = d.id; CMD_SEQ = 0;
     document.querySelectorAll("[data-rm-code]").forEach(el=>{ el.textContent = SID; });
     document.querySelectorAll("[data-remote]").forEach(el=>{ el.hidden = false; });
-    drawQR(location.origin + "/remote?s=" + SID);
+    drawQR(location.origin + "/?m=" + SID);        // 手機開同一個畫面（鏡像模式）
     sessionPoll();
     clearInterval(PUSH_TIMER); PUSH_TIMER = setInterval(sessionPush, 1000);
     sessionPush();
@@ -1731,11 +1737,15 @@ async function sessionPush(){
   const t = G && curTeam();
   const state = G ? {
     phase: G.phase,
-    turn: G.turn,
+    turn: G.turn, rounds: G.rounds,
     remaining: Math.max(0, Math.round(G.remaining || 0)),
-    allowSkip: G.allowSkip,
-    skipLeft: G.skipLeft, skipCap: G.skipCap,
+    allowSkip: G.allowSkip, skipLeft: G.skipLeft, skipCap: G.skipCap,
+    skipPenalty: G.skipPenalty, foulPenalty: G.foulPenalty,
+    order: G.order,
+    word: G.cur ? G.cur.t : "",
+    teams: G.teams.map(x=>({ id:x.id, name:x.name, color:x.color, score:x.score, ok:x.ok, skip:x.skip, foul:x.foul||0 })),
     team: t ? { id: t.id, name: t.name, color: t.color, score: t.score } : null,
+    settle: G.settle || null,
     label: G.phase === "ready" ? "準備中" : G.phase === "interstitial" ? "本回合結算" : G.phase === "countdown" ? "倒數中" : ""
   } : { phase: "idle" };
   try{
@@ -1765,6 +1775,7 @@ function judge(kind){
   if(delta) fxScore(delta);
   t.score += delta;
   G.judged++;
+  if(SID) sessionPush();          // 鏡像即時跟住轉字
 
   setTimeout(()=>{                          // 三個判定都等文字滑走，再換下一題
     if(!G || G.phase !== "running") return;
@@ -1842,7 +1853,7 @@ function closeTurnEnd(){
   setTimeout(()=>{ gate.classList.remove("on","opening"); }, REDUCE ? 40 : 500);
 }
 
-$("#teNext").onclick = ()=> closeTurnEnd();
+$("#teNext").onclick = ()=> MIRROR ? mirrorCmd("next") : closeTurnEnd();
 
 function endTurn(){
   if(!G) return;
@@ -1855,6 +1866,8 @@ function endTurn(){
   const stats = { ok: team.ok - base.ok, skip: team.skip - base.skip,
                   foul: (team.foul||0) - (base.foul||0), score: team.score - base.score };
   G.phase = "interstitial";
+  G.settle = { id: team.id, name: team.name, color: team.color,
+               ok: stats.ok, skip: stats.skip, foul: stats.foul, score: stats.score };
   slamGate(()=>{
     showTurnEnd(team, stats, ()=>{
       G.turn++;
@@ -2098,8 +2111,8 @@ $("#btnStepBack").onclick = ()=>{
 };
 $("#btnNext").onclick = ()=>{ if(SETUP.i < LAST_STEP) goStep(SETUP.i + 1, 1); else launchGame(); };
 
-$$("[data-judge]").forEach(b=>b.onclick=()=>act(b.dataset.judge));
-$("#btnReady").onclick = startRound;
+$$("[data-judge]").forEach(b=>b.onclick=()=> MIRROR ? mirrorCmd(b.dataset.judge) : act(b.dataset.judge));
+$("#btnReady").onclick = ()=> MIRROR ? mirrorCmd("ready") : startRound();
 
 /* 規則開關 */
 function syncRules(){
@@ -2276,9 +2289,136 @@ document.addEventListener("pointerdown", e=>{
   sfx("tap", 0.5);
 }, true);
 
+/* ---------- 鏡像模式：手機顯示同一套畫面，唔另做一套 ---------- */
+let MR = null, MR_AT = 0, MR_TIMER = 0;
+
+function mirrorCmd(kind){
+  if(!MIRROR) return;
+  fetch("/api/cmd", {
+    method:"POST", headers:{"Content-Type":"application/json"},
+    body: JSON.stringify({id: MIRROR, kind})
+  }).catch(()=>{});
+  if(navigator.vibrate) navigator.vibrate(10);
+}
+
+function mirrorPaint(st){
+  MR = st; MR_AT = Date.now();
+  const phase = st.phase || "idle";
+  const teams = st.teams || [];
+  const turnTeam = st.turn != null && st.order ? teams[st.order[st.turn]] : null;
+
+  document.body.classList.toggle("is-ready", phase === "ready");
+  const ready = $("#readyOverlay");
+  const gate = $("#gate");
+  const hud = $("#hud");
+
+  if(phase === "ready"){
+    if(gate) gate.classList.remove("on","closed","settle","text");
+    ready.style.display = "flex";
+    $("#rdRound").textContent = `第 ${(st.turn||0)+1} 回合，共 ${st.rounds||0} 回合`;
+    $("#rdMark").innerHTML = turnTeam ? (ICONS[turnTeam.id] || "") : "";
+    $("#rdTeam").textContent = turnTeam ? turnTeam.name : "";
+    $("#rdScores").innerHTML = teams.map((t,i)=>
+      `<div class="score-tile${st.order && i===st.order[st.turn] ? " cur" : ""}" style="--tc:${t.color}">
+         <em class="pill-mark">${ICONS[t.id] || ""}</em>
+         <span class="score-name">${esc(t.name)}</span><b>${t.score}</b></div>`).join("");
+    const mini = ready.querySelector(".remote-mini"); if(mini) mini.hidden = true;
+    hud.style.visibility = "hidden";
+    setMirrorWord("");
+  }else if(phase === "running"){
+    ready.style.display = "none";
+    if(gate) gate.classList.remove("on","closed","settle","text");
+    hud.style.visibility = "visible";
+    if(turnTeam){
+      $("#turnChip").style.setProperty("--tc", turnTeam.color);
+      $("#turnMark").innerHTML = ICONS[turnTeam.id] || "";
+      $("#turnName").textContent = turnTeam.name;
+    }
+    setMirrorWord(st.word || "");
+    const sk = $('[data-judge="skip"]');
+    if(sk){
+      const left = st.skipLeft == null ? (st.skipCap || 3) : st.skipLeft;
+      sk.textContent = `跳過 ${left}/${st.skipCap || 3}`;
+      sk.disabled = !st.allowSkip || left <= 0;
+    }
+    const foul = $('[data-judge="foul"]');
+    if(foul) foul.classList.toggle("bad", !!st.foulPenalty);
+    tickMirrorClock();
+  }else if(phase === "interstitial"){
+    ready.style.display = "none";
+    hud.style.visibility = "hidden";
+    const s2 = st.settle || {};
+    if(gate){
+      gate.classList.add("on","closed","settle");
+      $("#teMark").innerHTML = ICONS[s2.id] || "";
+      $("#teName").textContent = s2.name || "";
+      const bits = [`答中 <b>${s2.ok || 0}</b>`];
+      if(s2.foul) bits.push(`犯規 <b>${s2.foul}</b>`);
+      if(st.skipPenalty && s2.skip) bits.push(`跳過 <b>${s2.skip}</b>`);
+      $("#teStats").innerHTML = bits.join(" · ");
+      $("#teScore").innerHTML = `${s2.score > 0 ? "+" : ""}${s2.score || 0}<em>分</em>`;
+      $("#teNext").disabled = false;
+    }
+  }else if(phase === "done"){
+    ready.style.display = "none";
+    if(gate) gate.classList.remove("on","closed","settle","text");
+    hud.style.visibility = "hidden";
+    setMirrorWord("比賽結束");
+  }else{
+    ready.style.display = "none";
+    hud.style.visibility = "hidden";
+    setMirrorWord("等待主持台開始");
+  }
+}
+
+function setMirrorWord(t){
+  const el = $("#pText");
+  if(!el) return;
+  el.textContent = t || "";
+  if(t) fitWord(t);
+}
+
+function tickMirrorClock(){
+  clearInterval(MR_TIMER);
+  const paint = ()=>{
+    if(!MR || MR.phase !== "running") return;
+    const secs = Math.max(0, Math.round(MR.remaining - (Date.now() - MR_AT) / 1000));
+    const c = $("#pClock"); if(c) c.textContent = secs;
+    const rr = $("#ringProg");
+    if(rr){
+      const frac = MR.remaining ? Math.max(0, Math.min(1, secs / MR.remaining)) : 0;
+      rr.style.strokeDasharray = String(CD_CIRC);
+      rr.style.strokeDashoffset = String(CD_CIRC * (1 - frac));
+    }
+  };
+  paint();
+  MR_TIMER = setInterval(paint, 200);
+}
+
+async function mirrorPoll(){
+  try{
+    const r = await fetch(`/api/session?id=${MIRROR}`, {cache:"no-store"});
+    if(r.ok){
+      const d = await r.json();
+      if(d.state && Object.keys(d.state).length) mirrorPaint(d.state);
+    }
+  }catch(e){}
+  setTimeout(mirrorPoll, 260);
+}
+
+function mirrorBoot(){
+  document.body.classList.add("is-mirror");
+  showView("v-play");
+  ["#v-home","#v-setup","#btnExit"].forEach(sel=>{
+    const el = $(sel); if(el) el.style.display = "none";
+  });
+  mirrorPaint({ phase: "idle" });
+  mirrorPoll();
+}
+
 /* ================= 啟動 ================= */
 /* 無法連接時每 15 秒自動重試，無需手動操作 */
-setInterval(()=>{ if(!REMOTE.ok && !G) pullText(); }, 15000);
+setInterval(()=>{ if(!REMOTE.ok && !G && !MIRROR) pullText(); }, 15000);
 
 /* 返回 App 或切換回前景時自動重新載入題目，無需重新開啟 */
 document.addEventListener("visibilitychange", ()=>{
@@ -2290,7 +2430,7 @@ window.addEventListener("focus", ()=>{
 
 document.body.dataset.view = "home";
 renderHome();
-pullText();
+if(MIRROR) mirrorBoot(); else pullText();
 window.__bigtv = { get G(){return G}, get lines(){return lines}, get cfg(){return cfg},
   startGame, startRound, enterReady, judge, endTurn, endGame, renderHome, renderPlay, showView };
 </script>
