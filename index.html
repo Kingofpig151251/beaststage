@@ -1729,7 +1729,7 @@ async function sessionPoll(){
       });
     }
   }catch(e){}
-  if(SID) SID_TIMER = setTimeout(sessionPoll, 260);
+  if(SID) SID_TIMER = setTimeout(sessionPoll, 180);
 }
 
 async function sessionPush(){
@@ -2294,6 +2294,13 @@ let MR = null, MR_AT = 0, MR_TIMER = 0;
 
 function mirrorCmd(kind){
   if(!MIRROR) return;
+  const card = document.querySelector(".question");
+  if(card && (kind === "ok" || kind === "skip" || kind === "foul")){
+    card.classList.remove("fx-ok","fx-skip","fx-bad");
+    void card.offsetWidth;
+    card.classList.add(kind === "ok" ? "fx-ok" : kind === "foul" ? "fx-bad" : "fx-skip");
+    setTimeout(()=>card.classList.remove("fx-ok","fx-skip","fx-bad"), 320);
+  }
   fetch("/api/cmd", {
     method:"POST", headers:{"Content-Type":"application/json"},
     body: JSON.stringify({id: MIRROR, kind})
@@ -2406,7 +2413,7 @@ async function mirrorPoll(){
       setMirrorWord("代碼已失效，請重新掃描 QR");
     }
   }catch(e){}
-  setTimeout(mirrorPoll, 260);
+  setTimeout(mirrorPoll, 180);
 }
 
 function mirrorBoot(){

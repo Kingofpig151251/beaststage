@@ -19,6 +19,7 @@
 import json
 import os
 import secrets
+from contextlib import contextmanager
 from datetime import datetime, timedelta, timezone
 
 import psycopg
@@ -47,14 +48,45 @@ def now():
     return datetime.now(timezone.utc).astimezone().isoformat(timespec="seconds")
 
 
+_CONN = None
+
+
 def conn():
+    """重用同一個 warm 連線：每次新連線要 2 個 TLS round-trip，佔咗大部分延遲。"""
+    global _CONN
     if not DATABASE_URL:
         raise RuntimeError("未設定 DATABASE_URL")
-    return psycopg.connect(DATABASE_URL, row_factory=dict_row, connect_timeout=10)
+    if _CONN is not None:
+        try:
+            if not _CONN.closed:
+                with _CONN.cursor() as cur:
+                    cur.execute("SELECT 1")
+                return _CONN
+        except Exception:
+            try: _CONN.close()
+            except Exception: pass
+        _CONN = None
+    _CONN = psycopg.connect(DATABASE_URL, row_factory=dict_row, connect_timeout=10)
+    return _CONN
+
+
+@contextmanager
+def db():
+    """沿用 conn() 的寫法，但唔會關掉快取連線。"""
+    c = conn()
+    cur = c.cursor()
+    try:
+        yield c, cur
+        c.commit()
+    except Exception:
+        c.rollback()
+        raise
+    finally:
+        cur.close()
 
 
 def ensure_schema():
-    with conn() as c, c.cursor() as cur:
+    with db() as (c, cur):
         cur.execute("CREATE TABLE IF NOT EXISTS meta (key TEXT PRIMARY KEY, value TEXT)")
         cur.execute("""CREATE TABLE IF NOT EXISTS sess (
             id TEXT PRIMARY KEY,
@@ -117,7 +149,7 @@ def read_text(cur):
 @app.get("/api/text")
 def text_get():
     schema()
-    with conn() as c, c.cursor() as cur:
+    with db() as (c, cur):
         text = read_text(cur)
         upd = get_meta(cur, "updated_at")
         title = get_meta(cur, "title") or ""
@@ -138,7 +170,7 @@ async def text_put(request: Request):
         return JSONResponse({"error": "title 要係字串"}, status_code=400)
     if subtitle is not None and not isinstance(subtitle, str):
         return JSONResponse({"error": "subtitle 要係字串"}, status_code=400)
-    with conn() as c, c.cursor() as cur:
+    with db() as (c, cur):
         put_meta(cur, "text", text)
         if title is not None:
             put_meta(cur, "title", title.strip()[:24])
@@ -157,7 +189,7 @@ ALPHABET = "ABCDEFGHJKLMNPQRSTUVWXYZ23456789"   # 無 I/O/0/1，避免讀錯
 def session_new():
     schema()
     sid = "".join(secrets.choice(ALPHABET) for _ in range(6))
-    with conn() as c, c.cursor() as cur:
+    with db() as (c, cur):
         cur.execute("DELETE FROM cmd WHERE ts < now() - interval '2 hours'")
         cur.execute("DELETE FROM sess WHERE touched < now() - interval '2 hours'")
         cur.execute("INSERT INTO sess(id) VALUES(%s)", (sid,))
@@ -169,14 +201,13 @@ def session_get(id: str = "", since: int = 0):
     schema()
     if not id:
         return JSONResponse({"error": "缺少 id"}, status_code=400)
-    with conn() as c, c.cursor() as cur:
+    with db() as (c, cur):
         cur.execute("SELECT state FROM sess WHERE id=%s", (id,))
         row = cur.fetchone()
         if not row:
             return JSONResponse({"error": "session 唔存在或已過期"}, status_code=404)
         cur.execute("SELECT seq, kind FROM cmd WHERE sid=%s AND seq>%s ORDER BY seq", (id, since))
         cmds = [{"seq": r["seq"], "kind": r["kind"]} for r in cur.fetchall()]
-        cur.execute("UPDATE sess SET touched=now() WHERE id=%s", (id,))
     return {"state": row["state"], "cmds": cmds}
 
 
@@ -188,7 +219,7 @@ async def session_cmd(request: Request):
     kind = body.get("kind")
     if not sid or kind not in KINDS:
         return JSONResponse({"error": "id 或 kind 唔合法"}, status_code=400)
-    with conn() as c, c.cursor() as cur:
+    with db() as (c, cur):
         cur.execute("SELECT 1 FROM sess WHERE id=%s", (sid,))
         if not cur.fetchone():
             return JSONResponse({"error": "session 唔存在或已過期"}, status_code=404)
@@ -206,7 +237,7 @@ async def session_state(request: Request):
     state = body.get("state")
     if not sid or not isinstance(state, dict):
         return JSONResponse({"error": "id 或 state 唔合法"}, status_code=400)
-    with conn() as c, c.cursor() as cur:
+    with db() as (c, cur):
         cur.execute("UPDATE sess SET state=%s::jsonb, touched=now() WHERE id=%s",
                     (json.dumps(state, ensure_ascii=False), sid))
         if cur.rowcount == 0:
