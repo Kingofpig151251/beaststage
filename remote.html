@@ -40,7 +40,7 @@
   .grid.judge{grid-template-columns:1fr 1fr; grid-template-rows:1fr 1fr}
   .btn{border:0; border-radius:var(--r); font:inherit; font-weight:700; color:var(--ink);
     background:var(--surface); box-shadow:inset 0 0 0 1px var(--sep);
-    display:grid; place-items:center; gap:4px; padding:8px; touch-action:manipulation;
+    display:grid; place-content:center; justify-items:center; gap:6px; padding:8px; touch-action:manipulation;
     transition:transform .12s var(--ease), background-color .12s}
   .btn small{font-size:12px; font-weight:500; color:var(--ink-3)}
   .btn:active{transform:scale(.97)}
@@ -66,9 +66,9 @@
     <span class="badge" id="mark"></span>
     <span class="who">
       <span class="name" id="team">連線中…</span>
-      <span class="sub" id="score">·</span>
+      <span class="sub" id="score"></span>
     </span>
-    <span class="clock" id="clock">·</span>
+    <span class="clock" id="clock"></span>
   </div>
 
   <div class="grid judge" id="pad"></div>
@@ -93,11 +93,14 @@ function paint(st){
   const t = st.team || {};
   $("#mark").innerHTML = t.id && ICONS[t.id] ? `<img src="${ICONS[t.id]}" alt="">` : "";
   $("#team").textContent = t.name || "·";
-  $("#score").textContent = st.phase === "running"
-    ? `${st.allowSkip === false ? "跳過已關閉 · " : ""}第 ${(st.turn||0)+1} 隊`
-    : (st.label || "");
+  const pts = t.score == null ? "" : `${t.score} 分`;
+  const bits = st.phase === "running"
+    ? [pts, `第 ${(st.turn||0)+1} 隊`]
+    : [st.label, pts];
+  if(st.allowSkip === false) bits.push("跳過已關閉");
+  $("#score").textContent = bits.filter(Boolean).join(" · ");
   const sec = Number(st.remaining);
-  $("#clock").textContent = st.phase === "running" && isFinite(sec) ? Math.max(0, Math.ceil(sec)) : "·";
+  $("#clock").textContent = st.phase === "running" && isFinite(sec) ? Math.max(0, Math.ceil(sec)) : "";
   $("#clock").classList.toggle("warn", st.phase === "running" && sec <= 10);
 
   const pad = $("#pad");
