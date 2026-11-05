@@ -137,6 +137,7 @@ async def text_put(request: Request):
     return {"ok": True, "chars": len(text)}
 
 # ------------------------------------------------------------------ 遙控
+# 全部用單層路徑＋query／body 參數：Vercel 只穩定支援 /api/<one-segment>
 KINDS = {"ok", "skip", "foul", "ready", "next", "exit"}
 ALPHABET = "ABCDEFGHJKLMNPQRSTUVWXYZ23456789"   # 無 I/O/0/1，避免讀錯
 
@@ -152,27 +153,30 @@ def session_new():
     return {"id": sid}
 
 
-@app.get("/api/session/{sid}")
-def session_get(sid: str, since: int = 0):
+@app.get("/api/session")
+def session_get(id: str = "", since: int = 0):
     schema()
+    if not id:
+        return JSONResponse({"error": "缺少 id"}, status_code=400)
     with conn() as c, c.cursor() as cur:
-        cur.execute("SELECT state FROM sess WHERE id=%s", (sid,))
+        cur.execute("SELECT state FROM sess WHERE id=%s", (id,))
         row = cur.fetchone()
         if not row:
             return JSONResponse({"error": "session 唔存在或已過期"}, status_code=404)
-        cur.execute("SELECT seq, kind FROM cmd WHERE sid=%s AND seq>%s ORDER BY seq", (sid, since))
+        cur.execute("SELECT seq, kind FROM cmd WHERE sid=%s AND seq>%s ORDER BY seq", (id, since))
         cmds = [{"seq": r["seq"], "kind": r["kind"]} for r in cur.fetchall()]
-        cur.execute("UPDATE sess SET touched=now() WHERE id=%s", (sid,))
-    return {"state": row["state"], "seq": cmds[-1]["seq"] if cmds else since, "cmds": cmds}
+        cur.execute("UPDATE sess SET touched=now() WHERE id=%s", (id,))
+    return {"state": row["state"], "cmds": cmds}
 
 
-@app.post("/api/session/{sid}/cmd")
-async def session_cmd(sid: str, request: Request):
+@app.post("/api/cmd")
+async def session_cmd(request: Request):
     schema()
     body = await request.json()
+    sid = body.get("id")
     kind = body.get("kind")
-    if kind not in KINDS:
-        return JSONResponse({"error": "kind 唔合法"}, status_code=400)
+    if not sid or kind not in KINDS:
+        return JSONResponse({"error": "id 或 kind 唔合法"}, status_code=400)
     with conn() as c, c.cursor() as cur:
         cur.execute("SELECT 1 FROM sess WHERE id=%s", (sid,))
         if not cur.fetchone():
@@ -183,13 +187,14 @@ async def session_cmd(sid: str, request: Request):
     return {"seq": seq}
 
 
-@app.put("/api/session/{sid}/state")
-async def session_state(sid: str, request: Request):
+@app.put("/api/state")
+async def session_state(request: Request):
     schema()
     body = await request.json()
+    sid = body.get("id")
     state = body.get("state")
-    if not isinstance(state, dict):
-        return JSONResponse({"error": "state 要係物件"}, status_code=400)
+    if not sid or not isinstance(state, dict):
+        return JSONResponse({"error": "id 或 state 唔合法"}, status_code=400)
     with conn() as c, c.cursor() as cur:
         cur.execute("UPDATE sess SET state=%s::jsonb, touched=now() WHERE id=%s",
                     (json.dumps(state, ensure_ascii=False), sid))

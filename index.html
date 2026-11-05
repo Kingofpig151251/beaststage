@@ -1585,7 +1585,7 @@ async function sessionPoll(){
   clearTimeout(SID_TIMER);
   if(!SID) return;
   try{
-    const r = await fetch("/api/session/" + SID + "?since=" + CMD_SEQ, {cache:"no-store"});
+    const r = await fetch("/api/session?id=" + SID + "&since=" + CMD_SEQ, {cache:"no-store"});
     if(r.ok){
       const d = await r.json();
       (d.cmds || []).forEach(c=>{
@@ -1610,9 +1610,9 @@ async function sessionPush(){
     label: G.phase === "ready" ? "準備中" : G.phase === "interstitial" ? "本回合結算" : G.phase === "countdown" ? "倒數中" : ""
   } : { phase: "idle" };
   try{
-    await fetch("/api/session/" + SID + "/state", {
+    await fetch("/api/state", {
       method:"PUT", headers:{"Content-Type":"application/json"},
-      body: JSON.stringify({state})
+      body: JSON.stringify({id: SID, state})
     });
   }catch(e){}
 }

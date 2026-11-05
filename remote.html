@@ -131,9 +131,9 @@ async function send(kind){
   busy = Date.now() + 220;
   if(navigator.vibrate) navigator.vibrate(12);
   try{
-    await fetch(`/api/session/${SID}/cmd`, {
+    await fetch("/api/cmd", {
       method:"POST", headers:{"Content-Type":"application/json"},
-      body: JSON.stringify({kind})
+      body: JSON.stringify({id: SID, kind})
     });
   }catch(e){}
 }
@@ -146,7 +146,7 @@ $("#pad").addEventListener("click", e=>{
 async function tick(){
   if(!SID){ $("#splash").textContent = "缺少連線代碼，請重新掃描主持台的 QR 條碼"; return; }
   try{
-    const r = await fetch(`/api/session/${SID}?since=${seq}`, {cache:"no-store"});
+    const r = await fetch(`/api/session?id=${SID}&since=${seq}`, {cache:"no-store"});
     if(!r.ok) throw new Error("bad");
     const d = await r.json();
     fail = 0;
