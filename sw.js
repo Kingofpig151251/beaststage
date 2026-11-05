@@ -8,7 +8,7 @@ const CACHE = "beast-v1";
 const SHELL = [
   "/", "/edit",
   "/manifest.json",
-  "/icon-192.png", "/icon-512.png", "/apple-touch-icon.png",
+  "/icon-192.png", "/icon-512.png", "/apple-touch-icon.png", "/favicon.ico",
   "/art/team/turtle.webp", "/art/team/fox.webp", "/art/team/whale.webp", "/art/team/octopus.webp",
   "/art/team/bee.webp", "/art/team/flamingo.webp", "/art/team/dolphin.webp", "/art/team/bear.webp",
   "/sfx/dingdong.mp3", "/sfx/whoosh.mp3", "/sfx/countdown.mp3", "/sfx/whistle.mp3",
