@@ -76,7 +76,7 @@
     animation:beastFloat var(--d,8s) ease-in-out calc(var(--i,0s) + .5s) infinite alternate}
   .beast .sway{display:block; transform:rotate(var(--r,0deg));
     animation:beastSway var(--d,8s) ease-in-out calc(var(--i,0s) + .5s) infinite alternate}
-  .beast img{display:block; width:100%; height:auto;
+  .beast img{display:block; width:100%; height:auto; aspect-ratio:1;
     animation:rise .62s .06s var(--ease) both}   /* 與標題同一條 rise、同一個延遲，唔再係貼圖先彈出 */
   @keyframes beastSway{
     from{transform:rotate(calc(var(--r,0deg) - 3.5deg))}
@@ -105,6 +105,8 @@
     .beast:nth-child(2){left:92%; top:9%; --k:.96}
   }
   .landing-main{display:flex; flex-direction:column; align-items:center}
+  html.brand-pending .landing-title,
+  html.brand-pending .landing-sub{visibility:hidden}   /* 等品牌到手先露，避免閃預設名 */
   .landing-title{margin:14px 0 0; font-family:var(--font-display); font-weight:700;
     font-size:clamp(76px,16vh,168px); letter-spacing:-.045em; line-height:.98; text-wrap:balance;
     animation:rise .62s .06s var(--ease) both}
@@ -728,7 +730,7 @@
       <h1 class="landing-title">百獸台</h1>
       <p class="landing-sub">派對猜詞主持台</p>
       <button class="btn-primary landing-go" id="btnEnter">開始</button>
-      <a class="landing-link" id="btnEditHome" href="/edit">編輯題目</a>
+      <a class="landing-link" id="btnEditHome" href="/edit">設定</a>
       </div>
       <div class="landing-beasts" aria-hidden="true">
         <span class="beast" style="--x:13%;--y:15%;--xl:9%;--yl:22%;--k:1.00;--r:-9deg;--d:7.4s;--i:.00s"><span class="sway"><img src="/art/team/turtle.webp" alt=""></span></span>
@@ -1084,7 +1086,18 @@ function shuffle(a){ for(let i=a.length-1;i>0;i--){ const j=Math.floor(Math.rand
 
 /* ================= 品牌（可由 /edit 自訂） ================= */
 const BRAND = { title: "百獸台", sub: "派對猜詞主持台" };
-function applyBrand(title, sub){
+const BRAND_KEY = "beastbrand.v1";
+
+/* 開頁即用上次的品牌（冇快取就暫時收埋標題，避免先閃「百獸台」再變） */
+(function(){
+  let c = null;
+  try{ c = JSON.parse(localStorage.getItem(BRAND_KEY) || "null"); }catch(e){}
+  if(c && c.t){ applyBrand(c.t, c.s, false); }
+  else{ document.documentElement.classList.add("brand-pending"); }
+  setTimeout(()=>document.documentElement.classList.remove("brand-pending"), 1400);
+})();
+
+function applyBrand(title, sub, save){
   const h = document.querySelector(".landing-title");
   const p = document.querySelector(".landing-sub");
   if(!h || !p) return;
@@ -1094,6 +1107,8 @@ function applyBrand(title, sub){
   p.textContent = s;
   h.dataset.len = t.length > 8 ? "long" : (t.length > 5 ? "mid" : "");
   document.title = s ? `${t} · ${s}` : t;
+  document.documentElement.classList.remove("brand-pending");
+  if(save){ try{ localStorage.setItem(BRAND_KEY, JSON.stringify({ t, s })); }catch(e){} }
 }
 
 /* ================= 後端 ================= */
@@ -1103,10 +1118,14 @@ async function pullText(){
     if(!r.ok) throw new Error("bad status");
     const d = await r.json();
     lines = parseText(d.text);
-    applyBrand(d.title, d.subtitle);
+    applyBrand(d.title, d.subtitle, true);
     REMOTE.ok = true;
     renderHome();
-  }catch(e){ REMOTE.ok = false; renderHome(); }
+  }catch(e){
+    REMOTE.ok = false;
+    document.documentElement.classList.remove("brand-pending");   // 離線都用預設，唔好一路收埋
+    renderHome();
+  }
 }
 
 /* ================= VFX ================= */
@@ -1617,9 +1636,9 @@ function fmtScore(v){ return (v < 0 ? "−" : "+") + Math.abs(v); }
 /* 統計文字：對 N · 跳過 M · 犯規 K（跳過關閉時不顯示） */
 function statLine(t, bold){
   const b = v => bold ? `<b>${v}</b>` : `${v}`;
-  const parts = [`對 ${b(t.ok)}`];
-  if(!G || G.allowSkip) parts.push(`跳過 ${b(t.skip || 0)}/${G ? G.skipCap : SKIP_CAP}`);
-  parts.push(`犯規 ${b(t.foul || 0)}`);
+  const parts = [`答中 ${b(t.ok || 0)}`];
+  if(t.foul) parts.push(`犯規 ${b(t.foul)}`);                       // 有犯規才提，解釋扣分
+  if(G && G.skipPenalty && t.skip) parts.push(`跳過 ${b(t.skip)}`);  // 跳過扣分時才提
   return parts.join(" · ");
 }
 
