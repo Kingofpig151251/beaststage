@@ -105,7 +105,8 @@ function paint(st){
   $("#clock").classList.toggle("warn", st.phase === "running" && sec <= 10);
 
   const pad = $("#pad");
-  const skips = st.skipLeft == null ? 3 : Math.max(0, st.skipLeft);
+  const cap = st.skipCap || 3;
+  const skips = st.skipLeft == null ? cap : Math.max(0, st.skipLeft);
   const key = st.phase + "|" + skips;
   if(pad.dataset.key === key) return;
   pad.dataset.key = key;
@@ -114,7 +115,7 @@ function paint(st){
     pad.className = "grid judge";
     pad.innerHTML = `
       <button class="btn foul" data-k="foul"><span class="big">犯規</span><small>← 向左</small></button>
-      <button class="btn" data-k="skip" ${skips <= 0 ? "disabled" : ""}><span class="big">跳過</span><small>剩 ${skips} 次</small></button>
+      <button class="btn" data-k="skip" ${skips <= 0 ? "disabled" : ""}><span class="big">跳過</span><small>剩 ${skips}/${cap}</small></button>
       <button class="btn ok" data-k="ok"><span class="big">正確</span><small>→ 向右</small></button>`;
   }else if(st.phase === "ready"){
     pad.className = "grid";

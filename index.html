@@ -273,6 +273,15 @@
     background:var(--fill); color:var(--ink); font-size:clamp(24px,3.2vh,32px); font-weight:400;
     display:grid; place-items:center; line-height:1}
   .round-btn:active{background:var(--fill-2)}
+  .sstep-hint + .sstep-hint{margin-top:2px; text-wrap:pretty}
+  .mini-step{display:flex; align-items:center; justify-content:center; gap:10px; margin:14px 0 6px}
+  .mini-step.tight{gap:6px; margin:0}
+  .mini-label{font-size:15px; color:var(--ink-2)}
+  .mini-step input{width:2ch; min-height:0; padding:0; background:transparent; border:0; text-align:center;
+    font-family:var(--font-display); font-size:28px; font-weight:700; font-variant-numeric:tabular-nums}
+  .mini-step input::-webkit-outer-spin-button,.mini-step input::-webkit-inner-spin-button{-webkit-appearance:none; margin:0}
+  .mini-step input:focus-visible{outline:2px solid var(--focus-ring); outline-offset:4px; border-radius:8px}
+  .round-btn.sm{width:40px; height:40px; font-size:24px}
   .round-btn:disabled{background:var(--fill-3); color:var(--ink-3); cursor:not-allowed; transform:none}
 
   /* 秒數 chips（第三步） */
@@ -749,7 +758,15 @@
           <input id="teamInput" type="number" inputmode="numeric" min="2" max="8" step="1" value="2" aria-label="隊伍數量">
           <button class="round-btn" id="teamPlus" aria-label="增加一隊">+</button>
         </div>
+        <div class="mini-step">
+          <span class="mini-label">每隊出場</span>
+          <button class="round-btn sm" id="rpMinus" aria-label="減少回合">−</button>
+          <input id="rpInput" type="number" inputmode="numeric" min="1" max="5" step="1" value="2" aria-label="每隊回合數">
+          <button class="round-btn sm" id="rpPlus" aria-label="增加回合">+</button>
+          <span class="mini-label">回合</span>
+        </div>
         <div class="sstep-hint">最少 2 隊，最多 8 隊</div>
+        <div class="sstep-hint" id="roundSum">4 隊 × 2 回合 = 共 8 回合</div>
       </section>
 
       <section class="sstep" data-step="1">
@@ -777,6 +794,14 @@
           <div class="rule" id="ruleSkip">
             <div class="rule-txt"><b>可以跳過</b><span>主持可按「↓ 跳過」直接換下一題</span></div>
             <button class="switch" id="swSkip" role="switch" aria-checked="true" aria-label="可以跳過"><i></i></button>
+          </div>
+          <div class="rule" id="ruleSkipCap">
+            <div class="rule-txt"><b>每回合可跳</b><span>用完之後不能再跳</span></div>
+            <div class="mini-step tight">
+              <button class="round-btn sm" id="scMinus" aria-label="減少可跳次數">−</button>
+              <input id="scInput" type="number" inputmode="numeric" min="1" max="10" step="1" value="3" aria-label="每回合可跳次數">
+              <button class="round-btn sm" id="scPlus" aria-label="增加可跳次數">+</button>
+            </div>
           </div>
           <div class="rule" id="ruleSkipPen">
             <div class="rule-txt"><b>跳過扣 1 分</b><span>每跳過一題，該隊扣一分</span></div>
@@ -968,11 +993,15 @@ let cfg  = Object.assign({
   sec:90,
   allowSkip:true,      // 可否跳過
   skipPenalty:false,   // 跳過扣 1 分
-  foulPenalty:true     // 犯規扣 1 分（預設開，符合賽例）
+  foulPenalty:true,    // 犯規扣 1 分（預設開，符合賽例）
+  roundsPer:2,         // 每隊出場回合數
+  skipCap:3            // 每回合最多跳幾條
 }, store.get(K_CFG, K_CFG_OLD.reduce((acc,k)=>acc || store.get(k, null), null) || {}));
 cfg.allowSkip = cfg.allowSkip !== false;
 cfg.skipPenalty = !!cfg.skipPenalty;
 cfg.foulPenalty = !!cfg.foulPenalty;
+cfg.roundsPer = Math.max(1, Math.min(5, Math.round(+cfg.roundsPer || 2)));
+cfg.skipCap = Math.max(1, Math.min(10, Math.round(+cfg.skipCap || 3)));
 
 cfg.teams = Math.max(2, Math.min(8, Math.round(+cfg.teams || 2)));
 if(!Array.isArray(cfg.names)) cfg.names = ANIMALS.slice(0,8).map(a=>a.name);
@@ -1101,6 +1130,14 @@ function renderSetup(){
   $("#teamInput").value = cfg.teams;
   $("#teamMinus").disabled = cfg.teams <= 2;
   $("#teamPlus").disabled  = cfg.teams >= 8;
+  const rp = $("#rpInput");
+  if(rp){
+    rp.value = cfg.roundsPer;
+    $("#rpMinus").disabled = cfg.roundsPer <= 1;
+    $("#rpPlus").disabled  = cfg.roundsPer >= 5;
+  }
+  const sum = $("#roundSum");
+  if(sum) sum.textContent = `${cfg.teams} 隊 × ${cfg.roundsPer} 回合 = 共 ${cfg.teams * cfg.roundsPer} 回合`;
 
   $("#nameList").innerHTML = Array.from({length:cfg.teams},(_,i)=>{
     const a = animalAt(i);
@@ -1273,13 +1310,13 @@ function startGame(){
   if(!pool.length){ toast("題目尚未載入"); return; }
 
   const order = [];                                  // 每隊出場 2 次：A B C D → A B C D
-  for(let r = 0; r < 2; r++) for(let i = 0; i < names.length; i++) order.push(i);
+  for(let r = 0; r < cfg.roundsPer; r++) for(let i = 0; i < names.length; i++) order.push(i);
   G = {
     sec: Math.max(5, Number(cfg.sec)||90),
     teams: names.map((n,i)=>({name:n, id:looks[i].id, color:looks[i].color, score:0, ok:0, skip:0, foul:0})),
     allowSkip: cfg.allowSkip, skipPenalty: cfg.skipPenalty, foulPenalty: cfg.foulPenalty,
     order, rounds: order.length,                 // turn = 第幾回合，隊伍 = order[turn]
-    turn:0, skipLeft: SKIP_CAP,
+    turn:0, skipCap: cfg.skipCap, skipLeft: cfg.skipCap,
     pool: shuffle(pool.slice()), used: [], cur:null,
     judged:0, paused:false, remaining:0, timerId:null, timerToken:0,
     phase:"ready"
@@ -1302,8 +1339,9 @@ const curTeam = ()=> G.teams[G.order[G.turn]];
 function syncSkipBtn(){
   const b = document.querySelector('[data-judge="skip"]');
   if(!b) return;
-  const left = G ? Math.max(0, G.skipLeft) : SKIP_CAP;
-  b.textContent = `跳過 ${left}/${SKIP_CAP}`;
+  const cap = G ? G.skipCap : SKIP_CAP;
+  const left = G ? Math.max(0, G.skipLeft) : cap;
+  b.textContent = `跳過 ${left}/${cap}`;
   b.disabled = !G || !G.allowSkip || left <= 0;
   b.setAttribute("aria-label", `跳過，剩 ${left} 次`);
   b.setAttribute("title", `跳過（↓）剩 ${left} 次`);
@@ -1468,7 +1506,7 @@ function beginRunning(){
   if(!G) return;                       // 倒數期間被退出
   G.phase = "running";
   const t0 = curTeam();
-  G.skipLeft = SKIP_CAP; syncSkipBtn();
+  G.skipLeft = G.skipCap; syncSkipBtn();
   G.base = { ok: t0.ok, skip: t0.skip, foul: t0.foul||0, score: t0.score };   // 回合起點，用嚟算本回合成績
   G.cur = drawItem();
   G.remaining = G.sec;
@@ -1555,7 +1593,7 @@ function fmtScore(v){ return (v < 0 ? "−" : "+") + Math.abs(v); }
 function statLine(t, bold){
   const b = v => bold ? `<b>${v}</b>` : `${v}`;
   const parts = [`對 ${b(t.ok)}`];
-  if(!G || G.allowSkip) parts.push(`跳過 ${b(t.skip || 0)}/${SKIP_CAP}`);
+  if(!G || G.allowSkip) parts.push(`跳過 ${b(t.skip || 0)}/${G ? G.skipCap : SKIP_CAP}`);
   parts.push(`犯規 ${b(t.foul || 0)}`);
   return parts.join(" · ");
 }
@@ -1641,7 +1679,7 @@ async function sessionPush(){
     turn: G.turn,
     remaining: Math.max(0, Math.round(G.remaining || 0)),
     allowSkip: G.allowSkip,
-    skipLeft: G.skipLeft,
+    skipLeft: G.skipLeft, skipCap: G.skipCap,
     team: t ? { id: t.id, name: t.name, color: t.color, score: t.score } : null,
     label: G.phase === "ready" ? "準備中" : G.phase === "interstitial" ? "本回合結算" : G.phase === "countdown" ? "倒數中" : ""
   } : { phase: "idle" };
@@ -1973,6 +2011,22 @@ function setTeams(n){
 $("#teamInput").onchange = e=> setTeams(e.target.value);
 $("#teamMinus").onclick = ()=> setTeams(cfg.teams - 1);
 $("#teamPlus").onclick  = ()=> setTeams(cfg.teams + 1);
+function setRounds(n){
+  cfg.roundsPer = Math.max(1, Math.min(5, Math.round(+n || 2)));
+  saveCfg(); renderSetup();
+}
+$("#rpInput").onchange = e=> setRounds(e.target.value);
+$("#rpMinus").onclick  = ()=> setRounds(cfg.roundsPer - 1);
+$("#rpPlus").onclick   = ()=> setRounds(cfg.roundsPer + 1);
+
+function setSkipCap(n){
+  cfg.skipCap = Math.max(1, Math.min(10, Math.round(+n || 3)));
+  saveCfg(); syncRules();
+}
+$("#scInput").onchange = e=> setSkipCap(e.target.value);
+$("#scMinus").onclick  = ()=> setSkipCap(cfg.skipCap - 1);
+$("#scPlus").onclick   = ()=> setSkipCap(cfg.skipCap + 1);
+
 $("#secInput").onchange  = e=>{ cfg.sec=Math.max(5,Math.min(600,+e.target.value||60)); saveCfg(); renderSetup(); };
 $$("#secChips button").forEach(b=>b.onclick = ()=>{
   cfg.sec = +b.dataset.sec; saveCfg(); renderSetup();
@@ -2000,6 +2054,13 @@ function syncRules(){
   const row = $("#ruleSkipPen");
   row.classList.toggle("off", !cfg.allowSkip);
   $("#swSkipPen").disabled = !cfg.allowSkip;
+  const cap = $("#scInput");
+  if(cap){
+    cap.value = cfg.skipCap;
+    $("#scMinus").disabled = cfg.skipCap <= 1;
+    $("#scPlus").disabled  = cfg.skipCap >= 10;
+    $("#ruleSkipCap").classList.toggle("off", !cfg.allowSkip);
+  }
 }
 $("#swSkip").onclick = ()=>{
   cfg.allowSkip = !cfg.allowSkip;
