@@ -73,9 +73,9 @@
   .beast{position:absolute; left:var(--x); top:var(--y);
     width:calc(var(--k,1) * clamp(54px, 8.6vmin, 112px));
     transform:translate(-50%,-50%) rotate(var(--r,0deg));
-    animation:beastFloat var(--d,8s) ease-in-out calc(var(--i,0s) + .5s) infinite alternate}
+    animation:beastFloat var(--d,8s) ease-in-out calc(var(--i,0s) + .5s) infinite alternate backwards}
   .beast .sway{display:block; transform:rotate(var(--r,0deg));
-    animation:beastSway var(--d,8s) ease-in-out calc(var(--i,0s) + .5s) infinite alternate}
+    animation:beastSway var(--d,8s) ease-in-out calc(var(--i,0s) + .5s) infinite alternate backwards}
   .beast img{display:block; width:100%; height:auto; aspect-ratio:1;
     animation:rise .62s .06s var(--ease) both}   /* 與標題同一條 rise、同一個延遲，唔再係貼圖先彈出 */
   @keyframes beastSway{
