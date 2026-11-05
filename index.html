@@ -202,8 +202,6 @@
     background:var(--sheet-veil); padding:0 16px calc(16px + env(safe-area-inset-bottom))}
   .sheet-wrap.on{display:grid}
   .sheet-note{margin:0; font-size:15px; color:var(--ink-2); line-height:1.5}
-  .sheet-btn.primary{background:var(--blue); color:var(--on-accent)}
-  .sheet-steps{margin:0 0 18px; padding-left:20px; color:var(--ink-2); font-size:14px; line-height:1.7}
   .sheet-actions{display:flex; gap:12px}
   .sheet-btn{flex:1 1 0; min-height:50px; border:0; border-radius:var(--r-lg); font:inherit;
     font-size:17px; font-weight:600; background:var(--fill); color:var(--ink); cursor:pointer}
@@ -780,11 +778,7 @@
             <div class="rule-txt"><b>犯規扣 1 分</b><span>每犯規一次，該隊扣一分</span></div>
             <button class="switch" id="swFoulPen" role="switch" aria-checked="false" aria-label="犯規扣分"><i></i></button>
           </div>
-          <div class="rule" id="ruleTilt">
-            <div class="rule-txt"><b>體感操作</b><span>傾斜 iPad：向左犯規、向下跳過、向右正確（預設關閉）</span></div>
-            <button class="switch" id="swTilt" role="switch" aria-checked="false" aria-label="體感操作"><i></i></button>
-          </div>
-        </div>
+
       </section>
 
     </div>
@@ -892,22 +886,6 @@
   </div>
 </div>
 
-<div class="sheet-wrap" id="tiltSheet" role="dialog" aria-modal="true" aria-labelledby="tiltTitle">
-  <div class="sheet-card">
-    <div class="sheet-title" id="tiltTitle">體感權限未開啟</div>
-    <p class="sheet-note" id="tiltNote">請在 Safari 開啟「動作與方向存取」，然後重新載入此頁。</p>
-    <ol class="sheet-steps" id="tiltSteps">
-      <li>設定 → Safari → 動作與方向存取 → 開啟</li>
-      <li>回到此頁，重新載入</li>
-      <li>再開一次「體感操作」</li>
-    </ol>
-    <div class="sheet-actions">
-      <button class="sheet-btn" id="tiltClose">知道了</button>
-      <button class="sheet-btn primary" id="tiltRetry">再試一次</button>
-    </div>
-  </div>
-</div>
-
 <div class="sheet-wrap" id="animalSheet" role="dialog" aria-modal="true" aria-label="選擇隊色">
   <div class="sheet-card">
     <div class="sheet-title">選擇動物與隊色</div>
@@ -978,13 +956,11 @@ let cfg  = Object.assign({
   sec:60,
   allowSkip:true,      // 可否跳過
   skipPenalty:false,   // 跳過扣 1 分
-  foulPenalty:false,   // 犯規扣 1 分
-  tilt:false           // 體感操作（陀螺儀）
+  foulPenalty:false    // 犯規扣 1 分
 }, store.get(K_CFG, K_CFG_OLD.reduce((acc,k)=>acc || store.get(k, null), null) || {}));
 cfg.allowSkip = cfg.allowSkip !== false;
 cfg.skipPenalty = !!cfg.skipPenalty;
 cfg.foulPenalty = !!cfg.foulPenalty;
-cfg.tilt = !!cfg.tilt;
 
 cfg.teams = Math.max(2, Math.min(8, Math.round(+cfg.teams || 2)));
 if(!Array.isArray(cfg.names)) cfg.names = ANIMALS.slice(0,8).map(a=>a.name);
@@ -1450,7 +1426,6 @@ function beginRunning(){
   G.cur = drawItem();
   G.remaining = G.sec;
   G.endsAt = Date.now() + G.sec * 1000;
-  TILT.base = null; TILT.since = 0; TILT.cool = 0; TILT.armed = true;   // 每回合重新對準
   startTimer();
   renderPlay();
 }
@@ -1551,97 +1526,6 @@ function act(name){
   setTimeout(()=>{ if(G) G.locked = false; }, 190);
   judge(name);
   return true;
-}
-
-/* ---------- 體感（陀螺儀）：傾斜 iPad 判定 ---------- */
-const TILT = { on:false, base:null, since:0, cool:0, gotEvent:false, armed:true };
-const TILT_DEG = 18, TILT_HOLD = 150, TILT_COOL = 600;
-
-function tiltSupported(){ return typeof DeviceOrientationEvent !== "undefined"; }
-
-function tiltSheet(reason){
-  const note = $("#tiltNote"), steps = $("#tiltSteps");
-  if(reason === "unsupported"){
-    note.textContent = "此瀏覽器沒有提供體感資料，請改用 Safari 開啟本頁。";
-    steps.style.display = "none";
-  }else{
-    note.textContent = "Safari 未授權動作與方向存取，開啟後重新載入此頁再試。";
-    steps.style.display = "";
-  }
-  $("#tiltSheet").classList.add("on");
-}
-function closeTiltSheet(){ $("#tiltSheet").classList.remove("on"); }
-
-async function tiltOn(){
-  if(!tiltSupported()){ tiltSheet("unsupported"); return false; }
-  if(typeof DeviceOrientationEvent.requestPermission === "function"){
-    let p = "denied";
-    try{ p = await DeviceOrientationEvent.requestPermission(); }
-    catch(e){ p = "denied"; }
-    if(p !== "granted"){ tiltSheet("denied"); return false; }
-  }
-  if(!TILT.on){ window.addEventListener("deviceorientation", onTilt); TILT.on = true; }
-  TILT.base = null; TILT.since = 0; TILT.cool = 0; TILT.gotEvent = false;
-  // 收不到事件＝瀏覽器有 API 但唔供資料（常見於 App 內建瀏覽器）
-  setTimeout(()=>{
-    if(TILT.on && !TILT.gotEvent) toast("收不到體感資料，請確認瀏覽器支援動作感測");
-  }, 6000);
-  return true;
-}
-function tiltOff(){
-  if(TILT.on){ window.removeEventListener("deviceorientation", onTilt); TILT.on = false; }
-  TILT.base = null; TILT.since = 0;
-}
-
-function screenAngle(){
-  const o = (typeof screen !== "undefined") ? screen.orientation : null;
-  if(o && typeof o.angle === "number") return o.angle;
-  if(typeof window.orientation === "number") return ((window.orientation % 360) + 360) % 360;
-  return 0;
-}
-
-function onTilt(e){
-  if(!TILT.on) return;
-  TILT.gotEvent = true;
-  if(!G || G.phase !== "running") return;
-  const { beta, gamma } = e;
-  if(beta == null || gamma == null) return;
-  if(!TILT.base){ TILT.base = { beta, gamma, angle: screenAngle() }; return; }   // 以第一幀為中位
-  const now = performance.now();
-  if(now < TILT.cool) return;
-  if(TILT.base.angle !== screenAngle()){ TILT.base = { beta, gamma, angle: screenAngle() }; return; }  // 轉向即重新對準
-  const db = beta - TILT.base.beta, dg = gamma - TILT.base.gamma;
-  // 把 device 軸旋轉到螢幕座標：橫屏時左右／前後軸會對調
-  const a = screenAngle() * Math.PI / 180;
-  const sx =  dg * Math.cos(a) + db * Math.sin(a);
-  const sy = -dg * Math.sin(a) + db * Math.cos(a);
-  // 未回正前唔接受新指令：避免「傾斜觸發後回正」被當成相反方向
-  if(!TILT.armed){
-    if(Math.abs(sx) < TILT_DEG * 0.45 && Math.abs(sy) < TILT_DEG * 0.45) TILT.armed = true;
-    return;
-  }
-  // 靜止時慢速跟隨，抵消長時間漂移
-  if(Math.abs(sx) < 6 && Math.abs(sy) < 6 && Math.abs(db) < 6 && Math.abs(dg) < 6){
-    TILT.base.beta  += db * 0.05;
-    TILT.base.gamma += dg * 0.05;
-  }
-  let dir = null;
-  if(Math.abs(sx) >= TILT_DEG) dir = sx > 0 ? "ok" : "foul";   // 螢幕右＝正確、左＝犯規
-  else if(sy >= TILT_DEG) dir = "skip";                        // 螢幕向下（前傾）＝跳過
-  if(!dir){ TILT.since = 0; return; }
-  if(!TILT.since) TILT.since = now;
-  if(now - TILT.since < TILT_HOLD) return;                     // 要維持 150ms 才算
-  TILT.since = 0; TILT.cool = now + TILT_COOL;
-  TILT.armed = false;                                           // 要回正（<8°）才再接受指令
-  tiltFlash(dir);
-  act(dir);
-}
-
-function tiltFlash(dir){
-  const b = document.querySelector(`[data-judge="${dir}"]`);
-  if(!b) return;
-  b.classList.add("tilt-hit");
-  setTimeout(()=>b.classList.remove("tilt-hit"), 260);
 }
 
 function judge(kind){
@@ -1976,8 +1860,6 @@ $("#btnReady").onclick = startRound;
 
 /* 規則開關 */
 function syncRules(){
-  const t = $("#swTilt");
-  if(t) t.setAttribute("aria-checked", String(!!cfg.tilt));
   $("#swSkip").setAttribute("aria-checked", String(cfg.allowSkip));
   $("#swSkipPen").setAttribute("aria-checked", String(cfg.skipPenalty));
   $("#swFoulPen").setAttribute("aria-checked", String(cfg.foulPenalty));
@@ -1992,15 +1874,7 @@ $("#swSkip").onclick = ()=>{
 };
 $("#swSkipPen").onclick = ()=>{ if(!cfg.allowSkip) return; cfg.skipPenalty = !cfg.skipPenalty; saveCfg(); syncRules(); };
 $("#swFoulPen").onclick = ()=>{ cfg.foulPenalty = !cfg.foulPenalty; saveCfg(); syncRules(); };
-$("#tiltClose").onclick = closeTiltSheet;
-$("#tiltRetry").onclick = async ()=>{ closeTiltSheet(); const ok = await tiltOn(); cfg.tilt = ok; saveCfg(); syncRules(); };
-$("#tiltSheet").addEventListener("click", e=>{ if(e.target.id === "tiltSheet") closeTiltSheet(); });
 
-$("#swTilt").onclick = async ()=>{
-  if(cfg.tilt){ cfg.tilt = false; tiltOff(); saveCfg(); syncRules(); return; }
-  const ok = await tiltOn();          // iOS 一定要喺手勢內申請權限
-  cfg.tilt = ok; saveCfg(); syncRules();
-};
 syncRules();
 function isPristine(){
   return !!G && (G.phase === "ready" || G.phase === "countdown") && G.turn === 0 && !G.judged
@@ -2155,7 +2029,6 @@ setInterval(()=>{ if(!REMOTE.ok && !G) pullText(); }, 15000);
 document.addEventListener("visibilitychange", ()=>{
   if(!document.hidden && !G && document.body.dataset.view === "home") pullText();
 });
-window.addEventListener("orientationchange", ()=>{ TILT.base = null; TILT.since = 0; });
 window.addEventListener("focus", ()=>{
   if(!G && document.body.dataset.view === "home") pullText();
 });
