@@ -57,6 +57,18 @@
   .state.bad{color:var(--red)} .state.bad::before{background:var(--red)}
   @keyframes pulse{0%,100%{opacity:.35} 50%{opacity:1}}
 
+  /* ---------- 品牌卡 ---------- */
+  .brand{flex:none; display:grid; grid-template-columns:1fr 1fr; gap:12px}
+  .field{display:flex; flex-direction:column; gap:6px; min-width:0;
+    background:var(--surface); border-radius:var(--r-lg); padding:12px 14px;
+    box-shadow:inset 0 0 0 1px var(--sep)}
+  .field span{font-size:13px; color:var(--ink-2)}
+  .field input{border:0; outline:0; background:transparent; color:var(--ink);
+    font-family:var(--font); font-size:17px; font-weight:600; padding:0; min-width:0}
+  .field input::placeholder{color:var(--ink-3); font-weight:400}
+  .field:focus-within{box-shadow:inset 0 0 0 2px var(--focus-ring)}
+  @media (max-width:520px){ .brand{grid-template-columns:1fr} }
+
   /* ---------- 編輯卡 ---------- */
   .sheet{flex:1; min-height:0; display:flex; flex-direction:column; overflow:hidden;
     background:var(--surface); border-radius:var(--r-xl);
@@ -95,10 +107,23 @@
       <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M14.5 5 7.5 12l7 7"/></svg>
     </a>
     <div class="titles">
-      <h1>題目</h1>
-      <p class="sub">一行一題，改完自動儲存</p>
+      <h1>題目與品牌</h1>
+      <p class="sub">改完自動儲存</p>
     </div>
     <span class="state" id="state"></span>
+  </div>
+
+  <div class="brand">
+    <label class="field">
+      <span>標題</span>
+      <input id="brandTitle" type="text" maxlength="24" placeholder="百獸台"
+        autocomplete="off" spellcheck="false">
+    </label>
+    <label class="field">
+      <span>副標題</span>
+      <input id="brandSub" type="text" maxlength="36" placeholder="派對猜詞主持台"
+        autocomplete="off" spellcheck="false">
+    </label>
   </div>
 
   <div class="sheet">
@@ -116,6 +141,7 @@
 "use strict";
 const $ = s => document.querySelector(s);
 let saveTimer = null, lastSaved = "";
+const sig = () => [$("#text").value, $("#brandTitle").value.trim(), $("#brandSub").value.trim()].join("\u0000");
 
 let stateTimer = null;
 function setState(kind, text, autoHide){
@@ -140,7 +166,9 @@ async function load(){
     if(!r.ok) throw new Error("bad");
     const d = await r.json();
     $("#text").value = d.text || "";
-    lastSaved = $("#text").value;
+    $("#brandTitle").value = d.title || "";
+    $("#brandSub").value = d.subtitle || "";
+    lastSaved = sig();
     paintMeta();
     setState("", "");                       // 連上就唔顯示任何狀態
   }catch(e){
@@ -150,16 +178,19 @@ async function load(){
 
 async function save(){
   clearTimeout(saveTimer);
-  const text = $("#text").value;
-  if(text === lastSaved){ setState("", ""); return; }   // 改完又改返一樣 → 唔使存，狀態亦要收走
+  if(sig() === lastSaved){ setState("", ""); return; }   // 改完又改返一樣 → 唔使存，狀態亦要收走
   setState("busy", "儲存中…");
   try{
     const r = await fetch("/api/text", {
       method: "PUT", headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({ text })
+      body: JSON.stringify({
+        text: $("#text").value,
+        title: $("#brandTitle").value.trim(),
+        subtitle: $("#brandSub").value.trim()
+      })
     });
     if(!r.ok) throw new Error("put");
-    lastSaved = text;
+    lastSaved = sig();
     setState("ok", "已儲存", true);          // 顯示 1.4 秒後自動消失
   }catch(e){
     setState("bad", "儲存失敗，稍後重試");
@@ -172,20 +203,25 @@ function scheduleSave(){
 }
 
 $("#text").oninput = () => { paintMeta(); scheduleSave(); };
+$("#brandTitle").oninput = scheduleSave;
+$("#brandSub").oninput = scheduleSave;
 window.addEventListener("beforeunload", e => {
-  if($("#text").value !== lastSaved){ e.preventDefault(); e.returnValue = ""; }
+  if(sig() !== lastSaved){ e.preventDefault(); e.returnValue = ""; }
 });
 
 /* 斷線自動重試；同時接收其他人的修改（有未儲存內容時不覆蓋） */
 async function poll(){
-  if($("#text").value !== lastSaved) return;
+  if(sig() !== lastSaved) return;
   try{
     const r = await fetch("/api/text", { cache: "no-store" });
     if(!r.ok) throw new Error("bad");
     const d = await r.json();
-    if((d.text || "") === lastSaved){ setState("", ""); return; }
+    if((d.text || "") === $("#text").value && (d.title || "") === $("#brandTitle").value
+       && (d.subtitle || "") === $("#brandSub").value){ setState("", ""); return; }
     $("#text").value = d.text || "";
-    lastSaved = $("#text").value;
+    $("#brandTitle").value = d.title || "";
+    $("#brandSub").value = d.subtitle || "";
+    lastSaved = sig();
     paintMeta();
     setState("ok", "已更新", true);
   }catch(e){

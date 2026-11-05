@@ -105,9 +105,12 @@
   }
   .landing-main{display:flex; flex-direction:column; align-items:center}
   .landing-title{margin:14px 0 0; font-family:var(--font-display); font-weight:700;
-    font-size:clamp(76px,16vh,168px); letter-spacing:-.045em; line-height:.98;
+    font-size:clamp(76px,16vh,168px); letter-spacing:-.045em; line-height:.98; text-wrap:balance;
     animation:rise .62s .06s var(--ease) both}
   @media (max-width:560px){ .landing-title{font-size:clamp(58px, 26vw, 116px); letter-spacing:-.03em} }
+  .landing-title[data-len="mid"]{font-size:clamp(52px, 11vh, 118px); letter-spacing:-.035em}
+  .landing-title[data-len="long"]{font-size:clamp(38px, 7.4vh, 82px); letter-spacing:-.025em; line-height:1.06}
+  @media (max-width:560px){ .landing-title[data-len="long"]{font-size:clamp(30px, 9.4vw, 46px); letter-spacing:-.02em} }
   .landing-sub{margin:clamp(12px,1.9vh,18px) 0 0; font-size:clamp(17px,2.5vh,22px);
     font-weight:500; color:var(--ink-2); letter-spacing:.02em;
     animation:rise .62s .12s var(--ease) both}
@@ -959,13 +962,13 @@ const teamName = i => (cfg.custom && cfg.custom[i] && cfg.names[i])
   ? cfg.names[i] : animalAt(i).name;
 
 let cfg  = Object.assign({
-  teams:2,
+  teams:4,
   names:ANIMALS.slice(0,8).map(a=>a.name),
   animals:ANIMALS.map(a=>a.id),
-  sec:60,
+  sec:90,
   allowSkip:true,      // 可否跳過
   skipPenalty:false,   // 跳過扣 1 分
-  foulPenalty:false    // 犯規扣 1 分
+  foulPenalty:true     // 犯規扣 1 分（預設開，符合賽例）
 }, store.get(K_CFG, K_CFG_OLD.reduce((acc,k)=>acc || store.get(k, null), null) || {}));
 cfg.allowSkip = cfg.allowSkip !== false;
 cfg.skipPenalty = !!cfg.skipPenalty;
@@ -1027,6 +1030,20 @@ function toast(msg){
 }
 function shuffle(a){ for(let i=a.length-1;i>0;i--){ const j=Math.floor(Math.random()*(i+1)); [a[i],a[j]]=[a[j],a[i]]; } return a; }
 
+/* ================= 品牌（可由 /edit 自訂） ================= */
+const BRAND = { title: "百獸台", sub: "派對猜詞主持台" };
+function applyBrand(title, sub){
+  const h = document.querySelector(".landing-title");
+  const p = document.querySelector(".landing-sub");
+  if(!h || !p) return;
+  const t = String(title || "").trim() || BRAND.title;
+  const s = String(sub || "").trim() || BRAND.sub;
+  h.textContent = t;
+  p.textContent = s;
+  h.dataset.len = t.length > 8 ? "long" : (t.length > 5 ? "mid" : "");
+  document.title = s ? `${t} · ${s}` : t;
+}
+
 /* ================= 後端 ================= */
 async function pullText(){
   try{
@@ -1034,6 +1051,7 @@ async function pullText(){
     if(!r.ok) throw new Error("bad status");
     const d = await r.json();
     lines = parseText(d.text);
+    applyBrand(d.title, d.subtitle);
     REMOTE.ok = true;
     renderHome();
   }catch(e){ REMOTE.ok = false; renderHome(); }
@@ -1254,11 +1272,14 @@ function startGame(){
   const pool = lines.map(t=>({ t }));
   if(!pool.length){ toast("題目尚未載入"); return; }
 
+  const order = [];                                  // 每隊出場 2 次：A B C D → A B C D
+  for(let r = 0; r < 2; r++) for(let i = 0; i < names.length; i++) order.push(i);
   G = {
-    sec: Math.max(5, Number(cfg.sec)||60),
+    sec: Math.max(5, Number(cfg.sec)||90),
     teams: names.map((n,i)=>({name:n, id:looks[i].id, color:looks[i].color, score:0, ok:0, skip:0, foul:0})),
     allowSkip: cfg.allowSkip, skipPenalty: cfg.skipPenalty, foulPenalty: cfg.foulPenalty,
-    turn:0,
+    order, rounds: order.length,                 // turn = 第幾回合，隊伍 = order[turn]
+    turn:0, skipLeft: SKIP_CAP,
     pool: shuffle(pool.slice()), used: [], cur:null,
     judged:0, paused:false, remaining:0, timerId:null, timerToken:0,
     phase:"ready"
@@ -1270,7 +1291,22 @@ function startGame(){
     hud.classList.toggle("bad-foul", cfg.foulPenalty);
   }
   showView("v-play");
+  syncSkipBtn();
   enterReady();
+}
+
+const SKIP_CAP = 3;                                  // 每回合最多跳 3 條
+const curTeam = ()=> G.teams[G.order[G.turn]];
+
+/* 跳過掣顯示剩餘次數；用完即變灰 */
+function syncSkipBtn(){
+  const b = document.querySelector('[data-judge="skip"]');
+  if(!b) return;
+  const left = G ? Math.max(0, G.skipLeft) : SKIP_CAP;
+  b.textContent = `跳過 ${left}/${SKIP_CAP}`;
+  b.disabled = !G || !G.allowSkip || left <= 0;
+  b.setAttribute("aria-label", `跳過，剩 ${left} 次`);
+  b.setAttribute("title", `跳過（↓）剩 ${left} 次`);
 }
 
 /* 每隊出場前先停頓：不計時、不出題，待隊伍準備完成 */
@@ -1290,14 +1326,14 @@ function enterReady(){
   G.remaining = G.sec;
   G.paused = false;
   setPauseIcon(false);
-  $("#rdRound").textContent = `第 ${G.turn+1} 隊，共 ${G.teams.length} 隊`;
-  const cur = G.teams[G.turn];
+  $("#rdRound").textContent = `第 ${G.turn+1} 回合，共 ${G.rounds} 回合`;
+  const cur = curTeam();
   $("#rdMark").innerHTML = ICONS[cur.id] || "";
   $("#rdTeam").textContent = cur.name;
   $("#rdTeam").style.setProperty("--tc", cur.color);
   $("#readyOverlay").style.setProperty("--tc", cur.color);
   $("#rdScores").innerHTML = G.teams.map((t,i)=>
-    `<div class="score-tile${i===G.turn?" cur":""}" style="--tc:${t.color}">
+    `<div class="score-tile${i===G.order[G.turn]?" cur":""}" style="--tc:${t.color}">
        <em class="pill-mark">${ICONS[t.id] || ""}</em>
        <span class="score-name">${esc(t.name)}</span>
        <b>${t.score}</b></div>`).join("");
@@ -1396,7 +1432,7 @@ function startRound(){
   clearInterval(CD_TIMER);
   G.phase = "countdown";
   $("#btnReady").style.display = "none";
-  const t = G.teams[G.turn];
+  const t = curTeam();
   const box = $("#countdown"), num = $("#cdNum"), prog = $("#cdProg"), team = $("#cdTeam");
   box.style.setProperty("--tc", t.color);
   team.innerHTML = `<span class="cd-mark">${ICONS[t.id] || ""}</span><span>${esc(t.name)}</span>`;
@@ -1431,7 +1467,8 @@ function startRound(){
 function beginRunning(){
   if(!G) return;                       // 倒數期間被退出
   G.phase = "running";
-  const t0 = G.teams[G.turn];
+  const t0 = curTeam();
+  G.skipLeft = SKIP_CAP; syncSkipBtn();
   G.base = { ok: t0.ok, skip: t0.skip, foul: t0.foul||0, score: t0.score };   // 回合起點，用嚟算本回合成績
   G.cur = drawItem();
   G.remaining = G.sec;
@@ -1500,7 +1537,7 @@ function renderPlay(){
   syncExitLabel();
   const chip = $("#turnChip");
   if(chip && G){
-    const t = G.teams[G.turn];
+    const t = curTeam();
     chip.style.setProperty("--tc", t.color);
     $("#turnMark").innerHTML = ICONS[t.id] || "";
     $("#turnName").textContent = t.name;
@@ -1518,7 +1555,7 @@ function fmtScore(v){ return (v < 0 ? "−" : "+") + Math.abs(v); }
 function statLine(t, bold){
   const b = v => bold ? `<b>${v}</b>` : `${v}`;
   const parts = [`對 ${b(t.ok)}`];
-  if(!G || G.allowSkip) parts.push(`跳過 ${b(t.skip || 0)}`);
+  if(!G || G.allowSkip) parts.push(`跳過 ${b(t.skip || 0)}/${SKIP_CAP}`);
   parts.push(`犯規 ${b(t.foul || 0)}`);
   return parts.join(" · ");
 }
@@ -1598,12 +1635,13 @@ async function sessionPoll(){
 
 async function sessionPush(){
   if(!SID) return;
-  const t = G && G.teams[G.turn];
+  const t = G && curTeam();
   const state = G ? {
     phase: G.phase,
     turn: G.turn,
     remaining: Math.max(0, Math.round(G.remaining || 0)),
     allowSkip: G.allowSkip,
+    skipLeft: G.skipLeft,
     team: t ? { id: t.id, name: t.name, color: t.color, score: t.score } : null,
     label: G.phase === "ready" ? "準備中" : G.phase === "interstitial" ? "本回合結算" : G.phase === "countdown" ? "倒數中" : ""
   } : { phase: "idle" };
@@ -1625,11 +1663,11 @@ function act(name){
 }
 
 function judge(kind){
-  if(kind === "skip" && !G.allowSkip) return;
-  const t = G.teams[G.turn];
+  if(kind === "skip" && (!G.allowSkip || G.skipLeft <= 0)) return;
+  const t = curTeam();
   let delta = 0;
   if(kind === "ok"){ t.ok++; delta = 1; fxOk(); sfx("ding"); }
-  else if(kind === "skip"){ t.skip++; if(G.skipPenalty) delta = -1; fxSkipDown(); sfx("whoosh", 0.75); }
+  else if(kind === "skip"){ t.skip++; G.skipLeft--; syncSkipBtn(); if(G.skipPenalty) delta = -1; fxSkipDown(); sfx("whoosh", 0.75); }
   else { t.foul++; if(G.foulPenalty) delta = -1; fxFoul(G.foulPenalty); sfx("snare", 0.45); }
   if(delta) fxScore(delta);
   t.score += delta;
@@ -1719,7 +1757,7 @@ function endTurn(){
   if(G.phase === "interstitial") return;
   clearInterval(G.timerId);
   G.timerToken++;
-  const team = G.teams[G.turn];
+  const team = curTeam();
   const base = G.base || { ok:0, skip:0, foul:0, score:0 };
   const stats = { ok: team.ok - base.ok, skip: team.skip - base.skip,
                   foul: (team.foul||0) - (base.foul||0), score: team.score - base.score };
@@ -1727,7 +1765,7 @@ function endTurn(){
   slamGate(()=>{
     showTurnEnd(team, stats, ()=>{
       G.turn++;
-      if(G.turn >= G.teams.length){ endGame(); return; }
+      if(G.turn >= G.rounds){ endGame(); return; }
       enterReady();
     });
   });

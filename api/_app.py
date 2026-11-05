@@ -3,8 +3,8 @@
 ------------------------------------------------------------------
 題目就係一段純文字，冇分類、冇組合、冇 token。
 
-  GET  /api/text   → {"text": "...", "updated_at": "..."}
-  PUT  /api/text   → 整份取代（無快照、無歷史）
+  GET  /api/text   → {"text": "...", "title": "...", "subtitle": "...", "updated_at": "..."}
+  PUT  /api/text   → 整份取代（無快照、無歷史）；title／subtitle 可選
 
 遙控（第二部裝置做主持）
   POST /api/session            → {"id": "ABC123"}
@@ -120,7 +120,9 @@ def text_get():
     with conn() as c, c.cursor() as cur:
         text = read_text(cur)
         upd = get_meta(cur, "updated_at")
-    return {"text": text, "updated_at": upd}
+        title = get_meta(cur, "title") or ""
+        subtitle = get_meta(cur, "subtitle") or ""
+    return {"text": text, "title": title, "subtitle": subtitle, "updated_at": upd}
 
 
 @app.put("/api/text")
@@ -131,8 +133,17 @@ async def text_put(request: Request):
     if not isinstance(text, str):
         return JSONResponse({"error": "text 要係字串"}, status_code=400)
     text = text.replace("\r\n", "\n").replace("\r", "\n")[:200000]
+    title, subtitle = body.get("title"), body.get("subtitle")
+    if title is not None and not isinstance(title, str):
+        return JSONResponse({"error": "title 要係字串"}, status_code=400)
+    if subtitle is not None and not isinstance(subtitle, str):
+        return JSONResponse({"error": "subtitle 要係字串"}, status_code=400)
     with conn() as c, c.cursor() as cur:
         put_meta(cur, "text", text)
+        if title is not None:
+            put_meta(cur, "title", title.strip()[:24])
+        if subtitle is not None:
+            put_meta(cur, "subtitle", subtitle.strip()[:36])
         put_meta(cur, "updated_at", now())
     return {"ok": True, "chars": len(text)}
 
