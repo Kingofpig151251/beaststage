@@ -1601,15 +1601,22 @@ const SFX_SRC = { ding: "/sfx/dingdong.mp3", whoosh: "/sfx/whoosh.mp3",
                    tap: "/sfx/tap.mp3" };
 const SFX = {};
 let SFX_LOADING = false;
-async function loadSfx(){
-  const c = audioCtx(); if(!c || SFX_LOADING) return;
+/* 分層載入：頁面一開就備好判定用的四聲（26KB），其餘等第一次觸碰才拉。
+   全部一次過拉會令第一下按掣冇聲——loadSfx 同 pointerdown 同時開始，buffer 未 decode 完。 */
+const SFX_CORE = ["tap","ding","whoosh","tick"];
+const SFX_REST = ["countdown","whistle","settle","champion","drums","snare"];
+async function loadSfx(keys){
+  const c = audioCtx(); if(!c || !keys) return;
+  const todo = keys.filter(k => !SFX[k]);
+  if(!todo.length) return;
   SFX_LOADING = true;
-  await Promise.all(Object.entries(SFX_SRC).map(async ([k, url])=>{
+  await Promise.all(todo.map(async (k)=>{
     try{
-      const r = await fetch(url, {cache:"force-cache"});
+      const r = await fetch(SFX_SRC[k], {cache:"force-cache"});
       SFX[k] = await c.decodeAudioData(await r.arrayBuffer());
     }catch(e){ /* 音檔拿不到就靜靜留空，唔影響流程 */ }
   }));
+  SFX_LOADING = false;
 }
 function sfx(name, vol=0.85, rate=1){
   const c = audioCtx(), buf = SFX[name];
@@ -1654,8 +1661,9 @@ document.addEventListener("visibilitychange", ()=>{
   if(c && c.state === "suspended") c.resume();
   if(!BGM) startBgm();
 });
-document.addEventListener("pointerdown", loadSfx, {once:true});
-document.addEventListener("keydown", loadSfx, {once:true});
+loadSfx(SFX_CORE);                                    // 判定四聲即刻備好（唔需要手勢都 decode 得）
+document.addEventListener("pointerdown", ()=>loadSfx(SFX_REST), {once:true});
+document.addEventListener("keydown", ()=>loadSfx(SFX_REST), {once:true});
 
 /* 按「準備好」→ 獨立倒數過場（3、2、1、開始）→ 出題兼起錶 */
 const REDUCE = window.matchMedia("(prefers-reduced-motion: reduce)").matches;
