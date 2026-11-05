@@ -1359,7 +1359,7 @@ function launchGame(){
 /* ================= 遊戲流程 ================= */
 function startGame(){
   stopBgm();
-  sessionStop(); sessionStart();
+  if(!SID) sessionStart();        // 沿用設定第一步已經配對嘅 session，唔好換新代碼
   if(G){ clearInterval(G.timerId); G.timerToken++; }   // 清除上一局殘留的計時器
   const names = Array.from({length:cfg.teams},(_,i)=> teamName(i));
   const looks = Array.from({length:cfg.teams},(_,i)=>{ const a = animalAt(i); return { id:a.id, color:a.color }; });
@@ -2401,6 +2401,9 @@ async function mirrorPoll(){
     if(r.ok){
       const d = await r.json();
       if(d.state && Object.keys(d.state).length) mirrorPaint(d.state);
+      else setMirrorWord("等待主持台開始");
+    }else if(r.status === 404){
+      setMirrorWord("代碼已失效，請重新掃描 QR");
     }
   }catch(e){}
   setTimeout(mirrorPoll, 260);
