@@ -76,7 +76,8 @@
     animation:beastFloat var(--d,8s) ease-in-out calc(var(--i,0s) + .5s) infinite alternate}
   .beast .sway{display:block; transform:rotate(var(--r,0deg));
     animation:beastSway var(--d,8s) ease-in-out calc(var(--i,0s) + .5s) infinite alternate}
-  .beast img{display:block; width:100%; height:auto}
+  .beast img{display:block; width:100%; height:auto;
+    animation:rise .62s .06s var(--ease) both}   /* 與標題同一條 rise、同一個延遲，唔再係貼圖先彈出 */
   @keyframes beastSway{
     from{transform:rotate(calc(var(--r,0deg) - 3.5deg))}
     to{transform:rotate(calc(var(--r,0deg) + 3.5deg))}}
