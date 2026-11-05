@@ -4,7 +4,7 @@
    - 圖片、音效：cache-first（檔名不變、內容少變）
    - /api/*：唔攔，永遠直上網絡（題庫唯一真相源在雲端）
 */
-const CACHE = "beast-v1";
+const CACHE = "beast-v2";
 const SHELL = [
   "/", "/edit",
   "/manifest.json",
@@ -13,7 +13,7 @@ const SHELL = [
   "/art/team/bee.webp", "/art/team/flamingo.webp", "/art/team/dolphin.webp", "/art/team/bear.webp",
   "/sfx/dingdong.mp3", "/sfx/whoosh.mp3", "/sfx/countdown.mp3", "/sfx/whistle.mp3",
   "/sfx/settle.mp3", "/sfx/champion.mp3", "/sfx/tick.mp3", "/sfx/drums.mp3",
-  "/sfx/snare.mp3", "/sfx/tap.mp3"
+  "/sfx/snare.mp3", "/sfx/tap.mp3", "/sfx/hb.mp3"
 ];
 
 self.addEventListener("install", e => {

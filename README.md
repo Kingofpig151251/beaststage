@@ -138,7 +138,7 @@ cd tests && python3 edge.py                      # 13 項邊界（暫停、退�
 - 落閘、倒數、結算共用同一套藍幕 `clip-path`／位移語言：幕合 → 幕上出字 → 幕開
 - 音效走「電視節目」路線，全部係真音源檔（**程式內已無合成音**）：
   **對**＝門鐘叮噹（`sfx/dingdong.mp3`）／**跳過**＝子彈飛過（`sfx/whoosh.mp3`）／**犯規**＝短 snare（`sfx/snare.mp3`）／
-  **倒數**＝賽車起步錄音（`sfx/countdown.mp3`）／**時間到**＝球證哨三吹（`sfx/whistle.mp3`）／
+  **倒數**＝賽車起步錄音（`sfx/countdown.mp3`）／**最後 10 秒**＝心跳＋滴答（`sfx/hb.mp3`＋`sfx/tick.mp3`）／**時間到**＝球證哨單響（`sfx/whistle.mp3`）／
   **結算卡**＝銅管 fanfare（`sfx/settle.mp3`，2.9s）／**冠軍**＝Celebration 背景音樂（`sfx/champion.mp3`，16.7s 無縫 loop）
 - 倒數錄音三個起音正好在 0／1／2 秒、GO 在 3 秒，同畫面每拍 1 秒天生對齊，所以整段照播、不逐拍發聲
 - 十個 mp3 合共約 **300KB**，`index.html` 大小不變；第一次觸控時用 `decodeAudioData` 一次過預載，之後播放零延遲
@@ -155,10 +155,11 @@ sfx/dingdong.mp3           判定「對」：門鐘叮噹
 sfx/whoosh.mp3             判定「跳過」：子彈飛過
 sfx/snare.mp3（同時用於犯規判定與冠軍揭曉重擊）
 sfx/countdown.mp3          倒數 3／2／1＋開始（真實賽車起步錄音）
-sfx/whistle.mp3            時間到：球證哨三吹
+sfx/whistle.mp3            時間到：球證哨單響
 sfx/settle.mp3             結算卡：銅管 fanfare（2.9s）
 sfx/champion.mp3           冠軍揭曉：Celebration loop（16.7s）
-sfx/tick.mp3               結果頁每行揭曉時的一下短音
+sfx/tick.mp3               結果頁每行揭曉的一下短音；亦疊在最後 10 秒的心跳上
+sfx/hb.mp3                 最後 10 秒的心跳（真人 61 BPM 錄音，剪一下 lub-dub，0.85s）
 sfx/tap.mp3                通用按鍵音（介面 chrome 用）
 sfx/drums.mp3              冠軍前 build-up 的密集鼓聲（可加速）
 sfx/snare.mp3              鼓停、冠軍揭曉的一下重擊
@@ -210,6 +211,8 @@ samples/hk-icebreaker.json 首次 seed 題庫
 - **判定音效**：`sfx/dingdong.mp3` 來自 Wikimedia Commons《Doorbell-cheap-dingdong》（Public domain）。
   `sfx/whoosh.mp3` 為本項目自行合成（掃頻噪音），無第三方素材。
 - **倒數音效**：`sfx/countdown.mp3` 來自 OpenGameArt《race start countdown》（CC0 1.0）。
+- **滴答音效**：`sfx/tick.mp3` 取自 Wikimedia Commons《Clock ticking》（pdsounds.org，public domain），只做裁剪、正規化與淡出。
+- **心跳音效**：`sfx/hb.mp3` 取自 Wikimedia Commons《Human heart beating at 61 bpm》（CC BY 3.0，原錄音 Benboncan／Freesound），只做裁剪與正規化。
 - **時間到哨子**：`sfx/whistle.mp3` 由 SpliceSound 裁判哨（CC0）剪成三吹。
 - **結算 fanfare**：`sfx/settle.mp3` 來自 OpenGameArt《Classic fanfare lick》（CC0 1.0）。
 - **結果頁鼓聲**：`sfx/drums.mp3` 為 OpenGameArt《Horde War Drums》（William Hector，CC0 1.0）節錄；

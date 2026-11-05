@@ -1594,7 +1594,7 @@ function audioCtx(){
   return AC;
 }
 /* 音檔：判定用真音源（門鐘／子彈），其餘場合仍用合成音 */
-const SFX_SRC = { ding: "/sfx/dingdong.mp3", whoosh: "/sfx/whoosh.mp3",
+const SFX_SRC = { ding: "/sfx/dingdong.mp3", whoosh: "/sfx/whoosh.mp3", heart: "/sfx/hb.mp3",
                    countdown: "/sfx/countdown.mp3", whistle: "/sfx/whistle.mp3",
                    settle: "/sfx/settle.mp3", champion: "/sfx/champion.mp3",
                    tick: "/sfx/tick.mp3", drums: "/sfx/drums.mp3", snare: "/sfx/snare.mp3",
@@ -1604,7 +1604,7 @@ let SFX_LOADING = false;
 /* 分層載入：頁面一開就備好判定用的四聲（26KB），其餘等第一次觸碰才拉。
    全部一次過拉會令第一下按掣冇聲——loadSfx 同 pointerdown 同時開始，buffer 未 decode 完。 */
 const SFX_CORE = ["tap","ding","whoosh","tick"];
-const SFX_REST = ["countdown","whistle","settle","champion","drums","snare"];
+const SFX_REST = ["countdown","whistle","settle","champion","drums","snare","heart"];
 async function loadSfx(keys){
   const c = audioCtx(); if(!c || !keys) return;
   const todo = keys.filter(k => !SFX[k]);
@@ -1740,8 +1740,9 @@ function startTimer(){
     const secLeft = Math.ceil(G.remaining);
     if(secLeft !== G.tickAt && secLeft <= 10 && secLeft > 0){
       G.tickAt = secLeft;
-      if(secLeft <= 3) sfx("tick", 0.9, 1.28);                     // 最後三秒：更急、更高
-      else sfx("tick", 0.42 + (10 - secLeft) * 0.045, 1);          // 由 10 秒起，越近越響
+      const v = 0.42 + (10 - secLeft) * 0.0533;                   // 10 秒 0.42 → 1 秒 0.90
+      sfx("heart", v);                                            // 心跳每拍
+      sfx("tick", v * 0.55);                                      // 滴答疊在心跳上
     }
     if(G.remaining <= 0){ clearInterval(id); endTurn(); }
   },100);
