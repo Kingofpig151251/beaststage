@@ -659,6 +659,25 @@
   }
   /* 極矮（手機橫向）：規則只留標題，四行一次過睇得完 */
   @media (max-height:420px){
+    .rank{display:grid; grid-template-columns:1fr 1fr; gap:2px 10px}
+    .rk .st{display:none}
+    .rk.is-champ .rk-tile{width:34px; height:34px}
+    .rk.is-champ .rk-tile .rk-mark{font-size:20px}
+    #v-result h1{font-size:20px}
+    .res-head{margin-bottom:0}
+    #v-result .result-actions .btn-big{min-height:38px; padding:8px 14px; font-size:14px}
+    .sstep .sstep-hint:nth-of-type(3){display:none}
+    .bignum input{font-size:clamp(38px,10vh,60px)}
+    .bignum{gap:10px}
+    .sstep-hint{font-size:12px; margin-top:2px}
+    .chips{gap:6px}
+    .chips button{min-height:26px; padding:0 9px; font-size:12px}
+    .namegrid{grid-template-columns:repeat(4,1fr); gap:4px}
+    .name-row{grid-template-columns:26px minmax(0,1fr); gap:4px}
+    .animal-btn{width:26px; height:26px}
+    .animal-mark{font-size:14px}
+    .animal-edit{display:none}
+    .name-row input{min-height:24px; padding:1px 5px; font-size:12px}
     .sstep{gap:8px}
     .sstep-title{font-size:22px}
     .rules{display:grid; grid-template-columns:1fr 1fr; gap:0 16px; margin-top:0}
@@ -669,6 +688,34 @@
     .rule-txt b{font-size:15px}
     .rule-txt span{display:none}
   }
+  /* 窄機（手機直向）：隊名改兩欄，8 隊一屏睇完，唔需要滾 */
+  @media (max-width:460px){
+    .namegrid{grid-template-columns:1fr 1fr; gap:12px 14px}
+    .name-row{grid-template-columns:44px minmax(0,1fr); gap:8px}
+    .animal-btn{width:44px; height:44px}
+    .animal-mark{font-size:22px}
+    .animal-edit{width:18px; height:18px; padding:3px; right:-1px; bottom:-1px}
+    .name-row input{min-height:48px; padding:10px 12px; font-size:16px}
+    .sstep-title{font-size:clamp(26px,7.4vw,32px)}
+  }
+
+  /* 窄機：結果頁壓縮，8 隊一屏 */
+  @media (max-width:520px){
+    #v-result h1{font-size:clamp(24px,3.6vh,30px)}
+    .rank{gap:1px}
+    .rk{padding:6px 10px; border-radius:12px}
+    .rk-tile{width:34px; height:34px; border-radius:9px}
+    .rk-tile .rk-mark{font-size:18px}
+    .res-hero .big, .res-hero .num{font-size:clamp(28px,5.4vh,40px)}
+    .rk.is-champ{padding:8px 12px}
+    .rk.is-champ .rk-tile{width:40px; height:40px}
+    .rk.is-champ .rk-tile .rk-mark{font-size:24px}
+    .rk .st{display:none}
+    #v-result .result-actions{gap:6px}
+    #v-result .result-actions .btn-big{min-height:44px; padding:10px 16px; font-size:16px}
+    .res-head{margin-bottom:4px}
+  }
+
   /* 矮螢幕（手機橫向、分割視窗）：壓縮首頁，避免內容被切 */
   @media (max-height:420px){
     body{padding:0}
@@ -703,6 +750,42 @@
   @media (prefers-reduced-motion: reduce){
     *,*::before,*::after{animation-duration:.001ms !important; animation-iteration-count:1 !important;
       transition-duration:.001ms !important}
+  }
+
+  /* 手機：任何步驟都唔需要滾動（放最後，蓋過上面所有媒體查詢） */
+  @media (max-width:520px){
+    .rk, .rk.is-champ, .rank.compact .rk.is-champ{padding:4px 9px; border-radius:11px}
+    .rank.compact .rk.is-champ .rk-tile{width:30px; height:30px}
+    .rank.compact .rk.is-champ .nm{font-size:17px}
+    .rank.compact .rk.is-champ .pt{font-size:18px}
+    .rk.is-champ{margin:6px 0 3px}
+    .rank.compact .rk.is-champ .rk-tile .rk-mark{font-size:16px}
+    .rk-tile, .rk.is-champ .rk-tile{width:30px; height:30px; border-radius:8px}
+    .rk-tile .rk-mark, .rk.is-champ .rk-tile .rk-mark{font-size:16px}
+    .rk .st{display:none}
+    #v-result .result-actions .btn-big{min-height:42px; padding:8px 14px; font-size:15px}
+    .res-head{margin-bottom:2px}
+    .rule{padding:10px 4px}
+  }
+  @media (max-height:420px){
+    .namegrid{grid-template-columns:repeat(4,1fr); gap:4px}
+    .name-row{grid-template-columns:24px minmax(0,1fr); gap:4px}
+    .animal-btn{width:24px; height:24px}
+    .animal-mark{font-size:13px}
+    .name-row input{min-height:22px; padding:1px 5px; font-size:12px}
+    .rank{display:grid; grid-template-columns:1fr 1fr; gap:2px 8px}
+    .rk, .rk.is-champ, .rank.compact .rk.is-champ{padding:3px 7px}
+    .rank.compact .rk.is-champ .rk-tile{width:24px; height:24px}
+    .rank.compact .rk.is-champ .nm{font-size:14px}
+    .rank.compact .rk.is-champ .pt{font-size:15px}
+    .rk.is-champ{margin:3px 0 2px}
+    .rk-tile, .rk.is-champ .rk-tile{width:24px; height:24px}
+    .rk-tile .rk-mark, .rk.is-champ .rk-tile .rk-mark{font-size:13px}
+    .rk .st{display:none}
+    #v-result h1{font-size:18px}
+    .res-head{margin-bottom:0}
+    #v-result .result-actions .btn-big{min-height:34px; padding:6px 12px; font-size:13px}
+    .chips button{min-height:26px}
   }
 </style>
 </head>
