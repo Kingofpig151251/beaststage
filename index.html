@@ -518,10 +518,6 @@
   .te-mark svg{display:block; width:1em; height:1em}
   .te-name{font-family:var(--font-display); font-weight:700; font-size:clamp(38px,7.6vh,68px);
     letter-spacing:-.03em; line-height:1.06; color:var(--on-accent)}
-  .te-stats{display:flex; gap:20px; font-size:clamp(15px,2vh,18px);
-    color:color-mix(in oklab, var(--on-accent) 74%, transparent);
-    font-variant-numeric:tabular-nums; letter-spacing:.01em}
-  .te-stats b{color:var(--on-accent); font-weight:600}
   .te-score{font-family:var(--font-display); font-weight:700; color:var(--on-accent);
     font-size:clamp(60px,12vh,112px); line-height:1; letter-spacing:-.04em;
     margin-top:clamp(2px,.4vh,4px); font-variant-numeric:tabular-nums}
@@ -976,7 +972,6 @@
         <div class="te-card" id="teCard">
           <div class="te-mark" id="teMark"></div>
           <div class="te-name" id="teName"></div>
-          <div class="te-stats" id="teStats"></div>
           <div class="te-score" id="teScore"></div>
           <button class="te-next" id="teNext">繼續</button>
         </div>
@@ -1674,6 +1669,7 @@ async function sessionStart(){
     document.querySelectorAll("[data-rm-code]").forEach(el=>{ el.textContent = SID; });
     document.querySelectorAll("[data-remote]").forEach(el=>{ el.hidden = false; });
     drawQR(location.origin + "/?m=" + SID);        // 手機開同一個畫面（鏡像模式）
+    if(!MIRROR) rtcHost();                         // 產生 offer 等手機接
     sessionPoll();
     clearInterval(PUSH_TIMER); PUSH_TIMER = setInterval(sessionPush, 1000);
     sessionPush();
@@ -1681,6 +1677,7 @@ async function sessionStart(){
 }
 
 function sessionStop(){
+  rtcClose(); RTC.offer = ""; RTC.joined = "";
   SID = null;
   clearTimeout(SID_TIMER); clearInterval(PUSH_TIMER);
   document.querySelectorAll("[data-remote]").forEach(el=>{ el.hidden = true; });
@@ -1706,13 +1703,21 @@ function drawQR(url){
   });
 }
 
+function applyCmd(c){
+  const fn = CMD_APPLY[c && c.kind];
+  if(fn) fn(c);
+}
+
 const CMD_APPLY = {
   ok: ()=> G && G.phase === "running" && act("ok"),
   skip: ()=> G && G.phase === "running" && act("skip"),
   foul: ()=> G && G.phase === "running" && act("foul"),
   ready: ()=> G && G.phase === "ready" && startRound(),
   next: ()=> G && G.phase === "interstitial" && closeTurnEnd(),
-  exit: ()=> G && askExit()
+  exit: ()=> G && askExit(),
+  sdp: (c)=>{ const a = c && c.data && c.data.answer;
+              if(a && RTC.pc) RTC.pc.setRemoteDescription({type:"answer", sdp:a}).catch(()=>{}); },
+  "need-offer": ()=>{ if(!RTC.on) rtcHost(); }
 };
 
 async function sessionPoll(){
@@ -1724,18 +1729,16 @@ async function sessionPoll(){
       const d = await r.json();
       (d.cmds || []).forEach(c=>{
         CMD_SEQ = Math.max(CMD_SEQ, c.seq);
-        const fn = CMD_APPLY[c.kind];
-        if(fn) fn();
+        applyCmd(c);
       });
     }
   }catch(e){}
   if(SID) SID_TIMER = setTimeout(sessionPoll, 180);
 }
 
-async function sessionPush(){
-  if(!SID) return;
+function buildState(){
   const t = G && curTeam();
-  const state = G ? {
+  const st = G ? {
     phase: G.phase,
     turn: G.turn, rounds: G.rounds,
     remaining: Math.max(0, Math.round(G.remaining || 0)),
@@ -1748,6 +1751,14 @@ async function sessionPush(){
     settle: G.settle || null,
     label: G.phase === "ready" ? "準備中" : G.phase === "interstitial" ? "本回合結算" : G.phase === "countdown" ? "倒數中" : ""
   } : { phase: "idle" };
+  st.rtc = (!RTC.on && RTC.offer) ? { offer: RTC.offer } : null;
+  return st;
+}
+
+async function sessionPush(){
+  if(!SID) return;
+  const state = buildState();
+  sendDC({ t:"state", s: state });            // 直連即刻送
   try{
     await fetch("/api/state", {
       method:"PUT", headers:{"Content-Type":"application/json"},
@@ -1818,10 +1829,9 @@ function slamGate(then){
 function showTurnEnd(team, stats, done){
   clearTimeout(TE_TIMER); clearInterval(TE_IV);
   TE_FINISH = done;
-  const mark = $("#teMark"), name = $("#teName"), st = $("#teStats"), sc = $("#teScore");
+  const mark = $("#teMark"), name = $("#teName"), sc = $("#teScore");
   mark.innerHTML = ICONS[team.id] || "";
   name.textContent = team.name;
-  st.innerHTML = statLine(stats, true);
   sc.classList.toggle("zero", stats.score === 0);
   const target = stats.score;
   if(target > 0 && !REDUCE){
@@ -2289,11 +2299,93 @@ document.addEventListener("pointerdown", e=>{
   sfx("tap", 0.5);
 }, true);
 
+/* ---------- WebRTC：配對後兩部機直連，唔再經雲端 ---------- */
+const RTC = { pc:null, dc:null, on:false, offer:"", joined:"", supported: (typeof RTCPeerConnection === "function") };
+const ICE = { iceServers: [{ urls: "stun:stun.l.google.com:19302" }] };
+
+function rtcClose(){
+  try{ if(RTC.dc) RTC.dc.close(); }catch(e){}
+  try{ if(RTC.pc) RTC.pc.close(); }catch(e){}
+  RTC.pc = null; RTC.dc = null; RTC.on = false;
+}
+
+function waitIce(pc, ms){
+  return new Promise(res=>{
+    if(pc.iceGatheringState === "complete") return res();
+    const h = ()=>{ if(pc.iceGatheringState === "complete"){ pc.removeEventListener("icegatheringstatechange", h); res(); } };
+    pc.addEventListener("icegatheringstatechange", h);
+    setTimeout(()=>{ pc.removeEventListener("icegatheringstatechange", h); res(); }, ms || 1200);
+  });
+}
+
+function dcBind(ch, isHost){
+  ch.onopen = ()=>{ RTC.on = true; if(isHost){ sendDC({t:"state", s: buildState()}); } else { sendDC({t:"hello"}); } };
+  ch.onclose = ()=>{ RTC.on = false; };
+  ch.onerror = ()=>{ RTC.on = false; };
+  ch.onmessage = ev=>{
+    let m = null;
+    try{ m = JSON.parse(ev.data); }catch(e){ return; }
+    if(!m || !m.t) return;
+    if(m.t === "cmd" && !isHost){ /* 唔會發生 */ }
+    if(m.t === "cmd" && isHost){ applyCmd({kind: m.k}); }
+    if(m.t === "state" && !isHost){ mirrorPaint(m.s); }
+    if(m.t === "hello" && isHost){ sendDC({t:"state", s: buildState()}); }
+  };
+}
+
+function sendDC(obj){
+  if(RTC.dc && RTC.dc.readyState === "open"){
+    try{ RTC.dc.send(JSON.stringify(obj)); return true; }catch(e){}
+  }
+  return false;
+}
+
+/* 主持台：產生 offer，寫入 state 等手機嚟接 */
+async function rtcHost(){
+  if(!SID || !RTC.supported) return;
+  try{
+    rtcClose();
+    const pc = new RTCPeerConnection(ICE);
+    RTC.pc = pc;
+    pc.onconnectionstatechange = ()=>{ RTC.on = pc.connectionState === "connected"; };
+    const ch = pc.createDataChannel("ctl", {ordered:true});
+    RTC.dc = ch; dcBind(ch, true);
+    await pc.setLocalDescription(await pc.createOffer());
+    await waitIce(pc, 1200);
+    RTC.offer = (pc.localDescription || {}).sdp || "";
+    sessionPush();
+  }catch(e){ RTC.offer = ""; }
+}
+
+/* 手機：收到 offer 就接，answer 經 /api/cmd 交返主持台 */
+async function rtcJoin(offerSdp){
+  if(!offerSdp || offerSdp === RTC.joined || !RTC.supported) return;
+  RTC.joined = offerSdp;
+  try{
+    rtcClose();
+    const pc = new RTCPeerConnection(ICE);
+    RTC.pc = pc;
+    pc.onconnectionstatechange = ()=>{ RTC.on = pc.connectionState === "connected"; };
+    pc.ondatachannel = e=>{ RTC.dc = e.channel; dcBind(e.channel, false); };
+    await pc.setRemoteDescription({type:"offer", sdp:offerSdp});
+    await pc.setLocalDescription(await pc.createAnswer());
+    await waitIce(pc, 1200);
+    await fetch("/api/cmd", {
+      method:"POST", headers:{"Content-Type":"application/json"},
+      body: JSON.stringify({ id: MIRROR, kind: "sdp", data: { answer: (pc.localDescription||{}).sdp || "" } })
+    });
+  }catch(e){ RTC.joined = ""; }
+}
+
 /* ---------- 鏡像模式：手機顯示同一套畫面，唔另做一套 ---------- */
 let MR = null, MR_AT = 0, MR_TIMER = 0;
 
 function mirrorCmd(kind){
   if(!MIRROR) return;
+  if(sendDC({ t:"cmd", k: kind })){    // 直連：10–30ms
+    if(navigator.vibrate) navigator.vibrate(8);
+    return;
+  }
   const card = document.querySelector(".question");
   if(card && (kind === "ok" || kind === "skip" || kind === "foul")){
     card.classList.remove("fx-ok","fx-skip","fx-bad");
@@ -2359,10 +2451,6 @@ function mirrorPaint(st){
       gate.classList.add("on","closed","settle");
       $("#teMark").innerHTML = ICONS[s2.id] || "";
       $("#teName").textContent = s2.name || "";
-      const bits = [`答中 <b>${s2.ok || 0}</b>`];
-      if(s2.foul) bits.push(`犯規 <b>${s2.foul}</b>`);
-      if(st.skipPenalty && s2.skip) bits.push(`跳過 <b>${s2.skip}</b>`);
-      $("#teStats").innerHTML = bits.join(" · ");
       $("#teScore").innerHTML = `${s2.score > 0 ? "+" : ""}${s2.score || 0}<em>分</em>`;
       $("#teNext").disabled = false;
     }
@@ -2407,13 +2495,16 @@ async function mirrorPoll(){
     const r = await fetch(`/api/session?id=${MIRROR}`, {cache:"no-store"});
     if(r.ok){
       const d = await r.json();
-      if(d.state && Object.keys(d.state).length) mirrorPaint(d.state);
+      if(d.state && Object.keys(d.state).length){
+        if(d.state.rtc && d.state.rtc.offer && !RTC.on) rtcJoin(d.state.rtc.offer);
+        if(!RTC.on) mirrorPaint(d.state);
+      }
       else setMirrorWord("等待主持台開始");
     }else if(r.status === 404){
       setMirrorWord("代碼已失效，請重新掃描 QR");
     }
   }catch(e){}
-  setTimeout(mirrorPoll, 180);
+  setTimeout(mirrorPoll, RTC.on ? 3000 : 180);
 }
 
 function mirrorBoot(){

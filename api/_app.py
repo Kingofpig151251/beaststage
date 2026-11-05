@@ -96,7 +96,9 @@ def ensure_schema():
             seq BIGSERIAL PRIMARY KEY,
             sid TEXT NOT NULL,
             kind TEXT NOT NULL,
+            data JSONB,
             ts TIMESTAMPTZ NOT NULL DEFAULT now())""")
+        cur.execute("ALTER TABLE cmd ADD COLUMN IF NOT EXISTS data JSONB")
         cur.execute("CREATE INDEX IF NOT EXISTS cmd_sid_seq ON cmd(sid, seq)")
 
 
@@ -181,7 +183,7 @@ async def text_put(request: Request):
 
 # ------------------------------------------------------------------ 遙控
 # 全部用單層路徑＋query／body 參數：Vercel 只穩定支援 /api/<one-segment>
-KINDS = {"ok", "skip", "foul", "ready", "next", "exit"}
+KINDS = {"ok", "skip", "foul", "ready", "next", "exit", "sdp", "need-offer"}
 ALPHABET = "ABCDEFGHJKLMNPQRSTUVWXYZ23456789"   # 無 I/O/0/1，避免讀錯
 
 
@@ -206,8 +208,8 @@ def session_get(id: str = "", since: int = 0):
         row = cur.fetchone()
         if not row:
             return JSONResponse({"error": "session 唔存在或已過期"}, status_code=404)
-        cur.execute("SELECT seq, kind FROM cmd WHERE sid=%s AND seq>%s ORDER BY seq", (id, since))
-        cmds = [{"seq": r["seq"], "kind": r["kind"]} for r in cur.fetchall()]
+        cur.execute("SELECT seq, kind, data FROM cmd WHERE sid=%s AND seq>%s ORDER BY seq", (id, since))
+        cmds = [{"seq": r["seq"], "kind": r["kind"], "data": r["data"]} for r in cur.fetchall()]
     return {"state": row["state"], "cmds": cmds}
 
 
@@ -223,7 +225,9 @@ async def session_cmd(request: Request):
         cur.execute("SELECT 1 FROM sess WHERE id=%s", (sid,))
         if not cur.fetchone():
             return JSONResponse({"error": "session 唔存在或已過期"}, status_code=404)
-        cur.execute("INSERT INTO cmd(sid, kind) VALUES(%s,%s) RETURNING seq", (sid, kind))
+        payload = body.get("data")
+        cur.execute("INSERT INTO cmd(sid, kind, data) VALUES(%s,%s,%s::jsonb) RETURNING seq",
+                    (sid, kind, json.dumps(payload, ensure_ascii=False) if payload is not None else None))
         seq = cur.fetchone()["seq"]
         cur.execute("UPDATE sess SET touched=now() WHERE id=%s", (sid,))
     return {"seq": seq}
