@@ -276,7 +276,6 @@
   .sstep-hint + .sstep-hint{margin-top:2px; text-wrap:pretty}
   .mini-step{display:flex; align-items:center; justify-content:center; gap:10px; margin:14px 0 6px}
   .mini-step.tight{gap:6px; margin:0}
-  .mini-label{font-size:15px; color:var(--ink-2)}
   .mini-step input{width:2ch; min-height:0; padding:0; background:transparent; border:0; text-align:center;
     font-family:var(--font-display); font-size:28px; font-weight:700; font-variant-numeric:tabular-nums}
   .mini-step input::-webkit-outer-spin-button,.mini-step input::-webkit-inner-spin-button{-webkit-appearance:none; margin:0}
@@ -746,7 +745,7 @@
       <button class="icon-btn" id="btnStepBack" aria-label="上一步" title="上一步（Esc）">
         <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M14.5 5 7.5 12l7 7"/></svg>
       </button>
-      <div class="dots" id="stepDots" aria-hidden="true"><i></i><i></i><i></i><i></i></div>
+      <div class="dots" id="stepDots" aria-hidden="true"><i></i><i></i><i></i><i></i><i></i></div>
       <span aria-hidden="true"></span>
     </div>
 
@@ -758,23 +757,26 @@
           <input id="teamInput" type="number" inputmode="numeric" min="2" max="8" step="1" value="2" aria-label="隊伍數量">
           <button class="round-btn" id="teamPlus" aria-label="增加一隊">+</button>
         </div>
-        <div class="mini-step">
-          <span class="mini-label">每隊出場</span>
-          <button class="round-btn sm" id="rpMinus" aria-label="減少回合">−</button>
-          <input id="rpInput" type="number" inputmode="numeric" min="1" max="5" step="1" value="2" aria-label="每隊回合數">
-          <button class="round-btn sm" id="rpPlus" aria-label="增加回合">+</button>
-          <span class="mini-label">回合</span>
-        </div>
         <div class="sstep-hint">最少 2 隊，最多 8 隊</div>
-        <div class="sstep-hint" id="roundSum">4 隊 × 2 回合 = 共 8 回合</div>
       </section>
 
       <section class="sstep" data-step="1">
+        <h2 class="sstep-title">每隊出場幾回合？</h2>
+        <div class="bignum">
+          <button class="round-btn" id="rpMinus" aria-label="減少回合">−</button>
+          <input id="rpInput" type="number" inputmode="numeric" min="1" max="5" step="1" value="2" aria-label="每隊回合數">
+          <button class="round-btn" id="rpPlus" aria-label="增加回合">+</button>
+        </div>
+        <div class="sstep-hint">1 至 5 回合</div>
+        <div class="sstep-hint" id="roundSum">4 隊 × 2 回合 = 共 8 回合</div>
+      </section>
+
+      <section class="sstep" data-step="2">
         <h2 class="sstep-title">為每一隊命名</h2>
         <div class="namegrid" id="nameList"></div>
       </section>
 
-      <section class="sstep" data-step="2">
+      <section class="sstep" data-step="3">
         <h2 class="sstep-title">每回合時間</h2>
         <div class="bignum bignum-sec">
           <input id="secInput" type="number" min="5" max="600" step="5" aria-label="每回合秒數">
@@ -788,7 +790,7 @@
         </div>
       </section>
 
-      <section class="sstep" data-step="3">
+      <section class="sstep" data-step="4">
         <h2 class="sstep-title">規則</h2>
         <div class="rules">
           <div class="rule" id="ruleSkip">
@@ -1116,6 +1118,7 @@ function fxSkipDown(){
 
 /* ================= 主頁 / 設定流程 ================= */
 const SETUP = { i:0 };
+const LAST_STEP = 4;
 
 function renderHome(){
   // 入口頁：一行現況
@@ -1222,11 +1225,11 @@ function syncNext(){
   const ok = lines.length > 0;
   const next = $("#btnNext");
   next.disabled = !ok;
-  next.textContent = SETUP.i < 3 ? "繼續" : (ok ? "開始遊戲" : "題目未連線");
+  next.textContent = SETUP.i < LAST_STEP ? "繼續" : (ok ? "開始遊戲" : "題目未連線");
 }
 
 function goStep(i, dir){
-  SETUP.i = Math.max(0, Math.min(3, i));
+  SETUP.i = Math.max(0, Math.min(LAST_STEP, i));
   $$(".sstep").forEach(el=>{
     const k = +el.dataset.step;
     el.classList.toggle("on", k === SETUP.i);
@@ -1236,9 +1239,9 @@ function goStep(i, dir){
     d.classList.toggle("on", n <= SETUP.i);
     d.classList.toggle("cur", n === SETUP.i);
   });
-  $("#btnNext").textContent = SETUP.i < 3 ? "繼續" : "開始遊戲";
+  $("#btnNext").textContent = SETUP.i < LAST_STEP ? "繼續" : "開始遊戲";
   syncNext();
-  if(SETUP.i === 1){
+  if(SETUP.i === 2){
     const first = $("#nameList input");
     if(first) setTimeout(()=>first.focus({preventScroll:true}), 260);
   }
@@ -2041,7 +2044,7 @@ $("#btnStepBack").onclick = ()=>{
   if(SETUP.i === 0){ showView("v-home"); renderHome(); }
   else goStep(SETUP.i - 1, -1);
 };
-$("#btnNext").onclick = ()=>{ if(SETUP.i < 3) goStep(SETUP.i + 1, 1); else launchGame(); };
+$("#btnNext").onclick = ()=>{ if(SETUP.i < LAST_STEP) goStep(SETUP.i + 1, 1); else launchGame(); };
 
 $$("[data-judge]").forEach(b=>b.onclick=()=>act(b.dataset.judge));
 $("#btnReady").onclick = startRound;
@@ -2168,7 +2171,7 @@ document.addEventListener("keydown", e=>{
   if(e.target.tagName === "INPUT" && e.key !== "Enter") return;
   if(e.key === "Enter"){
     e.preventDefault();
-    if(SETUP.i < 3) goStep(SETUP.i + 1, 1); else launchGame();
+    if(SETUP.i < LAST_STEP) goStep(SETUP.i + 1, 1); else launchGame();
   }else if(e.key === "Escape"){
     e.preventDefault(); $("#btnStepBack").click();
   }
