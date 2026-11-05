@@ -433,11 +433,13 @@
   .readyMark svg,.readyMark .mark-img{display:block; width:1em; height:1em; margin:0 auto}
   .readyTeam{font-family:var(--font-display); font-weight:700; font-size:clamp(52px,13vh,140px);
     letter-spacing:-.03em; line-height:1.02; margin:10px 0 16px}
-  .sstep .remote-mini{margin-top:14px}
-  @media (max-height:520px){ .sstep .remote-mini{display:none} }
+  .sstep .remote-mini{margin-top:6px; --rm:132px; padding:14px 18px; gap:18px}
+  .sstep .remote-mini .rm-txt b{font-size:17px}
+  .sstep .remote-mini .rm-txt span{font-size:15px}
+  @media (max-height:560px){ .sstep .remote-mini{--rm:92px; padding:10px 14px; gap:12px} }
   .remote-mini{display:flex; align-items:center; gap:12px; padding:8px 12px; border-radius:16px;
     background:var(--surface); box-shadow:inset 0 0 0 1px var(--sep)}
-  .rm-qr{width:84px; height:84px; flex:none; display:grid; place-items:center}
+  .rm-qr{width:var(--rm,84px); height:var(--rm,84px); flex:none; display:grid; place-items:center}
   .rm-qr svg{width:100%; height:100%; display:block}
   .rm-txt{display:flex; flex-direction:column; gap:2px; text-align:left}
   .rm-txt b{font-size:14px}
@@ -764,12 +766,22 @@
       <button class="icon-btn" id="btnStepBack" aria-label="上一步" title="上一步（Esc）">
         <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M14.5 5 7.5 12l7 7"/></svg>
       </button>
-      <div class="dots" id="stepDots" aria-hidden="true"><i></i><i></i><i></i><i></i><i></i></div>
+      <div class="dots" id="stepDots" aria-hidden="true"><i></i><i></i><i></i><i></i><i></i><i></i></div>
       <span aria-hidden="true"></span>
     </div>
 
     <div class="stage" id="stepStage">
       <section class="sstep" data-step="0">
+        <h2 class="sstep-title">用手機做主持</h2>
+        <div class="remote-mini lg" data-remote hidden>
+          <div class="rm-qr" data-qr></div>
+          <div class="rm-txt"><b>手機掃描即配對</b><span data-rm-code>待連線</span></div>
+        </div>
+        <div class="sstep-hint">用手機相機掃描上面的 QR，手機會變成判定掣</div>
+        <div class="sstep-hint">想單機玩就直接按「繼續」，畫面按鈕照用</div>
+      </section>
+
+      <section class="sstep" data-step="1">
         <h2 class="sstep-title">有多少隊參賽？</h2>
         <div class="bignum">
           <button class="round-btn" id="teamMinus" aria-label="減少一隊">−</button>
@@ -777,13 +789,9 @@
           <button class="round-btn" id="teamPlus" aria-label="增加一隊">+</button>
         </div>
         <div class="sstep-hint">最少 2 隊，最多 8 隊</div>
-        <div class="remote-mini" data-remote hidden>
-          <div class="rm-qr" data-qr></div>
-          <div class="rm-txt"><b>手機做主持</b><span data-rm-code>待連線</span></div>
-        </div>
       </section>
 
-      <section class="sstep" data-step="1">
+      <section class="sstep" data-step="2">
         <h2 class="sstep-title">每隊出場幾回合？</h2>
         <div class="bignum">
           <button class="round-btn" id="rpMinus" aria-label="減少回合">−</button>
@@ -794,12 +802,12 @@
         <div class="sstep-hint" id="roundSum">4 隊 × 2 回合 = 共 8 回合</div>
       </section>
 
-      <section class="sstep" data-step="2">
+      <section class="sstep" data-step="3">
         <h2 class="sstep-title">為每一隊命名</h2>
         <div class="namegrid" id="nameList"></div>
       </section>
 
-      <section class="sstep" data-step="3">
+      <section class="sstep" data-step="4">
         <h2 class="sstep-title">每回合時間</h2>
         <div class="bignum bignum-sec">
           <input id="secInput" type="number" min="5" max="600" step="5" aria-label="每回合秒數">
@@ -813,7 +821,7 @@
         </div>
       </section>
 
-      <section class="sstep" data-step="4">
+      <section class="sstep" data-step="5">
         <h2 class="sstep-title">規則</h2>
         <div class="rules">
           <div class="rule" id="ruleSkip">
@@ -1158,7 +1166,7 @@ function fxSkipDown(){
 
 /* ================= 主頁 / 設定流程 ================= */
 const SETUP = { i:0 };
-const LAST_STEP = 4;
+const LAST_STEP = 5;
 
 function renderHome(){
   // 入口頁：一行現況
@@ -1281,7 +1289,7 @@ function goStep(i, dir){
   });
   $("#btnNext").textContent = SETUP.i < LAST_STEP ? "繼續" : "開始遊戲";
   syncNext();
-  if(SETUP.i === 2){
+  if(SETUP.i === 3){
     const first = $("#nameList input");
     if(first) setTimeout(()=>first.focus({preventScroll:true}), 260);
   }
@@ -2134,7 +2142,7 @@ function backToSetup(){
   $("#readyOverlay").style.display = "none";
   document.body.classList.remove("is-ready");
   showView("v-setup");
-  goStep(2, -1);
+  goStep(3, -1);
 }
 
 function doExit(){
