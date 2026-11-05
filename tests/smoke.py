@@ -24,6 +24,8 @@ window.fetch = async (u) => {
   if (s.startsWith("/api/text")) return {ok:true, json:async()=>({text:"甲\\n乙\\n丙\\n丁", title:"", subtitle:""})};
   return {ok:true, json:async()=>({})};
 };
+window.__err = [];
+addEventListener("error", e => window.__err.push(String(e.message)));
 """
 
 class Tab:
@@ -180,7 +182,15 @@ async def main(url, shot):
             await T.wait("G && G.phase==='done'", 60, "結果頁")
             check("結果頁有排名", await T.js("document.querySelectorAll('#rankList .rk').length") >= 4)
             check("有冠軍卡", await T.js("!!document.querySelector('#rankList .rk.is-champ')"))
-            check("結果頁無 JS 例外", True)
+            check("結果頁無 JS 例外", (await T.js("window.__err.length")) == 0,
+                  str(await T.js("window.__err")))
+            # 回歸：冠軍頁「返回主頁」（曾因殘留 sessionStop() 拋 ReferenceError）
+            await T.js("document.getElementById('btnBackHome').click()")
+            await asyncio.sleep(0.8)
+            check("返回主頁有效", (await T.js("document.body.dataset.view")) == "home",
+                  str(await T.js("document.body.dataset.view")))
+            check("返回主頁無 JS 例外", (await T.js("window.__err.length")) == 0,
+                  str(await T.js("window.__err")))
 
             if shot:
                 await T.cmd("Page.captureScreenshot")
