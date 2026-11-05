@@ -2323,7 +2323,9 @@ function waitIce(pc, ms){
 
 function dcBind(ch, isHost){
   ch.onopen = ()=>{ RTC.on = true; if(isHost){ sendDC({t:"state", s: buildState()}); } else { sendDC({t:"hello"}); } };
-  ch.onclose = ()=>{ RTC.on = false; };
+  ch.onclose = ()=>{ RTC.on = false;
+    if(isHost){ setTimeout(()=>{ if(SID && !RTC.on) rtcHost(); }, 800); }   // 斷線自動出新 offer
+  };
   ch.onerror = ()=>{ RTC.on = false; };
   ch.onmessage = ev=>{
     let m = null;
@@ -2379,6 +2381,14 @@ async function rtcJoin(offerSdp){
     });
   }catch(e){ RTC.joined = ""; }
 }
+
+/* 手機由背景返嚟：RTC 多數斷咗，重新要一個 offer */
+document.addEventListener("visibilitychange", ()=>{
+  if(!MIRROR || document.hidden || RTC.on) return;
+  RTC.joined = "";
+  fetch("/api/cmd", {method:"POST", headers:{"Content-Type":"application/json"},
+    body: JSON.stringify({id: MIRROR, kind:"need-offer"})}).catch(()=>{});
+});
 
 /* ---------- 鏡像模式：手機顯示同一套畫面，唔另做一套 ---------- */
 let MR = null, MR_AT = 0, MR_TIMER = 0;
