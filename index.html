@@ -29,7 +29,7 @@
     --blue-fill:var(--blue); --blue-fill-press:var(--blue-press); --green:#34C759; --red:#FF3B30; --amber:#FF9F0A;
     --on-accent:#FFFFFF; --focus-ring:rgba(0,113,227,.85);
     --flash-ok:rgba(52,199,89,.16); --toast-bg:rgba(28,28,30,.92);
-    --toast-ink:#FFFFFF; --flash-bad:rgba(255,59,48,.15);
+    --toast-ink:#FFFFFF; --flash-bad:rgba(255,59,48,.15); --halo:rgba(255,255,255,.55);
     /* geometry */
     --r-xl:22px; --r-lg:16px; --r-md:12px; --pill:999px;
     --hair:1px;
@@ -74,8 +74,13 @@
     width:calc(var(--k,1) * clamp(54px, 8.6vmin, 112px));
     transform:translate(-50%,-50%) rotate(var(--r,0deg));
     animation:beastFloat var(--d,8s) ease-in-out calc(var(--i,0s) + .5s) infinite alternate}
+  .beast .sway{display:block; transform:rotate(var(--r,0deg));
+    animation:beastSway calc(var(--d,8s) * .78) ease-in-out calc(var(--i,0s) + .2s) infinite alternate}
   .beast img{display:block; width:100%; height:auto; opacity:0;
     animation:beastIn .5s var(--ease) var(--i,0s) both}
+  @keyframes beastSway{
+    from{transform:rotate(calc(var(--r,0deg) - 3.5deg))}
+    to{transform:rotate(calc(var(--r,0deg) + 3.5deg))}}
   @keyframes beastIn{to{opacity:1; transform:scale(1)}}
   @keyframes beastFloat{
     from{transform:translate(-50%,-50%) rotate(var(--r,0deg)) translateY(-7px)}
@@ -94,7 +99,12 @@
     .beast:nth-child(4){left:88%; top:82%}
     .beast:nth-child(n+5){display:none}
   }
-  @media (max-height:560px){ .landing-beasts{display:none} }
+  /* 矮螢幕：最少留兩隻（左右上角），唔會全空 */
+  @media (max-height:600px){
+    .beast:nth-child(n+3){display:none}
+    .beast:nth-child(1){left:8%; top:11%; --k:.88}
+    .beast:nth-child(2){left:92%; top:9%; --k:.96}
+  }
   .landing-main{display:flex; flex-direction:column; align-items:center}
   .landing-title{margin:14px 0 0; font-family:var(--font-display); font-weight:700;
     font-size:clamp(76px,16vh,168px); letter-spacing:-.045em; line-height:.98;
@@ -210,7 +220,6 @@
   .animal-opt.taken{background:var(--fill); cursor:not-allowed;
     box-shadow:inset 0 0 0 1px var(--sep)}
   .animal-opt.taken .opt-mark,.animal-opt.taken .opt-name{opacity:.42}
-  .animal-opt .opt-taken{font-size:11px; font-weight:600; color:var(--ink-2); line-height:1.2}
   .mark-img{display:block; width:1em; height:1em; object-fit:contain; margin:0 auto}
   .animal-opt .opt-mark{font-size:26px; line-height:1; color:var(--tc)}
   .animal-opt .opt-mark svg,.animal-opt .opt-mark .mark-img{display:block; width:1em; height:1em}
@@ -244,13 +253,15 @@
 
   .vs-team{flex:1 1 0; min-width:0; display:flex; flex-direction:column; align-items:center;
     gap:clamp(8px,1.4vh,16px); text-align:center}
-  .vs-mark{font-size:var(--mark,72px); line-height:1; display:block; filter:drop-shadow(0 2px 6px var(--vs-shadow))}
+  .vs-mark{font-size:var(--mark,72px); line-height:1; display:block;
+    filter:drop-shadow(0 2px 6px var(--vs-shadow)) drop-shadow(0 0 10px var(--halo))}
   .vs-label{font-family:var(--font-display); font-weight:700; font-size:var(--label,40px);
     letter-spacing:-.02em; line-height:1.15;
     overflow-wrap:anywhere; text-wrap:balance}
   .vs-mark svg{display:block; width:1em; height:1em}
-  .vs-team::after{content:""; display:block; width:28px; height:3px; border-radius:2px;
-    background:var(--tc,var(--on-accent)); opacity:.9}
+  .vs-team::after{content:""; display:block; width:28px; height:4px; border-radius:2px;
+    background:var(--tc,var(--on-accent));
+    box-shadow:0 0 0 1.5px var(--halo)}   /* 白圈：任何隊色喺藍幕上都讀得到 */
 
   body.is-launch .stage{opacity:0; transform:translateY(-28px) scale(.97);
     transition:opacity .38s var(--ease), transform .48s var(--ease)}
@@ -648,14 +659,14 @@
       <a class="landing-link" id="btnEditHome" href="/edit">編輯題目</a>
       </div>
       <div class="landing-beasts" aria-hidden="true">
-        <span class="beast" style="--x:13%;--y:15%;--xl:9%;--yl:22%;--k:1.00;--r:-9deg;--d:7.4s;--i:.00s"><img src="/art/team/turtle.webp" alt=""></span>
-        <span class="beast" style="--x:87%;--y:13%;--xl:91%;--yl:18%;--k:1.12;--r:10deg;--d:8.6s;--i:.06s"><img src="/art/team/fox.webp" alt=""></span>
-        <span class="beast" style="--x:7%;--y:64%;--xl:5%;--yl:63%;--k:.96;--r:-5deg;--d:9.2s;--i:.12s"><img src="/art/team/whale.webp" alt=""></span>
-        <span class="beast" style="--x:93%;--y:60%;--xl:95%;--yl:60%;--k:.90;--r:7deg;--d:6.8s;--i:.18s"><img src="/art/team/octopus.webp" alt=""></span>
-        <span class="beast" style="--x:19%;--y:78%;--xl:17%;--yl:87%;--k:.78;--r:6deg;--d:7.8s;--i:.24s"><img src="/art/team/bee.webp" alt=""></span>
-        <span class="beast" style="--x:81%;--y:80%;--xl:83%;--yl:85%;--k:.84;--r:-7deg;--d:8.2s;--i:.30s"><img src="/art/team/flamingo.webp" alt=""></span>
-        <span class="beast" style="--x:37%;--y:89%;--xl:27%;--yl:11%;--k:.92;--r:5deg;--d:9.6s;--i:.36s"><img src="/art/team/dolphin.webp" alt=""></span>
-        <span class="beast" style="--x:63%;--y:91%;--xl:73%;--yl:11%;--k:.86;--r:-4deg;--d:7.0s;--i:.42s"><img src="/art/team/bear.webp" alt=""></span>
+        <span class="beast" style="--x:13%;--y:15%;--xl:9%;--yl:22%;--k:1.00;--r:-9deg;--d:7.4s;--i:.00s"><span class="sway"><img src="/art/team/turtle.webp" alt=""></span></span>
+        <span class="beast" style="--x:87%;--y:13%;--xl:91%;--yl:18%;--k:1.12;--r:10deg;--d:8.6s;--i:.06s"><span class="sway"><img src="/art/team/fox.webp" alt=""></span></span>
+        <span class="beast" style="--x:7%;--y:64%;--xl:5%;--yl:63%;--k:.96;--r:-5deg;--d:9.2s;--i:.12s"><span class="sway"><img src="/art/team/whale.webp" alt=""></span></span>
+        <span class="beast" style="--x:93%;--y:60%;--xl:95%;--yl:60%;--k:.90;--r:7deg;--d:6.8s;--i:.18s"><span class="sway"><img src="/art/team/octopus.webp" alt=""></span></span>
+        <span class="beast" style="--x:19%;--y:78%;--xl:17%;--yl:87%;--k:.78;--r:6deg;--d:7.8s;--i:.24s"><span class="sway"><img src="/art/team/bee.webp" alt=""></span></span>
+        <span class="beast" style="--x:81%;--y:80%;--xl:83%;--yl:85%;--k:.84;--r:-7deg;--d:8.2s;--i:.30s"><span class="sway"><img src="/art/team/flamingo.webp" alt=""></span></span>
+        <span class="beast" style="--x:37%;--y:89%;--xl:27%;--yl:11%;--k:.92;--r:5deg;--d:9.6s;--i:.36s"><span class="sway"><img src="/art/team/dolphin.webp" alt=""></span></span>
+        <span class="beast" style="--x:63%;--y:91%;--xl:73%;--yl:11%;--k:.86;--r:-4deg;--d:7.0s;--i:.42s"><span class="sway"><img src="/art/team/bear.webp" alt=""></span></span>
       </div>
       <div class="landing-foot">
         <span class="landing-credit">© 2026 Leung Tung Lam · MIT License</span>
@@ -887,7 +898,7 @@ const ICONS = Object.fromEntries(TEAM_IDS.map(id =>
 const ANIMALS = [
   { id:"turtle", name:"烏龜隊", color:"#34C759" },
   { id:"fox", name:"狐狸隊", color:"#FF9500" },
-  { id:"whale", name:"鯨魚隊", color:"#0071E3" },
+  { id:"whale", name:"鯨魚隊", color:"#0A2F5C" },
   { id:"octopus", name:"章魚隊", color:"#AF52DE" },
   { id:"bee", name:"蜜蜂隊", color:"#F5A300" },
   { id:"flamingo", name:"火烈鳥隊", color:"#FF2D55" },
@@ -1077,7 +1088,6 @@ function renderAnimalGrid(){
       style="--tc:${a.color}" aria-pressed="${a.id===cur}" ${taken?"aria-disabled=\"true\" tabindex=\"-1\"":""}>
       <span class="opt-mark">${ICONS[a.id]}</span>
       <span class="opt-name">${a.name}</span>
-      ${taken ? `<span class="opt-taken">第 ${owner+1} 隊已選</span>` : ""}
     </button>`;
   }).join("");
   $$("#animalGrid .animal-opt").forEach(b=>{
