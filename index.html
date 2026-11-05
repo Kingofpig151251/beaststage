@@ -1522,6 +1522,7 @@ function startRound(){
   if(!G || G.phase !== "ready") return;
   clearInterval(CD_TIMER);
   G.phase = "countdown";
+  if(SID) sessionPush();
   $("#btnReady").style.display = "none";
   const t = curTeam();
   const box = $("#countdown"), num = $("#cdNum"), prog = $("#cdProg"), team = $("#cdTeam");
@@ -1566,6 +1567,7 @@ function beginRunning(){
   G.endsAt = Date.now() + G.sec * 1000;
   startTimer();
   renderPlay();
+  if(SID) sessionPush();
 }
 
 function drawItem(){
@@ -1889,6 +1891,7 @@ function endTurn(){
 
 function endGame(){
   if(!G) return;
+  setTimeout(()=>{ if(SID) sessionPush(); }, 30);
   resetTurnTimers();
   clearInterval(G.timerId);
   G.timerToken++;
