@@ -238,6 +238,15 @@ python3 scripts/bank.py text <slug>   # 印出內容
 python3 scripts/bank.py rm <slug>     # 刪
 ```
 
+## 語言（中文／English）
+
+首頁 footer 的 `EN` 鍵、設定頁右上角的 `EN` 鍵可即時切換全站介面語言（題目本身不翻譯）。
+
+- 偏好存 `localStorage["beasttv.lang"]`，預設中文
+- 實作：`EN` 字典 + `translateTree()` 走訪文字節點與 `title`／`aria-label`／`placeholder`；
+  動態字串（回合數、分數、統計）逐條雙語
+- 新增文案：在 `EN` 字典加一條（key 用中文原文），靜態文字即自動翻譯
+
 ## 授權範圍## 授權範圍
 
 | 範圍 | 授權 |
