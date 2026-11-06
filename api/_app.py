@@ -242,7 +242,7 @@ def _new_slug(cur):
     raise RuntimeError("slug 生成失敗，再試一次")
 
 
-@app.post("/api/banks/new")
+@app.post("/api/newbank")
 async def banks_selfserve(request: Request):
     """自助開庫：要 CREATE_KEY。每位來源每日最多 5 份，總數上限 120 份。"""
     if not CREATE_KEY:

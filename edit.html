@@ -285,7 +285,7 @@ $("#newForm").addEventListener("submit", async (e)=>{
   err.textContent = "";
   $("#newGo").disabled = true;
   try{
-    const r = await fetch("/api/banks/new", { method: "POST", headers: { "content-type": "application/json" },
+    const r = await fetch("/api/newbank", { method: "POST", headers: { "content-type": "application/json" },
       body: JSON.stringify({ name, code, key }) });
     const d = await r.json().catch(()=>({}));
     if(!r.ok){ err.textContent = d.error || "開唔到，請再試"; return; }
