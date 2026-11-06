@@ -206,7 +206,7 @@ samples/hk-icebreaker.json 首次 seed 題庫
 
 > Copyright (c) 2026 **Leung Tung Lam**
 
-MIT 只覆蓋程式碼，**不代表 `sfx/` 變成 MIT**。素材逐項來源、授權與需要的署名見 [`CREDITS.md`](CREDITS.md)。
+MIT 只覆蓋程式碼，**不代表 `sfx/` 變成 MIT**。素材逐項來源、授權與需要的署名見網頁版 **`/credits`**（`credits.html`，唯一維護點）。
 
 兩個需要署名的素材：`hb3.mp3`（Benboncan／Freesound，CC BY 3.0）、`champion.mp3`（Kevin MacLeod《Celebration》，CC BY 4.0）。介面「版權聲明」吐司已列出兩者署名，符合授權要求。
 
