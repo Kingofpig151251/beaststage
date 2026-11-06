@@ -10,8 +10,10 @@
   DATABASE_URL   postgres://...（Neon / Vercel Marketplace 的 Postgres）
 """
 
+import hashlib
 import json
 import os
+import re
 from contextlib import contextmanager
 from datetime import datetime, timedelta, timezone
 
@@ -85,6 +87,25 @@ def ensure_schema():
         cur.execute("CREATE TABLE IF NOT EXISTS reports ("
                     "id BIGSERIAL PRIMARY KEY, created_at TEXT NOT NULL, "
                     "kind TEXT, ua TEXT, vw INT, vh INT, body TEXT)")
+        cur.execute("CREATE TABLE IF NOT EXISTS banks ("
+                    "slug TEXT PRIMARY KEY, name TEXT, text TEXT NOT NULL DEFAULT '', "
+                    "title TEXT DEFAULT '', subtitle TEXT DEFAULT '', key_hash TEXT, "
+                    "created_at TEXT NOT NULL, updated_at TEXT NOT NULL)")
+        # 一次性遷移：舊嘅單一題庫（meta.text）搬入 slug='default'
+        cur.execute("SELECT 1 FROM banks WHERE slug='default'")
+        if not cur.fetchone():
+            cur.execute("SELECT value FROM meta WHERE key='text'")
+            row = cur.fetchone()
+            base = row["value"] if row else None
+            base = base if base is not None else seed_text()
+            cur.execute("SELECT value FROM meta WHERE key='title'")
+            t = cur.fetchone()
+            cur.execute("SELECT value FROM meta WHERE key='subtitle'")
+            st = cur.fetchone()
+            ts = now()
+            cur.execute("INSERT INTO banks (slug,name,text,title,subtitle,key_hash,created_at,updated_at) "
+                        "VALUES ('default','預設題庫',%s,%s,%s,NULL,%s,%s)",
+                        (base, (t["value"] if t else "") or "", (st["value"] if st else "") or "", ts, ts))
 
 
 _READY = {"ok": False}
@@ -123,7 +144,27 @@ def seed_text():
     return "\n".join(out)
 
 
+def get_bank(cur, slug):
+    cur.execute("SELECT slug,name,text,title,subtitle,key_hash,updated_at FROM banks WHERE slug=%s", (slug,))
+    return cur.fetchone()
+
+
+def bank_key_ok(request, bank):
+    """master（EDIT_KEY）可改任何題庫；otherwise 比對該題庫自己的密碼 hash。"""
+    supplied = request.headers.get("x-edit-key", "")
+    if EDIT_KEY and supplied == EDIT_KEY:
+        return True
+    if not EDIT_KEY and not (bank and bank.get("key_hash")):
+        return True                                   # 本地開發：完全開放
+    h = (bank or {}).get("key_hash")
+    return bool(h) and hashlib.sha256(supplied.encode()).hexdigest() == h
+
+
 def read_text(cur):
+    """舊路徑兼容：回 default 題庫內文。"""
+    row = get_bank(cur, "default")
+    if row:
+        return row["text"]
     text = get_meta(cur, "text")
     if text is None:
         text = seed_text()
@@ -133,6 +174,14 @@ def read_text(cur):
 
 
 # ------------------------------------------------------------------ routes
+SLUG_RE = re.compile(r"^[a-z0-9][a-z0-9-]{1,31}$")
+
+
+def norm_slug(b):
+    b = (b or "default").strip().lower()
+    return b if SLUG_RE.match(b) else "default"
+
+
 def key_ok(request):
     """未設 EDIT_KEY 就唔檢查（本地開發／未配置環境變數時保持可用）。"""
     if not EDIT_KEY:
@@ -140,24 +189,76 @@ def key_ok(request):
     return request.headers.get("x-edit-key", "") == EDIT_KEY
 
 
-@app.get("/api/text")
-def text_get(request: Request, check: int = 0):
-    if check:                                   # /api/text?check=1：只驗密碼，唔讀 DB
-        return {"ok": key_ok(request), "protected": bool(EDIT_KEY)}
-    schema()
-    with db() as (c, cur):
-        text = read_text(cur)
-        upd = get_meta(cur, "updated_at")
-        title = get_meta(cur, "title") or ""
-        subtitle = get_meta(cur, "subtitle") or ""
-    return {"text": text, "title": title, "subtitle": subtitle, "updated_at": upd}
-
-
-@app.put("/api/text")
-async def text_put(request: Request):
+@app.get("/api/banks")
+def banks_list(request: Request):
+    """只俾 master 睇：邊個開過幾多份題庫。"""
     if not key_ok(request):
         return JSONResponse({"error": "未授權"}, status_code=401)
     schema()
+    with db() as (c, cur):
+        cur.execute("SELECT slug,name,title,subtitle,length(text) AS chars,updated_at,"
+                    "(key_hash IS NOT NULL) AS locked FROM banks ORDER BY created_at")
+        rows = [dict(r) for r in cur.fetchall()]
+    return {"ok": True, "count": len(rows), "items": rows}
+
+
+@app.post("/api/banks")
+async def banks_create(request: Request):
+    """開新題庫：要有 master key。可順便設該題庫自己的密碼（key）。"""
+    if not key_ok(request):
+        return JSONResponse({"error": "未授權"}, status_code=401)
+    body = await request.json()
+    slug = (body.get("slug") or "").strip().lower()
+    if not SLUG_RE.match(slug):
+        return JSONResponse({"error": "slug 只可以用細楷英數同連字號（2-32 字）"}, status_code=400)
+    text = body.get("text") or ""
+    if not isinstance(text, str):
+        return JSONResponse({"error": "text 要係字串"}, status_code=400)
+    text = text.replace("\r\n", "\n").replace("\r", "\n")[:200000]
+    name = (body.get("name") or slug).strip()[:40]
+    key = body.get("key") or ""
+    ts = now()
+    schema()
+    with db() as (c, cur):
+        if get_bank(cur, slug):
+            return JSONResponse({"error": "slug 已存在"}, status_code=409)
+        cur.execute("INSERT INTO banks (slug,name,text,title,subtitle,key_hash,created_at,updated_at) "
+                    "VALUES (%s,%s,%s,%s,%s,%s,%s,%s)",
+                    (slug, name, text, (body.get("title") or "")[:24], (body.get("subtitle") or "")[:36],
+                     hashlib.sha256(key.encode()).hexdigest() if key else None, ts, ts))
+    return {"ok": True, "slug": slug, "url": f"/b/{slug}", "edit": f"/edit?b={slug}"}
+
+
+@app.get("/api/text")
+def text_get(request: Request, check: int = 0, b: str = "default"):
+    slug = norm_slug(b)
+    if check:                                   # 只驗密碼，唔讀題庫內容
+        schema()
+        with db() as (c, cur):
+            bank = get_bank(cur, slug)
+        if bank is None:
+            return JSONResponse({"error": "找不到題庫"}, status_code=404)
+        return {"ok": bank_key_ok(request, bank), "protected": bool(bank.get("key_hash") or EDIT_KEY)}
+    schema()
+    with db() as (c, cur):
+        bank = get_bank(cur, slug)
+        if bank is None:
+            return JSONResponse({"error": "找不到題庫"}, status_code=404)
+        return {"slug": bank["slug"], "name": bank["name"] or bank["slug"],
+                "text": bank["text"], "title": bank["title"] or "",
+                "subtitle": bank["subtitle"] or "", "updated_at": bank["updated_at"]}
+
+
+@app.put("/api/text")
+async def text_put(request: Request, b: str = "default"):
+    schema()
+    slug = norm_slug(b)
+    with db() as (c, cur):
+        bank = get_bank(cur, slug)
+    if bank is None:
+        return JSONResponse({"error": "找不到題庫"}, status_code=404)
+    if not bank_key_ok(request, bank):
+        return JSONResponse({"error": "未授權"}, status_code=401)
     body = await request.json()
     text = body.get("text")
     if not isinstance(text, str):
@@ -169,13 +270,13 @@ async def text_put(request: Request):
     if subtitle is not None and not isinstance(subtitle, str):
         return JSONResponse({"error": "subtitle 要係字串"}, status_code=400)
     with db() as (c, cur):
-        put_meta(cur, "text", text)
+        cur.execute("UPDATE banks SET text=%s, updated_at=%s WHERE slug=%s", (text, now(), slug))
         if title is not None:
-            put_meta(cur, "title", title.strip()[:24])
+            cur.execute("UPDATE banks SET title=%s WHERE slug=%s", (title.strip()[:24], slug))
         if subtitle is not None:
-            put_meta(cur, "subtitle", subtitle.strip()[:36])
-        put_meta(cur, "updated_at", now())
-    return {"ok": True, "chars": len(text)}
+            cur.execute("UPDATE banks SET subtitle=%s WHERE slug=%s", (subtitle.strip()[:36], slug))
+        cur.execute("UPDATE banks SET updated_at=%s WHERE slug=%s", (now(), slug))
+    return {"ok": True, "slug": slug, "chars": len(text)}
 
 
 @app.post("/api/report")
