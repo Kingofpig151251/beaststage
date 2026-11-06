@@ -802,7 +802,12 @@
   }
 
   /* 英文排版：長句一律單行，必要時收細一級字階 */
-  html[lang="en"] .landing-sub{font-size:13.5px; white-space:nowrap}
+  /* 英文品牌：字比中文窄，主標略收一級；副標維持正常字階但唔換行 */
+  html[lang="en"] .landing-title{font-size:clamp(44px, 16vw, 150px); letter-spacing:-.045em; white-space:nowrap}
+  html[lang="en"] .landing-title[data-len="mid"]{font-size:clamp(40px, 12vw, 112px)}
+  html[lang="en"] .landing-title[data-len="long"]{font-size:clamp(28px, 8vw, 76px)}
+  html[lang="en"] .landing-sub{font-size:clamp(17px, 2.5vh, 22px); white-space:nowrap}
+  @media (max-width:360px){ html[lang="en"] .landing-sub{font-size:17px} }
   html[lang="en"] .sstep-title{font-size:clamp(22px,5.4vw,34px); white-space:nowrap}
   html[lang="en"] .rule-txt span{white-space:nowrap; font-size:12.5px}
   .flash-hud .key{white-space:nowrap}
@@ -1214,8 +1219,8 @@
 const LANG_KEY = "beasttv.lang";
 let LANG = (()=>{ try{ return localStorage.getItem(LANG_KEY) === "en" ? "en" : "zh"; }catch(_){ return "zh"; } })();
 const EN = {
-  "百獸台": "Beast Stage",
-  "派對猜詞主持台": "Party guessing console",
+  "百獸台": "Beast TV",
+  "派對猜詞主持台": "Party word-guessing game",
   "開始": "Start",
   "設定": "Settings",
   "繼續": "Continue",
@@ -1354,6 +1359,7 @@ function setLang(next){
   document.documentElement.lang = LANG === "en" ? "en" : "zh-Hant-HK";
   const lb = document.getElementById("btnLang");
   if(lb) lb.textContent = LANG === "en" ? "中文" : "English";
+  applyBrand(BRAND_RAW.t, BRAND_RAW.s, false);   // 品牌名按語言重譯
   translateTree(document.body);
   if(G && G.phase === "running") renderPlay();
   else if(document.body.dataset.view === "home") renderHome();
@@ -1490,7 +1496,8 @@ $("#toast").addEventListener("click", ()=>{ clearTimeout(toastT); $("#toast").cl
 function shuffle(a){ for(let i=a.length-1;i>0;i--){ const j=Math.floor(Math.random()*(i+1)); [a[i],a[j]]=[a[j],a[i]]; } return a; }
 
 /* ================= 品牌（可由 /edit 自訂） ================= */
-const BRAND = { title: T("百獸台"), sub: T("派對猜詞主持台") };
+const BRAND_DEF = { title: "百獸台", sub: "派對猜詞主持台" };   // 預設品牌（按語言翻譯）
+let BRAND_RAW = { t: "", s: "" };                                // 伺服器／自訂品牌，空＝用預設
 const BRAND_KEY = "beastbrand.v1";
 
 /* 開頁即用上次的品牌（冇快取就暫時收埋標題，避免先閃「百獸台」再變） */
@@ -1506,14 +1513,20 @@ function applyBrand(title, sub, save){
   const h = document.querySelector(".landing-title");
   const p = document.querySelector(".landing-sub");
   if(!h || !p) return;
-  const t = String(title || "").trim() || BRAND.title;
-  const s = String(sub || "").trim() || BRAND.sub;
+  const rawT = String(title ?? BRAND_RAW.t ?? "").trim();
+  const rawS = String(sub ?? BRAND_RAW.s ?? "").trim();
+  BRAND_RAW = { t: rawT, s: rawS };
+  const t = rawT || T(BRAND_DEF.title);
+  const s = rawS || T(BRAND_DEF.sub);
   h.textContent = t;
   p.textContent = s;
-  h.dataset.len = t.length > 8 ? "long" : (t.length > 5 ? "mid" : "");
+  /* 拉丁字比中文窄：英文用較寬的長度門檻，避免「Beast TV」被降兩級字階 */
+  const n = t.length;
+  h.dataset.len = LANG === "en" ? (n > 16 ? "long" : n > 10 ? "mid" : "")
+                                : (n > 8 ? "long" : n > 5 ? "mid" : "");
   document.title = s ? `${t} · ${s}` : t;
   document.documentElement.classList.remove("brand-pending");
-  if(save){ try{ localStorage.setItem(BRAND_KEY, JSON.stringify({ t, s })); }catch(e){} }
+  if(save){ try{ localStorage.setItem(BRAND_KEY, JSON.stringify(BRAND_RAW)); }catch(e){} }
 }
 
 /* ================= 後端 ================= */
