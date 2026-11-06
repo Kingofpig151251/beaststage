@@ -70,6 +70,28 @@ def conn():
     return _CONN
 
 
+def sweep_accounts(cur, days: int = 90, cap: int = 20) -> int:
+    """清走殭屍帳號：久未登入 且 題庫由未改過（等於初始題目）先刪。
+    有自訂內容嘅帳號永不自動刪——冇 email 可以預先通知，靜靜刪走對真用戶係災難。"""
+    cur.execute("SELECT u.id, u.bank_slug, b.text FROM users u "
+                "LEFT JOIN banks b ON b.slug = u.bank_slug "
+                "WHERE COALESCE(u.last_seen, u.created_at)::timestamptz "
+                "      < now() - make_interval(days => %s) LIMIT 200", (days,))
+    seed = seed_text()
+    gone = 0
+    for r in cur.fetchall():
+        if gone >= cap:
+            break
+        if (r["text"] or "").strip() not in ("", seed.strip()):
+            continue                     # 改過題目 → 保留
+        cur.execute("DELETE FROM auth_sessions WHERE user_id=%s", (r["id"],))
+        cur.execute("DELETE FROM users WHERE id=%s", (r["id"],))
+        if r["bank_slug"]:
+            cur.execute("DELETE FROM banks WHERE slug=%s", (r["bank_slug"],))
+        gone += 1
+    return gone
+
+
 def client_ip(request) -> str:
     """Vercel 會覆寫 x-forwarded-for，取第一個就係真實來源。"""
     fwd = request.headers.get("x-forwarded-for") or ""
@@ -122,6 +144,7 @@ def ensure_schema():
                     "id BIGSERIAL PRIMARY KEY, username TEXT UNIQUE NOT NULL, "
                     "pass_hash TEXT NOT NULL, salt TEXT NOT NULL, "
                     "created_at TEXT NOT NULL, bank_slug TEXT)")
+        cur.execute("ALTER TABLE users ADD COLUMN IF NOT EXISTS last_seen TEXT")
         # 舊 /api/session 遺留嘅 sessions 表用唔到（id/mode/rounds…），另開 auth_sessions
         cur.execute("CREATE TABLE IF NOT EXISTS auth_sessions ("
                     "token_hash TEXT PRIMARY KEY, user_id INT NOT NULL, "
@@ -288,10 +311,8 @@ async def signup(request: Request):
     username = str(body.get("username") or "").strip().lower()
     pw = str(body.get("password") or "")
     code = str(body.get("code") or "")
-    if not CREATE_KEY:
-        return JSONResponse({"error": "註冊未開放"}, status_code=503)
-    if not secrets.compare_digest(code.encode(), CREATE_KEY.encode()):
-        return JSONResponse({"error": "邀請碼不正確"}, status_code=401)
+    if CREATE_KEY and not secrets.compare_digest(code.encode(), CREATE_KEY.encode()):
+        return JSONResponse({"error": "邀請碼不正確"}, status_code=401)   # 未設 CREATE_KEY = 公開註冊
     if not USER_RE.match(username):
         return JSONResponse({"error": "用戶名 3-24 個字，只可用細楷英數、_ . -"}, status_code=400)
     if len(pw) < 6:
@@ -301,6 +322,9 @@ async def signup(request: Request):
     with db() as (c, cur):
         if too_many(cur, "signup", client_ip(request), 10, 3600):
             return JSONResponse({"error": "嘗試太頻密，請遲一點再試"}, status_code=429)
+        cur.execute("SELECT count(*) AS n FROM users")
+        if cur.fetchone()["n"] >= 500:
+            return JSONResponse({"error": "帳號已滿，請聯絡主持人"}, status_code=503)
         ts = now()
         # 先插入用戶（ON CONFLICT 不插），避免「建咗題庫但用戶名撞咗」留孤兒
         cur.execute("INSERT INTO users (username,pass_hash,salt,created_at,bank_slug) "
@@ -314,7 +338,9 @@ async def signup(request: Request):
         cur.execute("INSERT INTO banks (slug,name,text,title,subtitle,key_hash,created_at,updated_at,owner_id) "
                     "VALUES (%s,%s,%s,'','',NULL,%s,%s,%s)",
                     (slug, username, seed_text(), ts, ts, u["id"]))
-        cur.execute("UPDATE users SET bank_slug=%s WHERE id=%s", (slug, u["id"]))
+        cur.execute("UPDATE users SET bank_slug=%s, last_seen=%s WHERE id=%s", (slug, ts, u["id"]))
+        if secrets.randbelow(3) == 0:                 # 約 1/3 機會順手掃殭屍帳號（零 cron）
+            sweep_accounts(cur)
         tok = issue_token(cur, u["id"])
     return {"ok": True, "token": tok, "user": {"username": username}, "bank": {"slug": slug, "name": username}}
 
@@ -333,6 +359,7 @@ async def login(request: Request):
         u = cur.fetchone()
         if not u or not secrets.compare_digest(hash_pw(pw, u["salt"]), u["pass_hash"]):
             return JSONResponse({"error": "用戶名或密碼不正確"}, status_code=401)
+        cur.execute("UPDATE users SET last_seen=%s WHERE id=%s", (now(), u["id"]))
         bank = user_bank(cur, u)
         tok = issue_token(cur, u["id"])
     return {"ok": True, "token": tok, "user": {"username": u["username"]},
@@ -350,12 +377,19 @@ def logout(request: Request):
     return {"ok": True}
 
 
+@app.get("/api/config")
+def config():
+    """前端只需知：而家註冊要唔要邀請碼。"""
+    return {"ok": True, "invite": bool(CREATE_KEY)}
+
+
 @app.get("/api/me")
 def me(request: Request):
     user = session_user(request)
     if not user:
         return JSONResponse({"error": "未登入"}, status_code=401)
     with db() as (c, cur):
+        cur.execute("UPDATE users SET last_seen=%s WHERE id=%s", (now(), user["id"]))
         bank = user_bank(cur, user)
     return {"ok": True, "user": {"username": user["username"]},
             "bank": {"slug": (bank or {}).get("slug"), "name": (bank or {}).get("name"),

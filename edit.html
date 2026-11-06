@@ -264,6 +264,8 @@ let BANK = (()=>{
   const v = (m ? m[1] : q || "default").toLowerCase();
   return /^[a-z0-9][a-z0-9-]{1,31}$/.test(v) ? v : "default";
 })();
+let INVITE = true;                    // 伺服器有設 CREATE_KEY 就要邀請碼；冇設＝公開註冊
+
 const apiUrl = (p)=> p + (p.includes("?") ? "&" : "?") + "b=" + encodeURIComponent(BANK);
 
 const editKey = () => sessionStorage.getItem(KEYNAME) || "";
@@ -290,7 +292,7 @@ function paintAuth(){
   $("#authGo").textContent = T(login ? "登入" : "註冊");
   $("#authSwap").textContent = T(login ? "未有帳號？註冊一個" : "已有帳號？返回登入");
   const codeEl = $("#authCode");
-  if(codeEl){ codeEl.hidden = login; if(login) codeEl.value = ""; }
+  if(codeEl){ codeEl.hidden = login || !INVITE; if(login) codeEl.value = ""; }
   $("#authPass").setAttribute("autocomplete", login ? "current-password" : "new-password");
   $("#authErr").textContent = "";
 }
@@ -301,7 +303,10 @@ function showGate(msg){
 }
 function hideGate(){ $("#gate").classList.remove("on"); }
 
-$("#authSwap").onclick = ()=>{ AUTH_MODE = AUTH_MODE === "login" ? "signup" : "login"; paintAuth(); };
+$("#authSwap").onclick = ()=>{ AUTH_MODE = AUTH_MODE === "login" ? "signup" : "login"; paintAuth();
+/* 有冇邀請碼由伺服器話事：冇設 CREATE_KEY 就係公開註冊，欄位自動收起 */
+fetch("/api/config", { cache: "no-store" }).then(r => r.json())
+  .then(d => { INVITE = d.invite !== false; paintAuth(); }).catch(() => {}); };
 paintAuth();
 
 $("#authForm").addEventListener("submit", async (e)=>{
@@ -311,7 +316,7 @@ $("#authForm").addEventListener("submit", async (e)=>{
   const code = ($("#authCode")?.value || "").trim();
   const err = $("#authErr");
   if(!username || !password){ err.textContent = T("兩樣都要填"); return; }
-  if(AUTH_MODE === "signup" && !code){ err.textContent = T("請填邀請碼"); return; }
+  if(AUTH_MODE === "signup" && INVITE && !code){ err.textContent = T("請填邀請碼"); return; }
   err.textContent = "";
   $("#authGo").disabled = true;
   try{
