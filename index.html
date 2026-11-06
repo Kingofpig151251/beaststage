@@ -134,8 +134,7 @@
   /* 窄屏：版權行同品牌圖示分兩行，避免斷字成三欄 */
   @media (max-width:560px){
     #toast.multi{bottom:calc(124px + env(safe-area-inset-bottom))}
-    .landing-foot{flex-direction:column; gap:6px; row-gap:6px}
-    .brand-links{border-left:0; padding-left:0; margin-left:0}
+    .landing-foot{gap:10px; row-gap:6px}          /* 只剩版權＋GitHub，一行過就夠 */
   }
   .landing-title[data-len="mid"]{font-size:clamp(52px, 11vh, 118px); letter-spacing:-.035em}
   .landing-title[data-len="long"]{font-size:clamp(38px, 7.4vh, 82px); letter-spacing:-.025em; line-height:1.06}
@@ -169,19 +168,14 @@
   #toast.multi{text-align:left; white-space:pre-line; line-height:1.6; font-size:14px;
     bottom:calc(104px + env(safe-area-inset-bottom));
     border-radius:var(--r-lg); padding:14px 16px; width:min(560px, calc(100% - 40px))}
-  .brand-links{display:inline-flex; align-items:center; gap:4px; padding-left:10px; margin-left:2px;
-    border-left:var(--hair) solid var(--sep)}
-  .brand{display:grid; place-items:center; width:38px; height:38px; border-radius:10px;
-    background:var(--surface); text-decoration:none; color:var(--ink);
-    box-shadow:0 0 0 1px var(--sep);
-    transition:box-shadow var(--dur) var(--ease), transform var(--dur) var(--ease),
-               background-color var(--dur) var(--ease)}
-  .brand:hover{box-shadow:0 0 0 1px color-mix(in oklab, var(--sep) 160%, transparent), 0 4px 12px var(--vs-shadow);
-    transform:translateY(-1px)}
-  .brand:active{transform:translateY(0) scale(.96); box-shadow:0 0 0 1px var(--sep)}
-  .brand:focus-visible{outline:2px solid var(--focus-ring); outline-offset:2px}
-  .brand svg{display:block; width:18px; height:18px}
-  .brand img{display:block; width:29px; height:29px; border-radius:7px}
+  /* 頁腳：只剩版權 ＋ 一個明顯嘅 GitHub 膠囊；Hermes／OpenCode 品牌搬去 /credits */
+  .gh-link{display:inline-flex; align-items:center; gap:6px; height:34px; padding:0 13px;
+    border-radius:var(--r-lg); background:var(--fill); color:var(--ink);
+    font-size:13px; font-weight:600; letter-spacing:.01em; text-decoration:none;
+    transition:background-color .2s var(--ease)}
+  .gh-link svg{width:15px; height:15px; flex:none}
+  .gh-link:active{background:var(--fill-2)}
+  .gh-link:focus-visible{outline:0; box-shadow:0 0 0 3px var(--focus-ring)}
   .landing-link{display:inline-flex; align-items:center; justify-content:center; margin-top:20px;
     min-width:132px; min-height:48px; padding:0 26px; border-radius:var(--pill); background:var(--fill);
     color:var(--ink); font-size:17px; font-weight:600; text-decoration:none;
@@ -1026,16 +1020,11 @@
       <div class="landing-foot">
         <span class="landing-credit">© 2026 <a class="credit-link" id="linkAuthor" href="https://king.kingleung.synology.me/" target="_blank" rel="noopener">Leung Tung Lam</a> ·
           <a class="credit-link" href="/credits" id="linkRights" style="min-width:52px">版權聲明</a></span>
-        <span class="brand-links">
-          <a class="brand" href="https://github.com/Kingofpig151251/beaststage" target="_blank" rel="noopener"
-             aria-label="GitHub 原始碼" title="GitHub 原始碼"><svg viewBox="0 0 16 16" width="1em" height="1em" fill="currentColor" aria-hidden="true"><path d="M8 0C3.58 0 0 3.58 0 8a8 8 0 0 0 5.47 7.59c.4.07.55-.17.55-.38 0-.19-.01-.82-.01-1.49-2.01.37-2.53-.49-2.69-.94-.09-.23-.48-.94-.82-1.13-.28-.15-.68-.52-.01-.53.63-.01 1.08.58 1.23.82.72 1.21 1.87.87 2.33.66.07-.52.28-.87.51-1.07-1.78-.2-3.64-.89-3.64-3.95 0-.87.31-1.59.82-2.15-.08-.2-.36-1.02.08-2.12 0 0 .67-.21 2.2.82a7.4 7.4 0 0 1 2-.27c.68 0 1.36.09 2 .27 1.53-1.04 2.2-.82 2.2-.82.44 1.1.16 1.92.08 2.12.51.56.82 1.27.82 2.15 0 3.07-1.87 3.75-3.65 3.95.29.25.54.73.54 1.48 0 1.07-.01 1.93-.01 2.2 0 .21.15.46.55.38A8.01 8.01 0 0 0 16 8c0-4.42-3.58-8-8-8z"/></svg></a>
-          <a class="brand" href="https://hermes-agent.nousresearch.com" target="_blank" rel="noopener"
-             aria-label="Hermes Agent" title="Built with Hermes"><img alt="Hermes"
-             src="data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAADoAAAA6CAYAAADhu0ooAAAQAElEQVR4AdSbCZRWcxvAnzsjbVKohGiTUEqL9MXXXorS2JcsJ0IlRSEfxbSqEHKSTh0he0pCJV80UiRalDqlZUpU1kn7/j2/Z+Y/733v3Pe+78xxjs+c+7z/5f635/+s/+d/J01S+Dt69GhdhSEKCxQ2KOxS+Lue3Toxa1io6XCF+imgIKGIaud0hfIKXRRW6EBLFQYoNFWoplBa4e96SunErOFfmv5HYYmuca1CV4UKCsdoXYGnAKLasKS2aqEwUWGCQh2FAu207v/pqamLGacwWaG14sBmaDb2xCGgDaBUe309TKGjAkhr8o94iusq2yqMUOikuJTRNP/JR1RfgFQ7fTNYobFCusI/7QGferroTAWQhXCalVwZVSRBqonW9FeoreAp/KXP3r175fvvv5evvvrKYPHixVb+/fff/9J5dDDWXkvTfgrNFLdimuYiqpmyCr0UGinQUJOiPzq4gNiPP/4oq1evltmzZ8v48eNlwIAB0q9fP+nbt6/BPffcIz179pRHH31U3n33Xdm0aZMcPny46BPHeoIDlO2pVRUV8hFtqwVkE8pqtujPunXr5Ouvv5bPP/9cfv31VylbtqzUrl1b2rZtK927d7f04MGD9v6jjz6St99+W55++mm577775IYbbpBBgwYZwkeOHCn6InJ7gktrzbbSjU+HpzUvffWngKbSupQeFg7VLr/8crnsssukU6dO0qVLF+nQoYO0b99eRowYITt37pSLLrrIKDpjxgzJzMyUkiVLii5Cdu3aZch98cUX8tRTT0mLFi1k+PDhsn///pTmj2hUUt/1ViiRphPV0ExDhSI9LO7KK6+U6667TmbOnClr166V7du3yy+//CJbt26VlStXyoQJEwzhPn36CJty8sknG+uC1HHHHRc37549eyQ7O1uGDh0qV111lY0V16DwBRyK6mnaL0MhXSHlB7aCLZ988kkByQ8++ED+/PPPUPnSjTTkduzYIS+88II0a9ZMYO/SpUvLLbfcYmwLewcnh5psHOOzecwZbJNiGdw6g2iHFDtYswMHDsiiRYukd+/eMnDgQNm2bZvVp/JTrFgxozAsvmLFCilVqpRcccUVctddd0mJEiVCh6DdI488YpRl00IbJa9sA6JVkrfLbcEuz58/Xx58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"></a>
-          <a class="brand" href="https://opencode.ai/console/go" target="_blank" rel="noopener"
-             aria-label="OpenCode" title="Built with OpenCode"><img alt="OpenCode"
-             src="data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAADoAAAA6CAYAAADhu0ooAAABjklEQVR4AeyZQUrDQBSGh4Ktm4Dd251diCDUA4jgGURPIXoKxWMo3qRQumv37SHaLJrATFoCWWQzJPMebzKT/oVHAjNv3v//XxctMzBaH43ufw3UmXxgtG+gQRREI00AX91IwVllg6g1mmohz3O12+291uGQVdPdH2Siv3//6vbu3mt9ff+4O6w6yEar/mgeMBoNqpZCQbRlUNFsC4SofF4iRqfTG7VczEn1MJuJuBYxOrwYqsnkmlSjy1E8RkWUMg8VIcrUJNIOoyKxdngoiHLCN4Uh/33TWnNGW3tFiBZFobIsI1XZa1XLWBAxytAj1gqjYtF2dDCIdhS82FgQFYu2o4NBtB58H95BtA8U6x5AtJ6G63v5wzxNU0UpY4zruFb7RYhuNlv1+PRMqtVq3Uq46yYRo64ifOyHUR8p+5wBoj7T9jELRJtSfnt9IV0iUS+fyr7Pj/cmWdZ1MtEkSUiXSNTLp7JvPL6yGmlaIBttOji0dRgNjQhXT0xEWV5hlBVfgM0gGiAUlqSzIXoCAAD//1XiKfYAAAAGSURBVAMAXu9Z20V2aSMAAAAASUVORK5CYII="></a>
-        </span>
+        <a class="gh-link" href="https://github.com/Kingofpig151251/beaststage" target="_blank" rel="noopener"
+           aria-label="GitHub 原始碼" title="GitHub 原始碼">
+          <svg viewBox="0 0 16 16" width="1em" height="1em" fill="currentColor" aria-hidden="true"><path d="M8 0C3.58 0 0 3.58 0 8a8 8 0 0 0 5.47 7.59c.4.07.55-.17.55-.38 0-.19-.01-.82-.01-1.49-2.01.37-2.53-.49-2.69-.94-.09-.23-.48-.94-.82-1.13-.28-.15-.68-.52-.01-.53.63-.01 1.08.58 1.23.82.72 1.21 1.87.87 2.33.66.07-.52.28-.87.51-1.07-1.78-.2-3.64-.89-3.64-3.95 0-.87.31-1.59.82-2.15-.08-.2-.36-1.02.08-2.12 0 0 .67-.21 2.2.82a7.4 7.4 0 0 1 2-.27c.68 0 1.36.09 2 .27 1.53-1.04 2.2-.82 2.2-.82.44 1.1.16 1.92.08 2.12.51.56.82 1.27.82 2.15 0 3.07-1.87 3.75-3.65 3.95.29.25.54.73.54 1.48 0 1.07-.01 1.93-.01 2.2 0 .21.15.46.55.38A8.01 8.01 0 0 0 16 8c0-4.42-3.58-8-8-8z"/></svg>
+          <span>GitHub</span>
+        </a>
       </div>
     </div>
   </section>
