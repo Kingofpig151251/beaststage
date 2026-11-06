@@ -141,7 +141,13 @@ def put_meta(cur, key, value):
 
 
 def seed_text():
-    """第一次用：由 samples 抽題目，一行一題（類別名唔要）。"""
+    """新用戶題庫的起頭題目：優先 samples/seed.txt（一行一題），否則由舊 JSON 抽。"""
+    plain = os.path.join(ROOT, "samples", "seed.txt")
+    if os.path.exists(plain):
+        with open(plain, encoding="utf-8") as f:
+            rows = [ln.strip() for ln in f if ln.strip()]
+        if rows:
+            return "\n".join(rows)
     try:
         with open(SEED, encoding="utf-8") as f:
             seed = json.load(f)
