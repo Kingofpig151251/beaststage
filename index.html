@@ -1388,7 +1388,22 @@ const LAST_STEP = 4;
 function renderHome(){
   // 入口頁：一行現況
   renderSetup();
+  paintEnter();
 }
+
+/* 空白題庫（例如啱啱開嘅新題庫）：主鍵改帶去設定，唔好撳落去得一句錯誤 */
+function paintEnter(){
+  const b = $("#btnEnter"); if(!b) return;
+  const empty = REMOTE.ok && lines.length === 0;
+  b.textContent = empty ? "先設定題目" : "開始";
+  b.dataset.mode = empty ? "setup-bank" : "";
+}
+$("#btnEnter").addEventListener("click", (e)=>{
+  if($("#btnEnter").dataset.mode === "setup-bank"){
+    e.preventDefault(); e.stopPropagation();
+    location.href = "/edit?b=" + encodeURIComponent(BANK);
+  }
+}, true);
 
 function renderSetup(){
   const qc = $("#qCount");
