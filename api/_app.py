@@ -99,7 +99,8 @@ def ensure_schema():
                     "id BIGSERIAL PRIMARY KEY, username TEXT UNIQUE NOT NULL, "
                     "pass_hash TEXT NOT NULL, salt TEXT NOT NULL, "
                     "created_at TEXT NOT NULL, bank_slug TEXT)")
-        cur.execute("CREATE TABLE IF NOT EXISTS sessions ("
+        # 舊 /api/session 遺留嘅 sessions 表用唔到（id/mode/rounds…），另開 auth_sessions
+        cur.execute("CREATE TABLE IF NOT EXISTS auth_sessions ("
                     "token_hash TEXT PRIMARY KEY, user_id INT NOT NULL, "
                     "created_at TEXT NOT NULL, expires_at TEXT NOT NULL)")
         # 一次性遷移：舊嘅單一題庫（meta.text）搬入 slug='default'
@@ -200,7 +201,7 @@ def new_salt():
 def issue_token(cur, user_id):
     tok = secrets.token_urlsafe(32)
     ts = datetime.now(timezone.utc)
-    cur.execute("INSERT INTO sessions (token_hash,user_id,created_at,expires_at) VALUES (%s,%s,%s,%s)",
+    cur.execute("INSERT INTO auth_sessions (token_hash,user_id,created_at,expires_at) VALUES (%s,%s,%s,%s)",
                 (hashlib.sha256(tok.encode()).hexdigest(), user_id, ts.isoformat(timespec="seconds"),
                  (ts + timedelta(days=30)).isoformat(timespec="seconds")))
     return tok
@@ -214,7 +215,7 @@ def session_user(request):
         return None
     h = hashlib.sha256(tok.encode()).hexdigest()
     with db() as (c, cur):
-        cur.execute("SELECT u.id,u.username,u.bank_slug FROM sessions s JOIN users u ON u.id=s.user_id "
+        cur.execute("SELECT u.id,u.username,u.bank_slug FROM auth_sessions s JOIN users u ON u.id=s.user_id "
                     "WHERE s.token_hash=%s AND s.expires_at > %s", (h, now()))
         return cur.fetchone()
 
@@ -301,7 +302,7 @@ def logout(request: Request):
     tok = auth[7:].strip() if auth.lower().startswith("bearer ") else ""
     if tok:
         with db() as (c, cur):
-            cur.execute("DELETE FROM sessions WHERE token_hash=%s",
+            cur.execute("DELETE FROM auth_sessions WHERE token_hash=%s",
                         (hashlib.sha256(tok.encode()).hexdigest(),))
     return {"ok": True}
 
