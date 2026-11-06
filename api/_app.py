@@ -126,6 +126,11 @@ def ensure_schema():
         cur.execute("CREATE TABLE IF NOT EXISTS auth_sessions ("
                     "token_hash TEXT PRIMARY KEY, user_id INT NOT NULL, "
                     "created_at TEXT NOT NULL, expires_at TEXT NOT NULL)")
+        # 節流表：只記最近事件，過期即清（唔使 Redis）
+        cur.execute("CREATE TABLE IF NOT EXISTS rl (id BIGSERIAL PRIMARY KEY, bucket TEXT NOT NULL, "
+                    "key TEXT NOT NULL, ts TIMESTAMPTZ NOT NULL DEFAULT now())")
+        cur.execute("CREATE INDEX IF NOT EXISTS rl_lookup ON rl (bucket, key, ts)")
+        cur.execute("CREATE INDEX IF NOT EXISTS rl_ts ON rl (ts)")
         # 一次性遷移：舊嘅單一題庫（meta.text）搬入 slug='default'
         cur.execute("SELECT 1 FROM banks WHERE slug='default'")
         if not cur.fetchone():
