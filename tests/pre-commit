@@ -1,0 +1,14 @@
+#!/bin/sh
+# 提交前把關：sloplint 有任何 FAIL 就唔准 commit
+# 安裝：cp 這個檔去 .git/hooks/pre-commit && chmod +x
+cd "$(git rev-parse --show-toplevel)" || exit 0
+for f in index.html edit.html; do
+  [ -f "$f" ] || continue
+  out=$(node /opt/data/skills/hallmark/scripts/sloplint.mjs "$f" --scope app 2>&1)
+  if ! printf '%s' "$out" | grep -q "sloplint: 0 FAIL"; then
+    printf '%s\n' "$out" | grep "FAIL"
+    echo "✗ sloplint FAIL：$f —— 修正後再 commit"
+    exit 1
+  fi
+done
+exit 0
