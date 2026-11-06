@@ -230,9 +230,20 @@ python3 scripts/bank.py new party2026 "派對題庫" --key 自訂密碼
 python3 scripts/bank.py new copy-of-default "副本" --from default   # 由現有題庫抄一份
 python3 scripts/bank.py text party2026              # 印出內容
 python3 scripts/bank.py rm party2026                # 刪（API 冇 DELETE，直接 SQL）
+python3 scripts/bank.py list                        # 睇齊所有人開嘅題庫
 ```
 
-API：`GET/PUT /api/text?b=<slug>`、`GET /api/banks`、`POST /api/banks`。`b` 省略＝`default`，舊網址完全照行。
+API：`GET/PUT /api/text?b=<slug>`、`GET /api/banks`（master）、`POST /api/banks`（master）、`POST /api/newbank`（自助，要開庫碼）。`b` 省略＝`default`，舊網址完全照行。
+
+### 自助開庫（朋友自己開一份）
+
+`/edit?new=1`（或設定頁密碼閘下面的「第一次用？用開庫碼開一份新題庫」）：
+
+1. 填題庫名稱、**開庫碼**、自訂密碼 → 開一份
+2. 即場拿到「玩」與「改」兩條連結（各有複製鍵），密碼由用戶自己記住（伺服器只存 hash）
+3. 全程不需要你介入；`CREATE_KEY` 環境變數就是開庫碼，改了即刻令舊碼失效
+
+限制：每個來源 IP 每日 5 份、全站上限 120 份。未設 `CREATE_KEY`＝自助開庫關閉。
 
 原本的 141 題已一次性遷移到 `slug='default'`（`meta` 表保留但不再使用）。
 

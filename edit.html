@@ -124,6 +124,14 @@
     color:var(--blue); min-height:0}
   .gate-alt:focus-visible{outline:0; box-shadow:0 0 0 3px var(--focus-ring); border-radius:8px}
   .done-lb{font-size:12.5px; color:var(--ink-2); margin-top:4px}
+  .copy-row{display:flex; gap:8px; align-items:center}
+  .copy-row input{flex:1; min-width:0; font-size:14px; color:var(--ink-2)}
+  .copy-btn{flex:none; height:42px; padding:0 14px; border:0; border-radius:var(--r-md);
+    background:var(--fill); color:var(--ink); font:inherit; font-size:13.5px; font-weight:600;
+    touch-action:manipulation}
+  .copy-btn:active{background:var(--fill-2)}
+  .copy-btn:focus-visible{outline:0; box-shadow:0 0 0 3px var(--focus-ring)}
+  .copy-btn.ok{color:var(--blue)}
   #newGate[hidden],#doneGate[hidden]{display:none}
   .gate-go{margin-top:10px; min-height:48px; border:0; border-radius:var(--r-lg);
     background:var(--blue); color:var(--surface); font:inherit; font-size:17px; font-weight:600; cursor:pointer}
@@ -160,9 +168,9 @@
     <h2>開好了</h2>
     <p id="doneName"></p>
     <label class="done-lb">玩嘅連結</label>
-    <input id="donePlay" type="text" readonly>
+    <div class="copy-row"><input id="donePlay" type="text" readonly><button type="button" class="copy-btn" data-copy="donePlay">複製</button></div>
     <label class="done-lb">改嘅連結</label>
-    <input id="doneEdit" type="text" readonly>
+    <div class="copy-row"><input id="doneEdit" type="text" readonly><button type="button" class="copy-btn" data-copy="doneEdit">複製</button></div>
     <p class="gate-err" style="color:var(--ink-2)">密碼就係你啱啱設定嘅嗰個，請自行記住（我哋唔會顯示返）。</p>
     <button type="button" class="gate-go" id="btnGoEdit">開始設定題目</button>
   </div>
@@ -301,6 +309,19 @@ $("#newForm").addEventListener("submit", async (e)=>{
   }finally{
     $("#newGo").disabled = false;
   }
+});
+
+document.querySelectorAll(".copy-btn").forEach(b=>{
+  b.addEventListener("click", async ()=>{
+    const el = document.getElementById(b.dataset.copy);
+    try{
+      await navigator.clipboard.writeText(el.value);
+    }catch(_){
+      el.select(); document.execCommand("copy");
+    }
+    const t = b.textContent; b.textContent = "已複製"; b.classList.add("ok");
+    setTimeout(()=>{ b.textContent = t; b.classList.remove("ok"); }, 1400);
+  });
 });
 
 if(SHOWNEW) showNew();
