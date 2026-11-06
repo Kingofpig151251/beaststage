@@ -202,8 +202,12 @@ samples/hk-icebreaker.json 首次 seed 題庫
 
 > Copyright (c) 2026 **Leung Tung Lam**
 
-可自由使用、修改、商用，唯一要求是保留版權聲明與授權條文；介面上的
-`© 2026 Leung Tung Lam · MIT License` 屬作者署名，請勿移除。
+可自由使用、修改、商用，唯一要求是保留版權聲明與授權條文。
+
+主頁右下（三個品牌圖示左邊）有兩個可按的文字鍵：
+
+- **授權** → 彈出「© 2026 Leung Tung Lam · MIT License」吐司
+- **素材鳴謝** → 彈出音效素材來源與授權吐司（CC BY 的素材依授權要求在此署名）
 
 ## 版權、致謝與商標
 
@@ -224,11 +228,10 @@ samples/hk-icebreaker.json 首次 seed 題庫
 - **倒數音效**：`sfx/countdown.mp3` 來自 OpenGameArt《race start countdown》（CC0 1.0）。
 - **滴答音效**：`sfx/tick.mp3` 取自 Wikimedia Commons《Clock ticking》（pdsounds.org，public domain），只做裁剪、正規化與淡出。
 - **心跳音效**：`sfx/hb3.mp3` 取自 Wikimedia Commons《Human heart beating at 61 bpm》（CC BY 3.0，原錄音 Benboncan／Freesound）。做過裁剪、升調 5×、+6dB：原版 500Hz 以上只有 −44.6dB，iPad 內置喇叭出唔到，調完 −25.3dB 才聽得到。
-- **時間到哨子**：`sfx/whistle.mp3` 由 SpliceSound 裁判哨（CC0）剪成三吹。
+- **時間到哨子**：`sfx/whistle.mp3` 由 SpliceSound 裁判哨（CC0）剪成單響。
 - **結算 fanfare**：`sfx/settle.mp3` 來自 OpenGameArt《Classic fanfare lick》（CC0 1.0）。
 - **結果頁鼓聲**：`sfx/drums.mp3` 為 OpenGameArt《Horde War Drums》（William Hector，CC0 1.0）節錄；
   `sfx/snare.mp3` 為 OpenGameArt《An interesting snare drum sound》（CC0 1.0）。
-- **結果頁 tick**：`sfx/tick.mp3` 來自 Kenney《UI Audio》（CC0 1.0）。
 - **冠軍 BGM**：`sfx/champion.mp3` 為 Kevin MacLeod《Celebration》節錄（[incompetech.com](https://incompetech.com)），
   以 **CC BY 4.0** 授權使用，已按授權要求在此署名；16.7 秒（8 小節，114.8 BPM）經交叉淡化做成無縫 loop。
 - **依賴**：見 `requirements.txt`（FastAPI、psycopg 等），各自依原授權（MIT / BSD / Apache-2.0）。
