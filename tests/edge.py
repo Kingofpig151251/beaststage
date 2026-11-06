@@ -237,6 +237,22 @@ async def t_undo(T):
     check("結算覆核：減返犯規", (await T.js("G.settle.foul")) == f0)
     check("撤回／覆核：無 JS 例外", (await T.js("window.__err.length")) == 0)
 
+# ⑫ 空白題回報：按鈕存在、有診斷紀錄、唔會寫壞題庫
+async def t_report(T):
+    await start_game(T)
+    await T.js("act('ok')")
+    await asyncio.sleep(0.3)
+    check("回報：按鍵存在", await T.js("!!document.getElementById('btnReport')"))
+    n = await T.js("window.__bigtv.diag.length")
+    check("回報：有診斷紀錄", (n or 0) >= 1, n)
+    d = await T.js("window.__bigtv.diag[window.__bigtv.diag.length-1]")
+    check("回報：紀錄有字級與尺寸", bool(d) and "fs" in d and "cw" in d, d)
+    await T.js("document.getElementById('btnReport').click()")
+    ok = await _poll(T, "document.getElementById('toast').classList.contains('on')", 4)
+    check("回報：按落去有回應", ok)
+    check("回報：有存本機備份", (await T.js("(localStorage.getItem('beasttv.reports')||'[]').length")) > 2)
+    check("回報：唔會寫題庫", (await T.js("String(window.__bigtv.lines.length)")) is not None)
+
 async def main(url):
     print("\n[1] 暫停／繼續時鐘")
     await session(url, {"teams": 2, "sec": 20, "roundsPer": 1, "skipCap": 3, "allowSkip": True}, t_pause)
@@ -269,6 +285,9 @@ async def main(url):
 
     print("\n[11] 手誤補救（撤回＋結算覆核）")
     await session(url, {"teams": 2, "sec": 60, "roundsPer": 1, "skipCap": 3, "allowSkip": True}, t_undo)
+
+    print("\n[12] 空白題回報")
+    await session(url, {"teams": 2, "sec": 60, "roundsPer": 1, "skipCap": 3, "allowSkip": True}, t_report)
 
     print("\n[5] 全員同分")
     await session(url, {"teams": 8, "sec": 3, "roundsPer": 1, "skipCap": 3, "allowSkip": True}, t_tie)

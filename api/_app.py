@@ -82,6 +82,9 @@ def db():
 def ensure_schema():
     with db() as (c, cur):
         cur.execute("CREATE TABLE IF NOT EXISTS meta (key TEXT PRIMARY KEY, value TEXT)")
+        cur.execute("CREATE TABLE IF NOT EXISTS reports ("
+                    "id BIGSERIAL PRIMARY KEY, created_at TEXT NOT NULL, "
+                    "kind TEXT, ua TEXT, vw INT, vh INT, body TEXT)")
 
 
 _READY = {"ok": False}
@@ -173,3 +176,33 @@ async def text_put(request: Request):
             put_meta(cur, "subtitle", subtitle.strip()[:36])
         put_meta(cur, "updated_at", now())
     return {"ok": True, "chars": len(text)}
+
+
+@app.post("/api/report")
+async def report_post(request: Request):
+    """玩家／主持回報問題（空白題等）。只寫 reports 表，唔會碰題庫。"""
+    schema()
+    body = await request.json()
+    if not isinstance(body, dict):
+        return JSONResponse({"error": "body 要係物件"}, status_code=400)
+    blob = json.dumps(body, ensure_ascii=False)[:20000]
+    with db() as (c, cur):
+        cur.execute("INSERT INTO reports (created_at, kind, ua, vw, vh, body) "
+                    "VALUES (%s,%s,%s,%s,%s,%s)",
+                    (now(), str(body.get("kind") or "")[:40], str(body.get("ua") or "")[:300],
+                     body.get("vw"), body.get("vh"), blob))
+        cur.execute("DELETE FROM reports WHERE id NOT IN "
+                    "(SELECT id FROM reports ORDER BY id DESC LIMIT 200)")   # 只留最近 200 筆
+    return {"ok": True}
+
+
+@app.get("/api/report")
+def report_list(request: Request, limit: int = 20):
+    if not key_ok(request):
+        return JSONResponse({"error": "未授權"}, status_code=401)
+    schema()
+    with db() as (c, cur):
+        cur.execute("SELECT id, created_at, kind, vw, vh, body FROM reports "
+                    "ORDER BY id DESC LIMIT %s", (max(1, min(limit, 100)),))
+        rows = [dict(r) for r in cur.fetchall()]
+    return {"ok": True, "count": len(rows), "items": rows}
