@@ -163,19 +163,18 @@ def seed_text():
 
 
 def get_bank(cur, slug):
-    cur.execute("SELECT slug,name,text,title,subtitle,key_hash,updated_at FROM banks WHERE slug=%s", (slug,))
+    cur.execute("SELECT slug,name,text,title,subtitle,key_hash,owner_id,updated_at "
+                "FROM banks WHERE slug=%s", (slug,))
     return cur.fetchone()
 
 
 def bank_key_ok(request, bank):
     """master（EDIT_KEY）可改任何題庫；otherwise 比對該題庫自己的密碼 hash。"""
     supplied = request.headers.get("x-edit-key", "")
-    if EDIT_KEY and supplied == EDIT_KEY:
+    if EDIT_KEY and secrets.compare_digest(supplied, EDIT_KEY):
         return True
-    if not EDIT_KEY and not (bank and bank.get("key_hash")):
-        return True                                   # 本地開發：完全開放
     h = (bank or {}).get("key_hash")
-    return bool(h) and hashlib.sha256(supplied.encode()).hexdigest() == h
+    return bool(h) and secrets.compare_digest(hashlib.sha256(supplied.encode()).hexdigest(), h)
 
 
 def read_text(cur):
@@ -248,10 +247,10 @@ def norm_slug(b):
 
 
 def key_ok(request):
-    """未設 EDIT_KEY 就唔檢查（本地開發／未配置環境變數時保持可用）。"""
+    """Master key 檢查；**未設 EDIT_KEY 一律拒絕**（以前 fail-open，一漏設就任人改任何題庫）。"""
     if not EDIT_KEY:
-        return True
-    return request.headers.get("x-edit-key", "") == EDIT_KEY
+        return False
+    return secrets.compare_digest(request.headers.get("x-edit-key", ""), EDIT_KEY)
 
 
 @app.post("/api/signup")
@@ -430,7 +429,8 @@ async def find_bank(request: Request):
     with db() as (c, cur):
         cur.execute("SELECT slug,name,key_hash FROM banks WHERE lower(name)=lower(%s)", (name,))
         rows = cur.fetchall()
-    hits = [{"slug": r["slug"], "name": r["name"]} for r in rows if r["key_hash"] == h]
+    hits = [{"slug": r["slug"], "name": r["name"]} for r in rows
+            if r["key_hash"] and secrets.compare_digest(r["key_hash"], h)]
     if not hits:
         return JSONResponse({"error": "名稱或密碼不正確"}, status_code=401)
     return {"ok": True, "count": len(hits), "items": hits}
