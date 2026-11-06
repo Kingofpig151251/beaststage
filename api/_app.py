@@ -14,6 +14,7 @@ import hashlib
 import json
 import os
 import re
+import secrets
 from contextlib import contextmanager
 from datetime import datetime, timedelta, timezone
 
@@ -25,6 +26,7 @@ from fastapi.responses import JSONResponse
 ROOT = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
 DATABASE_URL = os.environ.get("DATABASE_URL") or os.environ.get("POSTGRES_URL") or ""
 EDIT_KEY = os.environ.get("EDIT_KEY") or ""      # 未設＝維持開放（本地開發用）
+CREATE_KEY = os.environ.get("CREATE_KEY") or ""  # 自助開庫碼；未設＝自助開庫關閉
 SEED = os.path.join(ROOT, "samples", "hk-icebreaker.json")
 
 app = FastAPI(title="百獸台 API", docs_url=None, redoc_url=None, openapi_url=None)
@@ -91,6 +93,7 @@ def ensure_schema():
                     "slug TEXT PRIMARY KEY, name TEXT, text TEXT NOT NULL DEFAULT '', "
                     "title TEXT DEFAULT '', subtitle TEXT DEFAULT '', key_hash TEXT, "
                     "created_at TEXT NOT NULL, updated_at TEXT NOT NULL)")
+        cur.execute("ALTER TABLE banks ADD COLUMN IF NOT EXISTS created_ip TEXT")
         # 一次性遷移：舊嘅單一題庫（meta.text）搬入 slug='default'
         cur.execute("SELECT 1 FROM banks WHERE slug='default'")
         if not cur.fetchone():
@@ -227,6 +230,55 @@ async def banks_create(request: Request):
                     (slug, name, text, (body.get("title") or "")[:24], (body.get("subtitle") or "")[:36],
                      hashlib.sha256(key.encode()).hexdigest() if key else None, ts, ts))
     return {"ok": True, "slug": slug, "url": f"/b/{slug}", "edit": f"/edit?b={slug}"}
+
+
+def _new_slug(cur):
+    alphabet = "abcdefghjkmnpqrstuvwxyz23456789"
+    for _ in range(12):
+        cand = "".join(secrets.choice(alphabet) for _ in range(6))
+        cur.execute("SELECT 1 FROM banks WHERE slug=%s", (cand,))
+        if not cur.fetchone():
+            return cand
+    raise RuntimeError("slug 生成失敗，再試一次")
+
+
+@app.post("/api/banks/new")
+async def banks_selfserve(request: Request):
+    """自助開庫：要 CREATE_KEY。每位來源每日最多 5 份，總數上限 120 份。"""
+    if not CREATE_KEY:
+        return JSONResponse({"error": "自助開庫未啟用"}, status_code=503)
+    body = await request.json()
+    code = str(body.get("code") or "")
+    if not secrets.compare_digest(code, CREATE_KEY):
+        return JSONResponse({"error": "開庫碼不正確"}, status_code=401)
+    name = str(body.get("name") or "").strip()[:40]
+    if not name:
+        return JSONResponse({"error": "請填題庫名稱"}, status_code=400)
+    key = str(body.get("key") or "")
+    if len(key) < 4:
+        return JSONResponse({"error": "密碼至少 4 個字"}, status_code=400)
+    text = body.get("text") or ""
+    if not isinstance(text, str):
+        return JSONResponse({"error": "text 要係字串"}, status_code=400)
+    text = text.replace("\r\n", "\n").replace("\r", "\n")[:200000]
+    ip = (request.headers.get("x-forwarded-for", "").split(",")[0].strip()
+          or request.headers.get("x-real-ip", "") or "")
+    schema()
+    with db() as (c, cur):
+        cur.execute("SELECT count(*) AS n FROM banks")
+        if cur.fetchone()["n"] >= 120:
+            return JSONResponse({"error": "題庫數量已滿，請聯絡管理員"}, status_code=429)
+        cur.execute("SELECT count(*) AS n FROM banks WHERE created_ip=%s AND created_at >= %s",
+                    (ip, now()[:10]))
+        if cur.fetchone()["n"] >= 5:
+            return JSONResponse({"error": "今日開庫次數已用完（每日 5 份）"}, status_code=429)
+        slug = _new_slug(cur)
+        ts = now()
+        cur.execute("INSERT INTO banks (slug,name,text,title,subtitle,key_hash,created_at,updated_at,created_ip) "
+                    "VALUES (%s,%s,%s,'','',%s,%s,%s,%s)",
+                    (slug, name, text, hashlib.sha256(key.encode()).hexdigest(), ts, ts, ip))
+    return {"ok": True, "slug": slug, "name": name,
+            "play": f"/b/{slug}", "edit": f"/edit?b={slug}"}
 
 
 @app.get("/api/text")

@@ -120,6 +120,11 @@
   .gate-card input{font:inherit; font-size:17px; padding:12px 14px; border-radius:var(--r-md);
     border:0; background:var(--fill); color:var(--ink); margin-top:6px}
   .gate-card input:focus{outline:0; box-shadow:inset 0 0 0 2px var(--focus-ring)}
+  .gate-alt{margin-top:2px; padding:8px 0; background:none; border:0; font:inherit; font-size:13.5px;
+    color:var(--blue); min-height:0}
+  .gate-alt:focus-visible{outline:0; box-shadow:0 0 0 3px var(--focus-ring); border-radius:8px}
+  .done-lb{font-size:12.5px; color:var(--ink-2); margin-top:4px}
+  #newGate[hidden],#doneGate[hidden]{display:none}
   .gate-go{margin-top:10px; min-height:48px; border:0; border-radius:var(--r-lg);
     background:var(--blue); color:var(--surface); font:inherit; font-size:17px; font-weight:600; cursor:pointer}
   .gate-err{color:var(--red); font-size:14px; min-height:20px; margin-top:2px}
@@ -133,7 +138,34 @@
     <input id="gatePass" type="password" autocomplete="current-password" aria-label="密碼" placeholder="密碼">
     <button type="submit" class="gate-go">進入</button>
     <p class="gate-err" id="gateErr"></p>
+    <button type="button" class="gate-alt" id="btnNewBank">第一次用？用開庫碼開一份新題庫</button>
   </form>
+</div>
+
+<div class="gate" id="newGate" hidden>
+  <form class="gate-card" id="newForm">
+    <h2>開新題庫</h2>
+    <p>開好之後會得到自己一條連結同密碼，同其他人分開。</p>
+    <input id="newName" type="text" maxlength="40" autocomplete="off" aria-label="題庫名稱" placeholder="題庫名稱（例如：陳家派對）">
+    <input id="newCode" type="text" autocomplete="off" aria-label="開庫碼" placeholder="開庫碼">
+    <input id="newPass" type="password" autocomplete="new-password" aria-label="自訂密碼" placeholder="自訂密碼（至少 4 個字）">
+    <button type="submit" class="gate-go" id="newGo">開一份</button>
+    <p class="gate-err" id="newErr"></p>
+    <button type="button" class="gate-alt" id="btnBackGate">返去輸入密碼</button>
+  </form>
+</div>
+
+<div class="gate" id="doneGate" hidden>
+  <div class="gate-card">
+    <h2>開好了</h2>
+    <p id="doneName"></p>
+    <label class="done-lb">玩嘅連結</label>
+    <input id="donePlay" type="text" readonly>
+    <label class="done-lb">改嘅連結</label>
+    <input id="doneEdit" type="text" readonly>
+    <p class="gate-err" style="color:var(--ink-2)">密碼就係你啱啱設定嘅嗰個，請自行記住（我哋唔會顯示返）。</p>
+    <button type="button" class="gate-go" id="btnGoEdit">開始設定題目</button>
+  </div>
 </div>
 
   <div class="wrap">
@@ -221,6 +253,57 @@ $("#gateForm").addEventListener("submit", async (e)=>{
     $("#gatePass").select();
   }
 });
+
+/* ---------- 自助開庫：輸入開庫碼即開一份自己嘅題庫 ---------- */
+const SHOWNEW = new URLSearchParams(location.search).get("new") === "1";
+const gNew = $("#newGate"), gDone = $("#doneGate"), gGate = $("#gate");
+
+function showNew(){
+  gGate.classList.remove("on"); gDone.classList.remove("on");
+  gDone.hidden = true;
+  gNew.hidden = false; gNew.classList.add("on");
+  $("#newName").focus();
+}
+function showGate(){
+  gNew.classList.remove("on"); gDone.classList.remove("on");
+  gNew.hidden = true; gDone.hidden = true;
+  gGate.classList.add("on");
+}
+
+$("#btnNewBank").onclick = showNew;
+$("#btnBackGate").onclick = showGate;
+
+$("#newForm").addEventListener("submit", async (e)=>{
+  e.preventDefault();
+  const name = $("#newName").value.trim();
+  const code = $("#newCode").value.trim();
+  const key  = $("#newPass").value;
+  const err = $("#newErr");
+  if(!name){ err.textContent = "請填題庫名稱"; return; }
+  if(!code){ err.textContent = "請填開庫碼"; return; }
+  if(key.length < 4){ err.textContent = "密碼至少 4 個字"; return; }
+  err.textContent = "";
+  $("#newGo").disabled = true;
+  try{
+    const r = await fetch("/api/banks/new", { method: "POST", headers: { "content-type": "application/json" },
+      body: JSON.stringify({ name, code, key }) });
+    const d = await r.json().catch(()=>({}));
+    if(!r.ok){ err.textContent = d.error || "開唔到，請再試"; return; }
+    sessionStorage.setItem(KEYNAME, key);
+    $("#doneName").textContent = `${name} · ${location.origin}${d.play}`;
+    $("#donePlay").value = location.origin + d.play;
+    $("#doneEdit").value = location.origin + d.edit;
+    $("#btnGoEdit").onclick = ()=>{ location.href = d.edit; };
+    gNew.classList.remove("on"); gNew.hidden = true;
+    gDone.hidden = false; gDone.classList.add("on");
+  }catch(_){
+    err.textContent = "網絡問題，請再試";
+  }finally{
+    $("#newGo").disabled = false;
+  }
+});
+
+if(SHOWNEW) showNew();
 
 const sig = () => [$("#text").value, $("#brandTitle").value.trim(), $("#brandSub").value.trim()].join("\u0000");
 
@@ -316,6 +399,7 @@ window.addEventListener("focus", poll);
 
 /* 開頁：先驗密碼（伺服器未設 EDIT_KEY 就直接入） */
 (async ()=>{
+  if(SHOWNEW){ showNew(); return; }          // 自助開庫：唔驗密碼，直接開表
   const st = await checkKey(editKey());
   if(st.ok){ hideGate(); load(); }
   else if(!st.protected){ hideGate(); load(); }
