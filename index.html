@@ -118,8 +118,11 @@
   html.brand-pending .landing-sub{visibility:hidden}   /* 等品牌到手先露，避免閃預設名 */
   .landing-title{margin:14px 0 0; font-family:var(--font-display); font-weight:700;
     font-size:clamp(76px,16vh,168px); letter-spacing:-.045em; line-height:.98; text-wrap:balance;
+    display:flex; align-items:center; justify-content:center;
+    min-height:calc(min(16vh, 168px) * .98);      /* 中英字階不同，但佔位一樣高 */
     animation:rise .62s .06s var(--ease) both}
-  @media (max-width:560px){ .landing-title{font-size:clamp(58px, 26vw, 116px); letter-spacing:-.03em} }
+  @media (max-width:560px){ .landing-title{font-size:clamp(58px, 26vw, 116px); letter-spacing:-.03em;
+    min-height:calc(min(26vw, 116px) * .98)} }
   /* 窄屏：版權行同品牌圖示分兩行，避免斷字成三欄 */
   @media (max-width:560px){
     #toast.multi{bottom:calc(124px + env(safe-area-inset-bottom))}
@@ -137,7 +140,7 @@
   .landing-foot{display:flex; align-items:center; justify-content:center; gap:8px; flex-wrap:wrap; row-gap:6px;
     padding:0 0 4px; animation:rise .62s .3s var(--ease) both}
   .lang-row{margin:12px 0 0; display:flex; justify-content:center}
-  .lang-toggle{min-height:34px; padding:0 14px; border:0; border-radius:999px; background:var(--fill);
+  .lang-toggle{min-width:92px; min-height:34px; padding:0 14px; border:0; border-radius:999px; background:var(--fill);
     color:var(--ink-2); font:inherit; font-size:12.5px; font-weight:600; letter-spacing:.01em;
     touch-action:manipulation; white-space:nowrap}
   .lang-toggle:active{background:var(--fill-2)}
@@ -168,7 +171,7 @@
   .brand svg{display:block; width:18px; height:18px}
   .brand img{display:block; width:29px; height:29px; border-radius:7px}
   .landing-link{display:inline-flex; align-items:center; justify-content:center; margin-top:20px;
-    min-height:48px; padding:0 26px; border-radius:var(--pill); background:var(--fill);
+    min-width:132px; min-height:48px; padding:0 26px; border-radius:var(--pill); background:var(--fill);
     color:var(--ink); font-size:17px; font-weight:600; text-decoration:none;
     animation:rise .62s .22s var(--ease) both}
   .landing-link:active{background:var(--fill-2)}
@@ -440,7 +443,8 @@
     padding:0 8px; border-radius:8px; font-family:var(--font-mono); font-size:16px; line-height:1;
     background:color-mix(in oklab, currentColor 14%, transparent); opacity:.9}
   /* 撤回 = 控制鍵，同 × / 回報 / 計時環 同一排、同一 44px 高度，唔混入判定列 */
-  .undo-btn{display:inline-flex; align-items:center; gap:6px; height:44px; padding:0 15px; white-space:nowrap;
+  .undo-btn{display:inline-flex; align-items:center; justify-content:center; gap:6px; height:44px; padding:0 15px; white-space:nowrap;
+    min-width:88px;
     border-radius:var(--pill); border:0; font:inherit; font-size:13.5px; font-weight:600;
     color:var(--ink); background:var(--fill); touch-action:manipulation;
     transition:background-color .2s var(--ease), color .2s var(--ease)}
@@ -823,10 +827,12 @@
   @media (max-height:420px){
     body{padding:0}
     .wrap{padding:8px 16px 10px}
-    .landing-title{font-size:clamp(40px, 13vh, 84px); margin-top:0}
+    .landing-title{font-size:clamp(40px, 13vh, 84px); margin-top:0; min-height:calc(min(13vh, 84px) * .98)}
+    html[lang="en"] .landing-title{font-size:clamp(30px, 9vh, 62px); min-height:calc(min(13vh, 84px) * .98)}
+    html[lang="en"] .landing-sub{font-size:clamp(13px, 3.4vh, 16px)}
   .landing-sub{margin-top:6px; font-size:14px}
     .landing-go{margin-top:14px; min-height:48px; min-width:200px; font-size:17px}
-    .landing-link{margin-top:10px; min-height:40px; padding:0 20px; font-size:15px}
+    .landing-link{min-width:132px; justify-content:center; margin-top:10px; min-height:40px; padding:0 20px; font-size:15px}
     .landing-foot{padding-bottom:0}
   }
   /* 手機橫向／矮視窗：設定頁壓縮，唔會壓住圓點同「繼續」 */
@@ -975,7 +981,7 @@
       </div>
       <div class="landing-foot">
         <span class="landing-credit">© 2026 <a class="credit-link" id="linkAuthor" href="https://king.kingleung.synology.me/" target="_blank" rel="noopener">Leung Tung Lam</a> ·
-          <a class="credit-link" href="/credits" id="linkRights">版權聲明</a></span>
+          <a class="credit-link" href="/credits" id="linkRights" style="min-width:52px">版權聲明</a></span>
         <span class="brand-links">
           <a class="brand" href="https://github.com/Kingofpig151251/beaststage" target="_blank" rel="noopener"
              aria-label="GitHub 原始碼" title="GitHub 原始碼"><svg viewBox="0 0 16 16" width="1em" height="1em" fill="currentColor" aria-hidden="true"><path d="M8 0C3.58 0 0 3.58 0 8a8 8 0 0 0 5.47 7.59c.4.07.55-.17.55-.38 0-.19-.01-.82-.01-1.49-2.01.37-2.53-.49-2.69-.94-.09-.23-.48-.94-.82-1.13-.28-.15-.68-.52-.01-.53.63-.01 1.08.58 1.23.82.72 1.21 1.87.87 2.33.66.07-.52.28-.87.51-1.07-1.78-.2-3.64-.89-3.64-3.95 0-.87.31-1.59.82-2.15-.08-.2-.36-1.02.08-2.12 0 0 .67-.21 2.2.82a7.4 7.4 0 0 1 2-.27c.68 0 1.36.09 2 .27 1.53-1.04 2.2-.82 2.2-.82.44 1.1.16 1.92.08 2.12.51.56.82 1.27.82 2.15 0 3.07-1.87 3.75-3.65 3.95.29.25.54.73.54 1.48 0 1.07-.01 1.93-.01 2.2 0 .21.15.46.55.38A8.01 8.01 0 0 0 16 8c0-4.42-3.58-8-8-8z"/></svg></a>
