@@ -401,10 +401,8 @@ function scheduleSave(){
 $("#text").oninput = () => { paintMeta(); scheduleSave(); };
 $("#brandTitle").oninput = scheduleSave;
 $("#brandSub").oninput = scheduleSave;
-window.addEventListener("beforeunload", e => {
-  const editorVisible = !$("#gate").classList.contains("on");
-  if(editorVisible && sig() !== lastSaved){ e.preventDefault(); e.returnValue = ""; }
-});
+/* 唔用原生 beforeunload 對話框：介面已有 800ms 自動儲存（並有「已儲存」提示），
+   離頁最多損失最後一次輸入。原生 confirm 視窗一律唔要。 */
 
 /* 斷線自動重試；同時接收其他人的修改（有未儲存內容時不覆蓋） */
 async function poll(){
