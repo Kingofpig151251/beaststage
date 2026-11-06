@@ -15,6 +15,7 @@ import json
 import os
 import re
 import secrets
+import threading
 from contextlib import contextmanager
 from datetime import datetime, timedelta, timezone
 
@@ -34,11 +35,11 @@ app = FastAPI(title="百獸台 API", docs_url=None, redoc_url=None, openapi_url=
 
 @app.exception_handler(Exception)
 async def any_error(request: Request, exc: Exception):
-    """serverless 出錯時要回 JSON，唔好回空白 500。"""
-    msg = str(exc)
-    if "DATABASE_URL" in msg:
-        msg = "未設定 DATABASE_URL（去 Vercel 專案加 Postgres）"
-    return JSONResponse({"error": msg}, status_code=503)
+    """serverless 出錯要回 JSON，但唔可以漏內部細節（SQL、欄位、DSN）俾 client。"""
+    print("API error:", repr(exc), flush=True)
+    if "DATABASE_URL" in str(exc):
+        return JSONResponse({"error": "未設定 DATABASE_URL"}, status_code=503)
+    return JSONResponse({"error": "伺服器錯誤，請再試"}, status_code=500)
 
 
 # ------------------------------------------------------------------ util
@@ -47,6 +48,7 @@ def now():
 
 
 _CONN = None
+_CONN_LOCK = threading.Lock()          # 一條快取連線同時只可以俾一個請求用
 
 
 def conn():
@@ -70,17 +72,18 @@ def conn():
 
 @contextmanager
 def db():
-    """沿用 conn() 的寫法，但唔會關掉快取連線。"""
-    c = conn()
-    cur = c.cursor()
-    try:
-        yield c, cur
-        c.commit()
-    except Exception:
-        c.rollback()
-        raise
-    finally:
-        cur.close()
+    """沿用 conn() 的寫法，但唔會關掉快取連線；用鎖避免並行請求共用同一條連線。"""
+    with _CONN_LOCK:
+        c = conn()
+        cur = c.cursor()
+        try:
+            yield c, cur
+            c.commit()
+        except Exception:
+            c.rollback()
+            raise
+        finally:
+            cur.close()
 
 
 def ensure_schema():
@@ -171,7 +174,7 @@ def get_bank(cur, slug):
 def bank_key_ok(request, bank):
     """master（EDIT_KEY）可改任何題庫；otherwise 比對該題庫自己的密碼 hash。"""
     supplied = request.headers.get("x-edit-key", "")
-    if EDIT_KEY and secrets.compare_digest(supplied, EDIT_KEY):
+    if EDIT_KEY and secrets.compare_digest(supplied.encode(), EDIT_KEY.encode()):
         return True
     h = (bank or {}).get("key_hash")
     return bool(h) and secrets.compare_digest(hashlib.sha256(supplied.encode()).hexdigest(), h)
@@ -250,7 +253,7 @@ def key_ok(request):
     """Master key 檢查；**未設 EDIT_KEY 一律拒絕**（以前 fail-open，一漏設就任人改任何題庫）。"""
     if not EDIT_KEY:
         return False
-    return secrets.compare_digest(request.headers.get("x-edit-key", ""), EDIT_KEY)
+    return secrets.compare_digest(request.headers.get("x-edit-key", "").encode(), EDIT_KEY.encode())
 
 
 @app.post("/api/signup")
@@ -259,7 +262,9 @@ async def signup(request: Request):
     username = str(body.get("username") or "").strip().lower()
     pw = str(body.get("password") or "")
     code = str(body.get("code") or "")
-    if CREATE_KEY and not secrets.compare_digest(code, CREATE_KEY):
+    if not CREATE_KEY:
+        return JSONResponse({"error": "註冊未開放"}, status_code=503)
+    if not secrets.compare_digest(code.encode(), CREATE_KEY.encode()):
         return JSONResponse({"error": "邀請碼不正確"}, status_code=401)
     if not USER_RE.match(username):
         return JSONResponse({"error": "用戶名 3-24 個字，只可用細楷英數、_ . -"}, status_code=400)
@@ -268,21 +273,20 @@ async def signup(request: Request):
     salt = new_salt()
     schema()
     with db() as (c, cur):
-        cur.execute("SELECT 1 FROM users WHERE username=%s", (username,))
-        if cur.fetchone():
+        ts = now()
+        # 先插入用戶（ON CONFLICT 不插），避免「建咗題庫但用戶名撞咗」留孤兒
+        cur.execute("INSERT INTO users (username,pass_hash,salt,created_at,bank_slug) "
+                    "VALUES (%s,%s,%s,%s,NULL) ON CONFLICT (username) DO NOTHING "
+                    "RETURNING id", (username, hash_pw(pw, salt), salt, ts))
+        u = cur.fetchone()
+        if not u:
             return JSONResponse({"error": "用戶名已被使用"}, status_code=409)
         # 每人都有一份自己嘅題庫：用預設題目起頭，玩得到先，再自己改
         slug = _new_slug(cur)
-        ts = now()
-        cur.execute("INSERT INTO banks (slug,name,text,title,subtitle,key_hash,created_at,updated_at) "
-                    "VALUES (%s,%s,%s,'','',NULL,%s,%s)",
-                    (slug, username, seed_text(), ts, ts))
-        cur.execute("INSERT INTO users (username,pass_hash,salt,created_at,bank_slug) "
-                    "VALUES (%s,%s,%s,%s,%s)",
-                    (username, hash_pw(pw, salt), salt, ts, slug))
-        cur.execute("SELECT id,username,bank_slug FROM users WHERE username=%s", (username,))
-        u = cur.fetchone()
-        cur.execute("UPDATE banks SET owner_id=%s WHERE slug=%s", (u["id"], slug))
+        cur.execute("INSERT INTO banks (slug,name,text,title,subtitle,key_hash,created_at,updated_at,owner_id) "
+                    "VALUES (%s,%s,%s,'','',NULL,%s,%s,%s)",
+                    (slug, username, seed_text(), ts, ts, u["id"]))
+        cur.execute("UPDATE users SET bank_slug=%s WHERE id=%s", (slug, u["id"]))
         tok = issue_token(cur, u["id"])
     return {"ok": True, "token": tok, "user": {"username": username}, "bank": {"slug": slug, "name": username}}
 
@@ -384,7 +388,7 @@ async def banks_selfserve(request: Request):
         return JSONResponse({"error": "自助開庫未啟用"}, status_code=503)
     body = await request.json()
     code = str(body.get("code") or "")
-    if not secrets.compare_digest(code, CREATE_KEY):
+    if not secrets.compare_digest(code.encode(), CREATE_KEY.encode()):
         return JSONResponse({"error": "開庫碼不正確"}, status_code=401)
     name = str(body.get("name") or "").strip()[:40]
     if not name:
@@ -395,7 +399,9 @@ async def banks_selfserve(request: Request):
     text = body.get("text") or ""
     if not isinstance(text, str):
         return JSONResponse({"error": "text 要係字串"}, status_code=400)
-    text = text.replace("\r\n", "\n").replace("\r", "\n")[:200000]
+    text = text.replace("\r\n", "\n").replace("\r", "\n")
+    if len(text) > 200000:
+        return JSONResponse({"error": "題庫太大（上限 20 萬字）"}, status_code=413)
     ip = (request.headers.get("x-forwarded-for", "").split(",")[0].strip()
           or request.headers.get("x-real-ip", "") or "")
     schema()
@@ -472,7 +478,9 @@ async def text_put(request: Request, b: str = "default"):
     text = body.get("text")
     if not isinstance(text, str):
         return JSONResponse({"error": "text 要係字串"}, status_code=400)
-    text = text.replace("\r\n", "\n").replace("\r", "\n")[:200000]
+    text = text.replace("\r\n", "\n").replace("\r", "\n")
+    if len(text) > 200000:
+        return JSONResponse({"error": "題庫太大（上限 20 萬字）"}, status_code=413)
     title, subtitle = body.get("title"), body.get("subtitle")
     if title is not None and not isinstance(title, str):
         return JSONResponse({"error": "title 要係字串"}, status_code=400)
@@ -501,8 +509,10 @@ async def report_post(request: Request):
                     "VALUES (%s,%s,%s,%s,%s,%s)",
                     (now(), str(body.get("kind") or "")[:40], str(body.get("ua") or "")[:300],
                      body.get("vw"), body.get("vh"), blob))
-        cur.execute("DELETE FROM reports WHERE id NOT IN "
-                    "(SELECT id FROM reports ORDER BY id DESC LIMIT 200)")   # 只留最近 200 筆
+        cur.execute("SELECT count(*) AS n FROM reports")
+        if cur.fetchone()["n"] > 400:                       # 超過先修剪，唔好每次 insert 都掃全表
+            cur.execute("DELETE FROM reports WHERE id NOT IN "
+                        "(SELECT id FROM reports ORDER BY id DESC LIMIT 200)")
     return {"ok": True}
 
 

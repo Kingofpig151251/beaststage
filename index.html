@@ -50,6 +50,7 @@
   }
 
   *{box-sizing:border-box}
+  [hidden]{display:none !important}
   html,body{margin:0; min-height:100%; background:var(--bg); overflow-x:clip}
   body{color:var(--ink); font-family:var(--font-body); font-size:17px; line-height:1.5;
     -webkit-font-smoothing:antialiased; text-rendering:optimizeLegibility}
@@ -553,7 +554,7 @@
   .gate.opening .gate-body{opacity:0; transition:none}
   .js .gate.opening .te-card{opacity:0; transform:translateY(-12%) scale(.985);
     transition:opacity .16s var(--ease), transform .3s var(--ease)}   /* 跟住開幕一齊滑走 */
-  .gate-hit{position:absolute; text-align:center; font-family:var(--font-display);
+  .gate-hit{white-space:nowrap;position:absolute; text-align:center; font-family:var(--font-display);
     font-weight:700; font-size:clamp(44px,8.4vh,88px); letter-spacing:-.02em;
     transition:opacity .26s var(--ease), transform .3s var(--ease)}
   .js .gate.settle .gate-hit{opacity:0; transform:scale(1.05)}
@@ -807,7 +808,7 @@
 
   /* 英文排版：長句一律單行，必要時收細一級字階 */
   /* 英文品牌：字比中文窄，主標略收一級；副標維持正常字階但唔換行 */
-  html[lang="en"] .landing-title{font-size:clamp(44px, 16vw, 150px); letter-spacing:-.045em; white-space:nowrap}
+  html[lang="en"] .landing-title{font-size:clamp(44px, min(16vw, 16vh), 150px); letter-spacing:-.045em; white-space:nowrap}
   html[lang="en"] .landing-title[data-len="mid"]{font-size:clamp(40px, 12vw, 112px)}
   html[lang="en"] .landing-title[data-len="long"]{font-size:clamp(28px, 8vw, 76px)}
   html[lang="en"] .landing-sub{font-size:clamp(17px, 2.5vh, 22px); white-space:nowrap}
@@ -816,7 +817,7 @@
   html[lang="en"] .rule-txt span{white-space:nowrap; font-size:12.5px}
   .flash-hud .key{white-space:nowrap}
   @media (max-width:430px){
-    .flash-hud .key{font-size:16px; gap:6px}
+    .flash-hud .key{font-size:16px; gap:6px; min-width:112px}
     .flash-hud .key::before, .flash-hud .key::after{min-width:22px; padding:0 5px; font-size:13px}
   }
   html[lang="en"] .flash-hud .key{font-size:clamp(15px,2vh,18px); gap:8px}
@@ -830,6 +831,7 @@
     .landing-title{font-size:clamp(40px, 13vh, 84px); margin-top:0; min-height:calc(min(13vh, 84px) * .98)}
     html[lang="en"] .landing-title{font-size:clamp(30px, 9vh, 62px); min-height:calc(min(13vh, 84px) * .98)}
     html[lang="en"] .landing-sub{font-size:clamp(13px, 3.4vh, 16px)}
+    html[lang="en"] .sstep-title{font-size:18px}
   .landing-sub{margin-top:6px; font-size:14px}
     .landing-go{margin-top:14px; min-height:48px; min-width:200px; font-size:17px}
     .landing-link{min-width:132px; justify-content:center; margin-top:10px; min-height:40px; padding:0 20px; font-size:15px}
@@ -1340,21 +1342,27 @@ function translateTree(root){
   for(const n of nodes){
     const p = n.parentElement;
     if(p && (p.closest("#pText,script,style") )) continue;   // 題目本身唔翻譯
-    if(n.__zh === undefined) n.__zh = n.nodeValue;
-    const key = n.__zh.trim();
-    if(!key) continue;
+    /* 內容被程式重寫過（或第一次見）就重新記原文；否則用快取。
+       之前只認 __zh === undefined，令「先寫英文再切中文」同「空節點後來填字」都會卡死。 */
+    if(n.__zh === undefined || n.nodeValue !== n.__applied) n.__zh = n.nodeValue;
+    const key = String(n.__zh).trim();
+    if(!key){ n.__applied = n.nodeValue; continue; }
     const en = EN[key];
     n.nodeValue = (LANG === "en" && en) ? n.__zh.replace(key, en) : n.__zh;
+    n.__applied = n.nodeValue;
   }
   if(!root.querySelectorAll) return;
   root.querySelectorAll("[title],[aria-label],[placeholder]").forEach(el=>{
     for(const a of ATTR_I18N){
       if(!el.hasAttribute(a)) continue;
-      const store = "__zh_" + a.replace("-","_");
-      if(el[store] === undefined) el[store] = el.getAttribute(a);
+      const store = "__zh_" + a.replace("-","_"), applied = store + "_ap";
+      const cur = el.getAttribute(a);
+      if(el[store] === undefined || cur !== el[applied]) el[store] = cur;
       const src = el[store];
       const en = EN[String(src).trim()];
-      el.setAttribute(a, (LANG === "en" && en) ? en : src);
+      const out = (LANG === "en" && en) ? en : src;
+      el.setAttribute(a, out);
+      el[applied] = out;
     }
   });
 }
@@ -1367,6 +1375,7 @@ function setLang(next){
   if(lb) lb.textContent = LANG === "en" ? "中文" : "English";
   applyBrand(BRAND_RAW.t, BRAND_RAW.s, false);   // 品牌名按語言重譯
   translateTree(document.body);
+  if(G){ syncSkipBtn(); }                     // 跳過鍵嘅 aria/title 係即時組字，要跟語言重算
   if(G && G.phase === "running") renderPlay();
   else if(document.body.dataset.view === "home") renderHome();
   else renderSetup();
@@ -1395,19 +1404,20 @@ const ICONS = Object.fromEntries(TEAM_IDS.map(id =>
 
 /* 隊伍動物：名稱、圖示、顏色三者綁定；改動物＝改色，但唔會覆蓋自己改過嘅隊名 */
 const ANIMALS = [
-  { id:"turtle", name:T("烏龜隊"), color:"#34C759" },
-  { id:"fox", name:T("狐狸隊"), color:"#FF9500" },
-  { id:"whale", name:T("鯨魚隊"), color:"#0071E3" },
-  { id:"octopus", name:T("章魚隊"), color:"#AF52DE" },
-  { id:"bee", name:T("蜜蜂隊"), color:"#F5A300" },
-  { id:"flamingo", name:T("火烈鳥隊"), color:"#FF2D55" },
-  { id:"dolphin", name:T("海豚隊"), color:"#30B0C7" },
-  { id:"bear", name:T("棕熊隊"), color:"#A2845E" }
+  { id:"turtle", name:"烏龜隊", color:"#34C759" },
+  { id:"fox", name:"狐狸隊", color:"#FF9500" },
+  { id:"whale", name:"鯨魚隊", color:"#0071E3" },
+  { id:"octopus", name:"章魚隊", color:"#AF52DE" },
+  { id:"bee", name:"蜜蜂隊", color:"#F5A300" },
+  { id:"flamingo", name:"火烈鳥隊", color:"#FF2D55" },
+  { id:"dolphin", name:"海豚隊", color:"#30B0C7" },
+  { id:"bear", name:"棕熊隊", color:"#A2845E" }
 ];
 const animalById = id => ANIMALS.find(a=>a.id===id) || ANIMALS[0];
+const animalLabel = a => T(a.name);              // 顯示時才翻譯，切語言即刻跟
 const animalAt = i => animalById((cfg.animals && cfg.animals[i]) || ANIMALS[i % ANIMALS.length].id);
 const teamName = i => (cfg.custom && cfg.custom[i] && cfg.names[i])
-  ? cfg.names[i] : animalAt(i).name;
+  ? cfg.names[i] : animalLabel(animalAt(i));
 
 let cfg  = Object.assign({
   teams:4,
@@ -1495,10 +1505,9 @@ function toast(msg, ms=1800){
   el.textContent=msg;
   el.classList.toggle("multi", String(msg).includes("\n"));
   el.classList.add("on");
-  el.style.pointerEvents = "auto";
-  clearTimeout(toastT); toastT=setTimeout(()=>{ el.classList.remove("on"); el.style.pointerEvents=""; }, ms);
+  clearTimeout(toastT); toastT=setTimeout(()=>el.classList.remove("on"), ms);
 }
-$("#toast").addEventListener("click", ()=>{ clearTimeout(toastT); $("#toast").classList.remove("on"); });
+/* 吐司唔攔截觸控：以前 pointer-events:auto 會蓋住正中嘅「跳過」鍵 */
 function shuffle(a){ for(let i=a.length-1;i>0;i--){ const j=Math.floor(Math.random()*(i+1)); [a[i],a[j]]=[a[j],a[i]]; } return a; }
 
 /* ================= 品牌（可由 /edit 自訂） ================= */
@@ -1627,7 +1636,7 @@ function renderSetup(){
   $("#nameList").innerHTML = Array.from({length:cfg.teams},(_,i)=>{
     const a = animalAt(i);
     return `<div class="name-row" style="--tc:${a.color}">
-      <button class="animal-btn" data-animal="${i}" aria-label="更改第 ${i+1} 隊的隊色" title=T("更改隊色")>
+      <button class="animal-btn" data-animal="${i}" aria-label="${esc(T("更改隊色"))} ${i+1}" title="${esc(T("更改隊色"))}">
         <span class="animal-mark">${ICONS[a.id]}</span>
         <svg class="animal-edit" viewBox="0 0 24 24" aria-hidden="true"><path d="M4 20h4l10-10-4-4L4 16v4z"/></svg>
       </button>
@@ -1637,9 +1646,11 @@ function renderSetup(){
   $$("#nameList input").forEach(inp=>inp.onchange=()=>{
     const i = +inp.dataset.name;
     const v = inp.value.trim();
-    cfg.names[i] = v || animalAt(i).name;
-    cfg.custom[i] = !!v && v !== animalAt(i).name;   // 手動改過就鎖住，換動物時唔覆蓋
-    inp.value = cfg.names[i]; saveCfg(); syncNext();
+    const zhName = animalAt(i).name;
+    cfg.names[i] = v || zhName;
+    cfg.custom[i] = !!v && v !== zhName && v !== T(zhName);   // 手動改過就鎖住，換動物時唔覆蓋
+    inp.value = LANG === "en" && !cfg.custom[i] ? T(zhName) : cfg.names[i];
+    saveCfg(); syncNext();
   });
   $$("#nameList .animal-btn").forEach(btn=>btn.onclick=()=>openAnimals(+btn.dataset.animal));
 
@@ -1675,7 +1686,7 @@ function renderAnimalGrid(){
     return `<button class="animal-opt${a.id===cur?" on":""}${taken?" taken":""}" data-id="${a.id}"
       style="--tc:${a.color}" aria-pressed="${a.id===cur}" ${taken?"aria-disabled=\"true\" tabindex=\"-1\"":""}>
       <span class="opt-mark">${ICONS[a.id]}</span>
-      <span class="opt-name">${a.name}</span>
+      <span class="opt-name">${esc(animalLabel(a))}</span>
     </button>`;
   }).join("");
   $$("#animalGrid .animal-opt").forEach(b=>{
@@ -2742,7 +2753,7 @@ $("#btnExit").onclick = ()=>{
 function setPauseIcon(p){
   const b = $("#btnPause"); if(!b) return;
   b.setAttribute("aria-label", p ? T("繼續") : T("暫停"));
-  b.setAttribute("title", p ? "繼續（Esc）" : T("暫停（Esc）"));
+  b.setAttribute("title", p ? T("繼續（Esc）") : T("暫停（Esc）"));
   b.classList.toggle("paused", !!p);
   const el = $("#pClock");
   if(p){ el.textContent = "▶"; }
@@ -2858,7 +2869,7 @@ function renderIdentity(){
   el.innerHTML = "";
   const span = document.createElement("span");
   if(ME){
-    span.append(T("已登入："));
+    span.append("已登入：");   // 原文交 translateTree 翻譯
     const b = document.createElement("b"); b.textContent = ME.user.username; span.append(b);
     el.append(span);
     const btn = document.createElement("button");
@@ -2872,6 +2883,7 @@ function renderIdentity(){
   }else{
     el.hidden = true;                            // 未登入：唔重複，設定鍵本身就係入口
   }
+  translateTree(el);
 }
 
 async function boot(){

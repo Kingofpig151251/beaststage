@@ -253,6 +253,28 @@ async def t_report(T):
     check("回報：有存本機備份", (await T.js("(localStorage.getItem('beasttv.reports')||'[]').length")) > 2)
     check("回報：唔會寫題庫", (await T.js("String(window.__bigtv.lines.length)")) is not None)
 
+
+# ⑬ 英文模式唔應該殘留中文（title / aria-label / 隊名欄）
+async def t_i18n(T):
+    await start_game(T)
+    await T.js("setLang('en')")
+    await asyncio.sleep(0.4)
+    bad = await T.js("""(()=>{
+      const cjk=/[\u4e00-\u9fff]/;
+      const out=[];
+      document.querySelectorAll('#v-play [title],#v-play [aria-label]').forEach(el=>{
+        for(const a of ['title','aria-label']){
+          const v=el.getAttribute(a); if(v && cjk.test(v)) out.push(a+': '+v);
+        }
+      });
+      return out.slice(0,6);
+    })()""")
+    check("英文模式：Play 畫面冇中文 title／aria", not bad, bad)
+    await T.js("document.getElementById('btnPause').click()")
+    await asyncio.sleep(0.3)
+    ttl = await T.js("document.getElementById('btnPause').getAttribute('title')")
+    check("英文模式：暫停 tooltip 已翻譯", "暫停" not in str(ttl), ttl)
+
 async def main(url):
     print("\n[1] 暫停／繼續時鐘")
     await session(url, {"teams": 2, "sec": 20, "roundsPer": 1, "skipCap": 3, "allowSkip": True}, t_pause)
@@ -288,6 +310,9 @@ async def main(url):
 
     print("\n[12] 空白題回報")
     await session(url, {"teams": 2, "sec": 60, "roundsPer": 1, "skipCap": 3, "allowSkip": True}, t_report)
+
+    print("\n[13] 英文模式殘留中文")
+    await session(url, {"teams": 2, "sec": 60, "roundsPer": 1, "skipCap": 3, "allowSkip": True}, t_i18n)
 
     print("\n[5] 全員同分")
     await session(url, {"teams": 8, "sec": 3, "roundsPer": 1, "skipCap": 3, "allowSkip": True}, t_tie)

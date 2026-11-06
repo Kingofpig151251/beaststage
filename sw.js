@@ -4,16 +4,16 @@
    - 圖片、音效：cache-first（檔名不變、內容少變）
    - /api/*：唔攔，永遠直上網絡（題庫唯一真相源在雲端）
 */
-const CACHE = "beast-v6";
+const CACHE = "beast-v7";
 const SHELL = [
   "/", "/edit", "/credits",
   "/manifest.json",
   "/icon-192.png", "/icon-512.png", "/apple-touch-icon.png", "/favicon.ico",
   "/art/team/turtle.webp", "/art/team/fox.webp", "/art/team/whale.webp", "/art/team/octopus.webp",
   "/art/team/bee.webp", "/art/team/flamingo.webp", "/art/team/dolphin.webp", "/art/team/bear.webp",
-  "/sfx/dingdong.mp3", "/sfx/whoosh.mp3", "/sfx/countdown.mp3", "/sfx/whistle.mp3",
-  "/sfx/settle.mp3", "/sfx/champion.mp3", "/sfx/tick.mp3", "/sfx/drums.mp3",
-  "/sfx/snare.mp3", "/sfx/tap.mp3", "/sfx/hb3.mp3"
+  /* 只預快取「核心四聲」(SFX_CORE)：tap/ding/whoosh/tick ≈ 29KB。
+     其餘音效由 cacheFirst 首次使用時自動入快取——原本一次過預載 337KB，白等 307KB。 */
+  "/sfx/dingdong.mp3", "/sfx/whoosh.mp3", "/sfx/tick.mp3", "/sfx/tap.mp3"
 ];
 
 self.addEventListener("install", e => {
