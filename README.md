@@ -215,6 +215,27 @@ samples/hk-icebreaker.json 首次 seed 題庫
 - 主持台連不到後端就冇題可玩（冇本機 fallback）
 - 猜的人要**背向**屏幕（不是閉眼），一隊 4–8 人最順
 
+## 多題庫（每組人自己一份）
+
+一份題庫＝`banks` 表一行，用 **slug** 分辨，網址直接帶走：
+
+- 玩：`/b/<slug>`（例：`/b/party2026`）；`/` 等於 `/b/default`
+- 改：`/edit?b=<slug>`
+- 每份題庫可以有自己的密碼（存 sha256）；master `EDIT_KEY` 可以改任何一份
+- 開新題庫要 master key：
+
+```bash
+python3 scripts/bank.py list                       # 睇有幾份、幾多字、有冇鎖
+python3 scripts/bank.py new party2026 "派對題庫" --key 自訂密碼
+python3 scripts/bank.py new copy-of-default "副本" --from default   # 由現有題庫抄一份
+python3 scripts/bank.py text party2026              # 印出內容
+python3 scripts/bank.py rm party2026                # 刪（API 冇 DELETE，直接 SQL）
+```
+
+API：`GET/PUT /api/text?b=<slug>`、`GET /api/banks`、`POST /api/banks`。`b` 省略＝`default`，舊網址完全照行。
+
+原本的 141 題已一次性遷移到 `slug='default'`（`meta` 表保留但不再使用）。
+
 ## 授權範圍
 
 | 範圍 | 授權 |
