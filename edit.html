@@ -221,7 +221,14 @@ const EN = {
   "題": "questions",
   "未有題目": "No questions yet",
   "設定頁": "Settings",
-  "密碼已失效，請重新輸入": "Password expired — enter again"
+  "密碼已失效，請重新輸入": "Password expired — enter again",
+  "改完自動儲存": "Saves automatically",
+  "標題": "Title",
+  "副標題": "Subtitle",
+  "邀請碼": "Invite code",
+  "請填邀請碼": "Enter the invite code",
+  "正在載入…": "Loading…",
+  "已更新": "Updated"
 };
 const T = (zh)=> LANG === "en" ? (EN[zh] || zh) : zh;
 function translateTree(root){
@@ -312,17 +319,17 @@ $("#authForm").addEventListener("submit", async (e)=>{
     const r = await fetch(path, { method:"POST", headers:{ "content-type":"application/json" },
       body: JSON.stringify({ username, password, code }) });
     const d = await r.json().catch(()=>({}));
-    if(!r.ok){ err.textContent = d.error || "失敗，請再試"; return; }
+    if(!r.ok){ err.textContent = d.error ? T(d.error) : T("失敗，請再試"); return; }
     localStorage.setItem("beasttv.token", d.token);
     localStorage.removeItem("beasttv.mybank");
     BANK = (d.bank && d.bank.slug) || "default";   // 就地切換，唔跳頁（跳頁會觸發離開警告）
-    if(d.bank && d.bank.name) document.title = `設定 · ${d.bank.name}`;
+    if(d.bank && d.bank.name) document.title = `${T("設定")} · ${d.bank.name}`;
     syncBack();
     $("#authPass").value = "";
     hideGate();
     await load();
   }catch(_){
-    err.textContent = "網絡問題，請再試";
+    err.textContent = T("網絡問題，請再試");
   }finally{
     $("#authGo").disabled = false;
   }
@@ -348,7 +355,7 @@ function paintMeta(){
 }
 
 async function load(){
-  setState("busy", "正在載入…");
+  setState("busy", T("正在載入…"));
   try{
     const r = await fetch(apiUrl("/api/text"), { cache: "no-store" });
     if(!r.ok) throw new Error("bad");
@@ -377,7 +384,7 @@ async function save(){
         subtitle: $("#brandSub").value.trim()
       })
     });
-    if(r.status === 401){ localStorage.removeItem("beasttv.token"); showGate("登入已失效，請重新登入"); throw new Error("401"); }
+    if(r.status === 401){ localStorage.removeItem("beasttv.token"); showGate(T("登入已失效，請重新登入")); throw new Error("401"); }
     if(!r.ok) throw new Error("put");
     lastSaved = sig();
     setState("ok", "已儲存", true);          // 顯示 1.4 秒後自動消失
@@ -428,7 +435,7 @@ window.addEventListener("focus", poll);
   if(!tok){ showGate(); return; }
   try{
     const r = await fetch("/api/me", { cache:"no-store", headers:{ authorization:"Bearer " + tok } });
-    if(!r.ok){ localStorage.removeItem("beasttv.token"); showGate("登入已失效，請重新登入"); return; }
+    if(!r.ok){ localStorage.removeItem("beasttv.token"); showGate(T("登入已失效，請重新登入")); return; }
     const d = await r.json();
     if(d.bank && d.bank.slug){ BANK = d.bank.slug; document.title = `設定 · ${d.bank.name || ""}`; }
     hideGate();

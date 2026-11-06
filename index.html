@@ -238,7 +238,7 @@
   .animal-btn:active{background:color-mix(in oklab, var(--tc) 28%, transparent)}
 
   /* 選隊色面板 */
-  .sheet-wrap{position:fixed; inset:0; z-index:70; display:none; place-items:end center;
+  .sheet-wrap{position:fixed; inset:0; z-index:86; display:none; place-items:end center;
     background:var(--sheet-veil); padding:0 16px calc(16px + env(safe-area-inset-bottom))}
   .sheet-wrap.on{display:grid}
   .sheet-note{margin:0; font-size:15px; color:var(--ink-2); line-height:1.5}
@@ -2041,7 +2041,11 @@ function beginRunning(){
 }
 
 function drawItem(){
-  if(!G.pool.length){ G.pool = shuffle(G.used.slice()); G.used = []; toast(T("題目已用完，正在重新洗牌")); }
+  if(!G.pool.length){
+    G.pool = shuffle(G.used.filter(x => x !== G.cur));     // 唔好即刻再出同一題
+    G.used = G.cur ? [G.cur] : [];
+    toast(T("題目已用完，正在重新洗牌"));
+  }
   let it = G.pool.pop();
   while(it && !String(it.t || "").trim() && G.pool.length) it = G.pool.pop();   // 跳過空白題，唔好交出嚟
   if(!it || !String(it.t || "").trim()) it = { t: (lines.find(x=>x && x.trim()) || "（題庫為空）") };
@@ -2295,6 +2299,7 @@ function judge(kind){
 }
 
 let TE_FINISH = null, TE_TIMER = 0, TE_IV = 0;
+const GATE_TIMERS = [];                        // 落閘過場的 timeout，退出時要取消
 
 function resetTurnTimers(){
   clearTimeout(TE_TIMER); clearInterval(TE_IV);
@@ -2304,6 +2309,7 @@ function resetTurnTimers(){
 /* 硬重置：退出遊戲／返回設定時用，連幕都收走 */
 function clearTurnEnd(){
   resetTurnTimers();
+  GATE_TIMERS.splice(0).forEach(clearTimeout);
   clearInterval(CD_TIMER); CD_TIMER = 0;
   const cd = $("#countdown"); if(cd) cd.classList.remove("on");
   const gate = $("#gate"); if(gate) gate.classList.remove("on","closed","text","settle","opening");
@@ -2319,11 +2325,16 @@ function slamGate(then){
   sfx("whistle", 0.85);                         // 球證哨：落閘即吹（單響，三吹版已否決）
   const HIT  = REDUCE ? 80  : 560;              // 幕合埋（0.46s）之後見字
   const CARD = REDUCE ? 300 : 1250;             // 停一停，轉結算卡
-  setTimeout(()=>{ gate.classList.add("text"); }, HIT);
-  setTimeout(()=>{ then(); gate.classList.add("settle"); }, CARD);
+  TE_TIMER = setTimeout(()=>{ gate.classList.add("text"); }, HIT);
+  GATE_TIMERS.push(TE_TIMER);
+  GATE_TIMERS.push(setTimeout(()=>{
+    if(!document.getElementById("gate").classList.contains("on")) return;   // 已被清走
+    then(); gate.classList.add("settle");
+  }, CARD));
 }
 
 function showTurnEnd(team, stats, done){
+  if(!G) return;                               // 遊戲已結束／已退出，唔好再畫
   clearTimeout(TE_TIMER); clearInterval(TE_IV);
   TE_FINISH = done;
   const mark = $("#teMark"), name = $("#teName"), sc = $("#teScore");
