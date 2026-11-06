@@ -187,6 +187,44 @@ async def t_tie(T):
     check("全同分 → 8 張冠軍卡", champs == 8, str(champs))
     check("8 張冠軍卡唔撐出滾動軸", h <= 0, f"溢出 {h}px")
 
+# ⑪ 手誤補救：↑ 撤回（單步）＋ 結算卡加減覆核
+async def t_undo(T):
+    await start_game(T)
+    q0 = await T.js("G.cur && G.cur.t")
+    await T.js("act('ok')")
+    check("撤回：判定先生效", (await T.js("G.teams[0].score")) == 1)
+    await T.js("document.dispatchEvent(new KeyboardEvent('keydown',{key:'ArrowUp'}))")
+    await asyncio.sleep(0.25)
+    check("撤回：分數回退", (await T.js("G.teams[0].score")) == 0)
+    check("撤回：正確次數回退", (await T.js("G.teams[0].ok")) == 0)
+    check("撤回：該題放返畫面", (await T.js("G.cur && G.cur.t")) == q0)
+
+    left1 = await T.js("G.skipLeft")
+    await T.js("act('skip')")
+    await T.js("document.dispatchEvent(new KeyboardEvent('keydown',{key:'ArrowUp'}))")
+    await asyncio.sleep(0.25)
+    check("撤回：跳過次數回退", (await T.js("G.skipLeft")) == left1)
+
+    await T.js("act('ok')")
+    await asyncio.sleep(0.3)
+    await T.js("endTurn()")
+    await _poll(T, "G && G.phase==='interstitial'", 6)
+    shown = await _poll(T, "!document.getElementById('teStats').hidden", 6)   # 結算卡要等幕布落定
+    ok0 = await T.js("G.settle && G.settle.ok")
+    check("結算覆核：三個數字有得改", shown and ok0 is not None, f"{shown} ok={ok0}")
+    f0 = await T.js("G.settle && G.settle.foul")
+    await T.js('document.querySelector(\'[data-k=ok] button[data-d="1"]\').click()')
+    await asyncio.sleep(0.35)
+    check("結算覆核：加一正確 → 隊分上升",
+          (await T.js("G.teams[0].ok")) == ok0 + 1 and (await T.js("G.settle.score")) == ok0 + 1)
+    await T.js('document.querySelector(\'[data-k=foul] button[data-d="1"]\').click()')
+    await asyncio.sleep(0.35)
+    check("結算覆核：加一犯規 → 分數扣減", (await T.js("G.settle.foul")) == f0 + 1)
+    await T.js('document.querySelector(\'[data-k=foul] button[data-d="-1"]\').click()')
+    await asyncio.sleep(0.35)
+    check("結算覆核：減返犯規", (await T.js("G.settle.foul")) == f0)
+    check("撤回／覆核：無 JS 例外", (await T.js("window.__err.length")) == 0)
+
 async def main(url):
     print("\n[1] 暫停／繼續時鐘")
     await session(url, {"teams": 2, "sec": 20, "roundsPer": 1, "skipCap": 3, "allowSkip": True}, t_pause)
@@ -216,6 +254,9 @@ async def main(url):
 
     print("\n[10] 跳過用完")
     await session(url, {"teams": 2, "sec": 60, "roundsPer": 1, "skipCap": 1, "allowSkip": True}, t_skipcap)
+
+    print("\n[11] 手誤補救（撤回＋結算覆核）")
+    await session(url, {"teams": 2, "sec": 60, "roundsPer": 1, "skipCap": 3, "allowSkip": True}, t_undo)
 
     print("\n[5] 全員同分")
     await session(url, {"teams": 8, "sec": 3, "roundsPer": 1, "skipCap": 3, "allowSkip": True}, t_tie)
