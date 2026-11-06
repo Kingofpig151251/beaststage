@@ -124,10 +124,6 @@
     color:var(--blue); min-height:0}
   .gate-alt:focus-visible{outline:0; box-shadow:0 0 0 3px var(--focus-ring); border-radius:8px}
   .done-lb{font-size:12.5px; color:var(--ink-2); margin-top:10px; display:block}
-  .share{margin-top:18px; border-top:1px solid var(--sep); padding-top:12px}
-  .share summary{font-size:13.5px; color:var(--blue); cursor:pointer; list-style:none; padding:6px 0}
-  .share summary::-webkit-details-marker{display:none}
-  .share summary:focus-visible{outline:0; box-shadow:0 0 0 3px var(--focus-ring); border-radius:8px}
   .copy-row{display:flex; gap:8px; align-items:center}
   .copy-row input{flex:1; min-width:0; font-size:14px; color:var(--ink-2)}
   .copy-btn{flex:none; height:42px; padding:0 14px; border:0; border-radius:var(--r-md);
@@ -136,7 +132,6 @@
   .copy-btn:active{background:var(--fill-2)}
   .copy-btn:focus-visible{outline:0; box-shadow:0 0 0 3px var(--focus-ring)}
   .copy-btn.ok{color:var(--blue)}
-  #newGate[hidden],#doneGate[hidden]{display:none}
   .gate-go{margin-top:10px; min-height:48px; border:0; border-radius:var(--r-lg);
     background:var(--blue); color:var(--surface); font:inherit; font-size:17px; font-weight:600; cursor:pointer}
   .gate-err{color:var(--red); font-size:14px; min-height:20px; margin-top:2px}
@@ -144,57 +139,15 @@
 </head>
 <body>
 <div class="gate" id="gate">
-  <form class="gate-card" id="gateForm">
-    <h2>設定</h2>
-    <p>請輸入密碼</p>
-    <input id="gatePass" type="password" autocomplete="current-password" aria-label="密碼" placeholder="密碼">
-    <button type="submit" class="gate-go">進入</button>
-    <p class="gate-err" id="gateErr"></p>
-    <button type="button" class="gate-alt" id="btnFindBank">唔記得連結？用名稱＋密碼搵返</button>
-    <button type="button" class="gate-alt" id="btnNewBank">第一次用？用開庫碼開一份新題庫</button>
+  <form class="gate-card" id="authForm">
+    <h2 id="authTitle">登入</h2>
+    <p id="authSub">用你嘅帳號，題庫只屬於你，同其他人分開。</p>
+    <input id="authUser" type="text" autocomplete="username" autocapitalize="off" spellcheck="false" aria-label="用戶名" placeholder="用戶名">
+    <input id="authPass" type="password" autocomplete="current-password" aria-label="密碼" placeholder="密碼">
+    <button type="submit" class="gate-go" id="authGo">登入</button>
+    <p class="gate-err" id="authErr"></p>
+    <button type="button" class="gate-alt" id="authSwap">未有帳號？註冊一個</button>
   </form>
-</div>
-
-<div class="gate" id="newGate" hidden>
-  <form class="gate-card" id="newForm">
-    <h2>開新題庫</h2>
-    <p>開好之後會得到自己一條連結同密碼，同其他人分開。</p>
-    <input id="newName" type="text" maxlength="40" autocomplete="off" aria-label="題庫名稱" placeholder="題庫名稱（例如：陳家派對）">
-    <input id="newCode" type="text" autocomplete="off" aria-label="開庫碼" placeholder="開庫碼">
-    <input id="newPass" type="password" autocomplete="new-password" aria-label="自訂密碼" placeholder="自訂密碼（至少 4 個字）">
-    <button type="submit" class="gate-go" id="newGo">開一份</button>
-    <p class="gate-err" id="newErr"></p>
-    <button type="button" class="gate-alt" id="btnBackGate">返去輸入密碼</button>
-  </form>
-</div>
-
-<div class="gate" id="findGate" hidden>
-  <form class="gate-card" id="findForm">
-    <h2>搵返我嘅題庫</h2>
-    <p>輸入你開庫時嘅名稱同密碼。</p>
-    <input id="findName" type="text" autocomplete="off" aria-label="題庫名稱" placeholder="題庫名稱">
-    <input id="findPass" type="password" autocomplete="current-password" aria-label="密碼" placeholder="密碼">
-    <button type="submit" class="gate-go" id="findGo">搵返</button>
-    <p class="gate-err" id="findErr"></p>
-    <button type="button" class="gate-alt" id="btnBackGate2">返回</button>
-  </form>
-</div>
-
-<div class="gate" id="doneGate" hidden>
-  <div class="gate-card">
-    <h2>開好了</h2>
-    <p id="doneName"></p>
-    <button type="button" class="gate-go" id="btnGoEdit">開始設定題目</button>
-    <p class="gate-err" style="color:var(--ink-2)">以後打開 <b>beasttv.vercel.app</b> 就會自動載入你嘅題庫，唔需要記連結。</p>
-    <details class="share">
-      <summary>想分享畀朋友玩？</summary>
-      <label class="done-lb">朋友玩嘅連結</label>
-      <div class="copy-row"><input id="donePlay" type="text" readonly><button type="button" class="copy-btn" data-copy="donePlay">複製</button></div>
-      <label class="done-lb">換裝置時用嘅改題連結</label>
-      <div class="copy-row"><input id="doneEdit" type="text" readonly><button type="button" class="copy-btn" data-copy="doneEdit">複製</button></div>
-      <p class="gate-err" style="color:var(--ink-2)">密碼就係你啱啱設定嘅嗰個（伺服器唔會顯示返）。第日忘記連結，喺設定頁用「名稱＋密碼」搵返就得。</p>
-    </details>
-  </div>
 </div>
 
   <div class="wrap">
@@ -241,7 +194,7 @@ const $ = s => document.querySelector(s);
 let saveTimer = null, lastSaved = "";
 const KEYNAME = "editkey";
 /* 題庫 slug：/edit?b=<slug>；默認 default */
-const BANK = (()=>{
+let BANK = (()=>{
   const m = location.pathname.match(/^\/edit\/b\/([a-z0-9][a-z0-9-]{1,31})\/?$/i);
   const q = new URLSearchParams(location.search).get("b");
   const v = (m ? m[1] : q || "default").toLowerCase();
@@ -250,139 +203,61 @@ const BANK = (()=>{
 const apiUrl = (p)=> p + (p.includes("?") ? "&" : "?") + "b=" + encodeURIComponent(BANK);
 
 const editKey = () => sessionStorage.getItem(KEYNAME) || "";
-if(BANK !== "default"){
+function syncBack(){
   const bh = document.getElementById("backHome");
-  if(bh) bh.setAttribute("href", "/b/" + encodeURIComponent(BANK));
+  if(bh) bh.setAttribute("href", BANK === "default" ? "/" : "/b/" + encodeURIComponent(BANK));
 }
-const withKey = (h) => { const o = Object.assign({}, h || {}); const k = editKey(); if(k) o["x-edit-key"] = k; return o; };
+syncBack();
+const withKey = (h) => { const o = Object.assign({}, h || {}); const k = editKey(); if(k) o["x-edit-key"] = k;
+  const t = TOKEN(); if(t) o["authorization"] = "Bearer " + t; return o; };
 
-async function checkKey(k){
-  try{
-    const r = await fetch(apiUrl("/api/text?check=1"), { cache:"no-store", headers: k ? {"x-edit-key": k} : {} });
-    if(!r.ok) return { ok:false, protected:true };
-    return await r.json();
-  }catch(e){ return { ok:false, protected:true }; }
+/* ---------- 帳號：登入 / 註冊 ---------- */
+const TOKEN = ()=> localStorage.getItem("beasttv.token") || "";
+let AUTH_MODE = "login";                      // login | signup
+
+function paintAuth(){
+  const login = AUTH_MODE === "login";
+  $("#authTitle").textContent = login ? "登入" : "註冊";
+  $("#authSub").textContent = login ? "用你嘅帳號，題庫只屬於你，同其他人分開。"
+                                    : "開一個帳號，即刻有你專屬嘅題庫。";
+  $("#authGo").textContent = login ? "登入" : "註冊";
+  $("#authSwap").textContent = login ? "未有帳號？註冊一個" : "已有帳號？返回登入";
+  $("#authPass").setAttribute("autocomplete", login ? "current-password" : "new-password");
+  $("#authErr").textContent = "";
 }
 function showGate(msg){
   $("#gate").classList.add("on");
-  $("#gateErr").textContent = msg || "";
-  setTimeout(()=>$("#gatePass").focus(), 60);
+  $("#authErr").textContent = msg || "";
+  setTimeout(()=>$("#authUser").focus(), 60);
 }
 function hideGate(){ $("#gate").classList.remove("on"); }
 
-$("#gateForm").addEventListener("submit", async (e)=>{
+$("#authSwap").onclick = ()=>{ AUTH_MODE = AUTH_MODE === "login" ? "signup" : "login"; paintAuth(); };
+paintAuth();
+
+$("#authForm").addEventListener("submit", async (e)=>{
   e.preventDefault();
-  const p = $("#gatePass").value;
-  if(!p){ return; }
-  $("#gateErr").textContent = "";
-  const st = await checkKey(p);
-  if(st.ok){
-    sessionStorage.setItem(KEYNAME, p);
-    $("#gatePass").value = "";
-    hideGate();
-    load();
-  }else{
-    $("#gateErr").textContent = "密碼不正確";
-    $("#gatePass").select();
-  }
-});
-
-/* ---------- 自助開庫：輸入開庫碼即開一份自己嘅題庫 ---------- */
-const SHOWNEW = new URLSearchParams(location.search).get("new") === "1";
-const gNew = $("#newGate"), gDone = $("#doneGate"), gGate = $("#gate");
-
-const gFind = $("#findGate");
-function showFind(){
-  gGate.classList.remove("on"); gNew.classList.remove("on"); gDone.classList.remove("on");
-  gNew.hidden = true; gDone.hidden = true;
-  gFind.hidden = false; gFind.classList.add("on");
-  $("#findName").focus();
-}
-$("#btnFindBank").onclick = showFind;
-$("#btnBackGate2").onclick = ()=> showGate();
-
-$("#findForm").addEventListener("submit", async (e)=>{
-  e.preventDefault();
-  const name = $("#findName").value.trim(), key = $("#findPass").value;
-  const err = $("#findErr");
-  if(!name || !key){ err.textContent = "兩樣都要填"; return; }
-  err.textContent = ""; $("#findGo").disabled = true;
-  try{
-    const r = await fetch("/api/findbank", { method:"POST", headers:{ "content-type":"application/json" },
-      body: JSON.stringify({ name, key }) });
-    const d = await r.json().catch(()=>({}));
-    if(!r.ok){ err.textContent = d.error || "搵唔到"; return; }
-    const hit = d.items[0];
-    localStorage.setItem("beasttv.mybank", JSON.stringify({ slug: hit.slug, name: hit.name }));
-    sessionStorage.setItem(KEYNAME, key);
-    location.href = "/edit?b=" + encodeURIComponent(hit.slug);
-  }catch(_){
-    err.textContent = "網絡問題，請再試";
-  }finally{
-    $("#findGo").disabled = false;
-  }
-});
-
-function showNew(){
-  gGate.classList.remove("on"); gDone.classList.remove("on");
-  gDone.hidden = true;
-  gNew.hidden = false; gNew.classList.add("on");
-  $("#newName").focus();
-}
-function showGate(){
-  gNew.classList.remove("on"); gDone.classList.remove("on"); gFind.classList.remove("on");
-  gNew.hidden = true; gDone.hidden = true; gFind.hidden = true;
-  gGate.classList.add("on");
-}
-
-$("#btnNewBank").onclick = showNew;
-$("#btnBackGate").onclick = showGate;
-
-$("#newForm").addEventListener("submit", async (e)=>{
-  e.preventDefault();
-  const name = $("#newName").value.trim();
-  const code = $("#newCode").value.trim();
-  const key  = $("#newPass").value;
-  const err = $("#newErr");
-  if(!name){ err.textContent = "請填題庫名稱"; return; }
-  if(!code){ err.textContent = "請填開庫碼"; return; }
-  if(key.length < 4){ err.textContent = "密碼至少 4 個字"; return; }
+  const username = $("#authUser").value.trim().toLowerCase();
+  const password = $("#authPass").value;
+  const err = $("#authErr");
+  if(!username || !password){ err.textContent = "兩樣都要填"; return; }
   err.textContent = "";
-  $("#newGo").disabled = true;
+  $("#authGo").disabled = true;
   try{
-    const r = await fetch("/api/newbank", { method: "POST", headers: { "content-type": "application/json" },
-      body: JSON.stringify({ name, code, key }) });
+    const path = AUTH_MODE === "login" ? "/api/login" : "/api/signup";
+    const r = await fetch(path, { method:"POST", headers:{ "content-type":"application/json" },
+      body: JSON.stringify({ username, password }) });
     const d = await r.json().catch(()=>({}));
-    if(!r.ok){ err.textContent = d.error || "開唔到，請再試"; return; }
-    sessionStorage.setItem(KEYNAME, key);
-    localStorage.setItem("beasttv.mybank", JSON.stringify({ slug: d.slug, name }));
-    $("#doneName").textContent = name;
-    $("#donePlay").value = location.origin + d.play;
-    $("#doneEdit").value = location.origin + d.edit;
-    $("#btnGoEdit").onclick = ()=>{ location.href = d.edit; };
-    gNew.classList.remove("on"); gNew.hidden = true;
-    gDone.hidden = false; gDone.classList.add("on");
+    if(!r.ok){ err.textContent = d.error || "失敗，請再試"; return; }
+    localStorage.setItem("beasttv.token", d.token);
+    localStorage.removeItem("beasttv.mybank");
+    location.href = "/edit";                   // reload：由 /api/me 取自己題庫
   }catch(_){
     err.textContent = "網絡問題，請再試";
   }finally{
-    $("#newGo").disabled = false;
+    $("#authGo").disabled = false;
   }
 });
-
-document.querySelectorAll(".copy-btn").forEach(b=>{
-  b.addEventListener("click", async ()=>{
-    const el = document.getElementById(b.dataset.copy);
-    try{
-      await navigator.clipboard.writeText(el.value);
-    }catch(_){
-      el.select(); document.execCommand("copy");
-    }
-    const t = b.textContent; b.textContent = "已複製"; b.classList.add("ok");
-    setTimeout(()=>{ b.textContent = t; b.classList.remove("ok"); }, 1400);
-  });
-});
-
-if(SHOWNEW) showNew();
 
 const sig = () => [$("#text").value, $("#brandTitle").value.trim(), $("#brandSub").value.trim()].join("\u0000");
 
@@ -432,7 +307,7 @@ async function save(){
         subtitle: $("#brandSub").value.trim()
       })
     });
-    if(r.status === 401){ sessionStorage.removeItem(KEYNAME); showGate("密碼已失效，請重新輸入"); throw new Error("401"); }
+    if(r.status === 401){ localStorage.removeItem("beasttv.token"); showGate("登入已失效，請重新登入"); throw new Error("401"); }
     if(!r.ok) throw new Error("put");
     lastSaved = sig();
     setState("ok", "已儲存", true);          // 顯示 1.4 秒後自動消失
@@ -476,13 +351,20 @@ setInterval(()=>{ if(!document.hidden) poll(); }, 60000);
 document.addEventListener("visibilitychange", () => { if(!document.hidden) poll(); });
 window.addEventListener("focus", poll);
 
-/* 開頁：先驗密碼（伺服器未設 EDIT_KEY 就直接入） */
+/* 開頁：有 token 就入自己題庫，冇就顯示登入 */
 (async ()=>{
-  if(SHOWNEW){ showNew(); return; }          // 自助開庫：唔驗密碼，直接開表
-  const st = await checkKey(editKey());
-  if(st.ok){ hideGate(); load(); }
-  else if(!st.protected){ hideGate(); load(); }
-  else { showGate(editKey() ? "密碼已失效，請重新輸入" : ""); }
+  const tok = TOKEN();
+  if(!tok){ showGate(); return; }
+  try{
+    const r = await fetch("/api/me", { cache:"no-store", headers:{ authorization:"Bearer " + tok } });
+    if(!r.ok){ localStorage.removeItem("beasttv.token"); showGate("登入已失效，請重新登入"); return; }
+    const d = await r.json();
+    if(d.bank && d.bank.slug){ BANK = d.bank.slug; document.title = `設定 · ${d.bank.name || ""}`; }
+    hideGate();
+    load();
+  }catch(_){
+    showGate("網絡問題，請再試");
+  }
 })();
 </script>
 <script>

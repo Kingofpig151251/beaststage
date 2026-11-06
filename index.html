@@ -1269,13 +1269,16 @@ function esc(s){ return String(s).replace(/[&<>"']/g, c=>({"&":"&amp;","<":"&lt;
 
 /* 題目一律以 {t:"..."} 存；舊格式（字串 / {t,ban}）都食得住 */
 /* 題庫 slug：/b/<slug> 或 ?b=<slug>，默認 default */
-const MY = (()=>{ try{ return JSON.parse(localStorage.getItem("beasttv.mybank") || "null"); }catch(_){ return null; } })();
-const BANK = (()=>{
+/* 帳號：登入後每個人都係自己一份題庫；/b/<slug> 只係「玩某人嘅題庫」嘅公開連結 */
+const TOKEN = ()=> localStorage.getItem("beasttv.token") || "";
+const URL_BANK = (()=>{
   const m = location.pathname.match(/^\/b\/([a-z0-9][a-z0-9-]{1,31})\/?$/i);
   const q = new URLSearchParams(location.search).get("b");
-  const v = (m ? m[1] : q || (MY && MY.slug) || "default").toLowerCase();
-  return /^[a-z0-9][a-z0-9-]{1,31}$/.test(v) ? v : "default";
+  const v = (m ? m[1] : q || "").toLowerCase();
+  return /^[a-z0-9][a-z0-9-]{1,31}$/.test(v) ? v : "";
 })();
+let BANK = URL_BANK || "default";
+let ME = null;                                  // {username, bank:{slug,name}}
 const apiUrl = (p)=> p + (p.includes("?") ? "&" : "?") + "b=" + encodeURIComponent(BANK);
 
 function parseText(raw){
@@ -2646,29 +2649,60 @@ window.addEventListener("focus", ()=>{
   if(!G && document.body.dataset.view === "home") pullText();
 });
 
-/* 自己嘅題庫：本機記住，唔需要記連結 */
-(function bindMyBank(){
+/* 身份：登入後自動用自己題庫 */
+function renderIdentity(){
   const link = $("#btnEditHome");
-  if(link) link.setAttribute("href", "/edit?b=" + encodeURIComponent(BANK));
+  if(link) link.setAttribute("href", "/edit");
   const el = $("#myBank");
   if(!el) return;
-  if(MY && MY.slug === BANK && MY.name){
-    el.hidden = false;
-    el.innerHTML = "";
-    const span = document.createElement("span");
-    span.append("我的題庫：");
-    const b = document.createElement("b"); b.textContent = MY.name; span.append(b);
+  el.hidden = false;
+  el.innerHTML = "";
+  const span = document.createElement("span");
+  if(ME){
+    span.append("已登入：");
+    const b = document.createElement("b"); b.textContent = ME.user.username; span.append(b);
     el.append(span);
     const btn = document.createElement("button");
-    btn.type = "button"; btn.textContent = "切換";
-    btn.onclick = ()=>{ localStorage.removeItem("beasttv.mybank"); location.href = "/"; };
+    btn.type = "button"; btn.textContent = "登出";
+    btn.onclick = async ()=>{
+      try{ await fetch("/api/logout", { method:"POST", headers:{ authorization:"Bearer " + TOKEN() } }); }catch(_){}
+      localStorage.removeItem("beasttv.token");
+      location.href = "/";
+    };
     el.append(btn);
+  }else{
+    const a = document.createElement("a");
+    a.href = "/edit"; a.textContent = "登入 / 註冊";
+    a.style.cssText = "color:var(--blue); text-decoration:none; font-size:12.5px";
+    span.append("未登入 · ");
+    el.append(span, a);
   }
-})();
+}
+
+async function boot(){
+  if(URL_BANK){                                  // 公開連結：直接玩嗰份，唔理登入
+    renderIdentity(); pullText(); return;
+  }
+  const tok = TOKEN();
+  if(tok){
+    try{
+      const r = await fetch("/api/me", { cache:"no-store", headers:{ authorization:"Bearer " + tok } });
+      if(r.ok){
+        const d = await r.json();
+        ME = d;
+        if(d.bank && d.bank.slug) BANK = d.bank.slug;
+      }else{
+        localStorage.removeItem("beasttv.token");   // 過期／失效
+      }
+    }catch(_){}
+  }
+  renderIdentity();
+  pullText();
+}
 
 document.body.dataset.view = "home";
 renderHome();
-pullText();
+boot();
 window.__bigtv = { get G(){return G}, get lines(){return lines}, get cfg(){return cfg},
   startGame, startRound, enterReady, judge, undoJudge, settleAdjust, endTurn, endGame,
   reportProblem, get diag(){return DIAG},

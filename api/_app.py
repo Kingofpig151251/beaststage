@@ -94,6 +94,14 @@ def ensure_schema():
                     "title TEXT DEFAULT '', subtitle TEXT DEFAULT '', key_hash TEXT, "
                     "created_at TEXT NOT NULL, updated_at TEXT NOT NULL)")
         cur.execute("ALTER TABLE banks ADD COLUMN IF NOT EXISTS created_ip TEXT")
+        cur.execute("ALTER TABLE banks ADD COLUMN IF NOT EXISTS owner_id INT")
+        cur.execute("CREATE TABLE IF NOT EXISTS users ("
+                    "id BIGSERIAL PRIMARY KEY, username TEXT UNIQUE NOT NULL, "
+                    "pass_hash TEXT NOT NULL, salt TEXT NOT NULL, "
+                    "created_at TEXT NOT NULL, bank_slug TEXT)")
+        cur.execute("CREATE TABLE IF NOT EXISTS sessions ("
+                    "token_hash TEXT PRIMARY KEY, user_id INT NOT NULL, "
+                    "created_at TEXT NOT NULL, expires_at TEXT NOT NULL)")
         # 一次性遷移：舊嘅單一題庫（meta.text）搬入 slug='default'
         cur.execute("SELECT 1 FROM banks WHERE slug='default'")
         if not cur.fetchone():
@@ -178,6 +186,53 @@ def read_text(cur):
 
 # ------------------------------------------------------------------ routes
 SLUG_RE = re.compile(r"^[a-z0-9][a-z0-9-]{1,31}$")
+USER_RE = re.compile(r"^[a-z0-9_.\-]{3,24}$")
+
+
+def hash_pw(pw, salt):
+    return hashlib.scrypt(pw.encode(), salt=bytes.fromhex(salt), n=2 ** 14, r=8, p=1, dklen=32).hex()
+
+
+def new_salt():
+    return secrets.token_hex(16)
+
+
+def issue_token(cur, user_id):
+    tok = secrets.token_urlsafe(32)
+    ts = datetime.now(timezone.utc)
+    cur.execute("INSERT INTO sessions (token_hash,user_id,created_at,expires_at) VALUES (%s,%s,%s,%s)",
+                (hashlib.sha256(tok.encode()).hexdigest(), user_id, ts.isoformat(timespec="seconds"),
+                 (ts + timedelta(days=30)).isoformat(timespec="seconds")))
+    return tok
+
+
+def session_user(request):
+    """由 Authorization: Bearer <token> 認人；回 users row（dict）或 None。"""
+    auth = request.headers.get("authorization", "")
+    tok = auth[7:].strip() if auth.lower().startswith("bearer ") else ""
+    if not tok:
+        return None
+    h = hashlib.sha256(tok.encode()).hexdigest()
+    with db() as (c, cur):
+        cur.execute("SELECT u.id,u.username,u.bank_slug FROM sessions s JOIN users u ON u.id=s.user_id "
+                    "WHERE s.token_hash=%s AND s.expires_at > %s", (h, now()))
+        return cur.fetchone()
+
+
+def user_bank(cur, user):
+    slug = user.get("bank_slug")
+    if slug:
+        cur.execute("SELECT slug,name,text,key_hash,owner_id,updated_at FROM banks WHERE slug=%s", (slug,))
+        row = cur.fetchone()
+        if row:
+            return row
+    # 保險：未綁定就綁一份
+    cur.execute("SELECT slug,name FROM banks WHERE owner_id=%s ORDER BY created_at LIMIT 1", (user["id"],))
+    row = cur.fetchone()
+    if row:
+        cur.execute("UPDATE users SET bank_slug=%s WHERE id=%s", (row["slug"], user["id"]))
+        return row
+    return None
 
 
 def norm_slug(b):
@@ -190,6 +245,77 @@ def key_ok(request):
     if not EDIT_KEY:
         return True
     return request.headers.get("x-edit-key", "") == EDIT_KEY
+
+
+@app.post("/api/signup")
+async def signup(request: Request):
+    body = await request.json()
+    username = str(body.get("username") or "").strip().lower()
+    pw = str(body.get("password") or "")
+    if not USER_RE.match(username):
+        return JSONResponse({"error": "用戶名 3-24 個字，只可用細楷英數、_ . -"}, status_code=400)
+    if len(pw) < 6:
+        return JSONResponse({"error": "密碼至少 6 個字"}, status_code=400)
+    salt = new_salt()
+    schema()
+    with db() as (c, cur):
+        cur.execute("SELECT 1 FROM users WHERE username=%s", (username,))
+        if cur.fetchone():
+            return JSONResponse({"error": "用戶名已被使用"}, status_code=409)
+        # 每人都有一份自己嘅題庫：用預設題目起頭，玩得到先，再自己改
+        slug = _new_slug(cur)
+        ts = now()
+        cur.execute("INSERT INTO banks (slug,name,text,title,subtitle,key_hash,created_at,updated_at) "
+                    "VALUES (%s,%s,%s,'','',NULL,%s,%s)",
+                    (slug, username, seed_text(), ts, ts))
+        cur.execute("INSERT INTO users (username,pass_hash,salt,created_at,bank_slug) "
+                    "VALUES (%s,%s,%s,%s,%s)",
+                    (username, hash_pw(pw, salt), salt, ts, slug))
+        cur.execute("SELECT id,username,bank_slug FROM users WHERE username=%s", (username,))
+        u = cur.fetchone()
+        cur.execute("UPDATE banks SET owner_id=%s WHERE slug=%s", (u["id"], slug))
+        tok = issue_token(cur, u["id"])
+    return {"ok": True, "token": tok, "user": {"username": username}, "bank": {"slug": slug, "name": username}}
+
+
+@app.post("/api/login")
+async def login(request: Request):
+    body = await request.json()
+    username = str(body.get("username") or "").strip().lower()
+    pw = str(body.get("password") or "")
+    schema()
+    with db() as (c, cur):
+        cur.execute("SELECT id,username,pass_hash,salt,bank_slug FROM users WHERE username=%s", (username,))
+        u = cur.fetchone()
+        if not u or not secrets.compare_digest(hash_pw(pw, u["salt"]), u["pass_hash"]):
+            return JSONResponse({"error": "用戶名或密碼不正確"}, status_code=401)
+        bank = user_bank(cur, u)
+        tok = issue_token(cur, u["id"])
+    return {"ok": True, "token": tok, "user": {"username": u["username"]},
+            "bank": {"slug": (bank or {}).get("slug"), "name": (bank or {}).get("name")}}
+
+
+@app.post("/api/logout")
+def logout(request: Request):
+    auth = request.headers.get("authorization", "")
+    tok = auth[7:].strip() if auth.lower().startswith("bearer ") else ""
+    if tok:
+        with db() as (c, cur):
+            cur.execute("DELETE FROM sessions WHERE token_hash=%s",
+                        (hashlib.sha256(tok.encode()).hexdigest(),))
+    return {"ok": True}
+
+
+@app.get("/api/me")
+def me(request: Request):
+    user = session_user(request)
+    if not user:
+        return JSONResponse({"error": "未登入"}, status_code=401)
+    with db() as (c, cur):
+        bank = user_bank(cur, user)
+    return {"ok": True, "user": {"username": user["username"]},
+            "bank": {"slug": (bank or {}).get("slug"), "name": (bank or {}).get("name"),
+                     "chars": len((bank or {}).get("text") or "")}}
 
 
 @app.get("/api/banks")
@@ -328,7 +454,9 @@ async def text_put(request: Request, b: str = "default"):
         bank = get_bank(cur, slug)
     if bank is None:
         return JSONResponse({"error": "找不到題庫"}, status_code=404)
-    if not bank_key_ok(request, bank):
+    user = session_user(request)
+    owns = bool(user and (bank.get("owner_id") == user["id"] or user.get("bank_slug") == slug))
+    if not owns and not bank_key_ok(request, bank):
         return JSONResponse({"error": "未授權"}, status_code=401)
     body = await request.json()
     text = body.get("text")
