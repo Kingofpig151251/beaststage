@@ -298,6 +298,56 @@ async def t_quitfloat(T):
     await T.js("document.dispatchEvent(new KeyboardEvent('keydown',{key:'Escape'}))"); await asyncio.sleep(0.2)
     check("落閘期間按 Esc 唔會開面板", await T.js("!document.getElementById('exitSheet').classList.contains('on')"))
 
+
+# ⑮ 鍵盤快捷鍵：可改、會記住、撞鍵交換、還原預設
+async def t_keys(T):
+    await T.js("(()=>{const b=document.getElementById('btnEnter');if(b&&b.offsetParent)b.click()})()")
+    await _poll(T, "!!document.querySelector('.sstep.on')", 5)
+    for _ in range(4):
+        await T.js("document.getElementById('btnNext').click()"); await asyncio.sleep(0.45)
+    check("規則頁有「鍵盤快捷鍵」入口", await T.js("!!document.getElementById('btnKeys')"))
+    await T.js("document.getElementById('btnKeys').click()"); await asyncio.sleep(0.35)
+    check("快捷鍵面板打開", await T.js("document.getElementById('keysSheet').classList.contains('on')"))
+    await T.js("document.querySelector('.key-chip[data-k=\"ok\"]').click()"); await asyncio.sleep(0.2)
+    await T.js("document.dispatchEvent(new KeyboardEvent('keydown',{key:'k',code:'KeyK',bubbles:true}))")
+    await asyncio.sleep(0.25)
+    label = (await T.js("document.querySelector('.key-chip[data-k=\"ok\"]').textContent")) or ""
+    check("按新鍵後晶片顯示 K", label.strip() == "K", label)
+
+    # 撞鍵 → 兩者交換
+    await T.js("document.querySelector('.key-chip[data-k=\"foul\"]').click()"); await asyncio.sleep(0.2)
+    await T.js("document.dispatchEvent(new KeyboardEvent('keydown',{key:'k',code:'KeyK',bubbles:true}))")
+    await asyncio.sleep(0.25)
+    foul_lbl = (await T.js("document.querySelector('.key-chip[data-k=\"foul\"]').textContent")) or ""
+    ok_lbl   = (await T.js("document.querySelector('.key-chip[data-k=\"ok\"]').textContent")) or ""
+    check("撞鍵會交換（犯規＝K、正確＝←）", foul_lbl.strip()=="K" and ok_lbl.strip()=="←", f"{foul_lbl}/{ok_lbl}")
+
+    await T.js("document.getElementById('keysDone').click()"); await asyncio.sleep(0.3)
+    check("規則頁摘要同步", "K" in (await T.js("document.getElementById('keysSum').textContent")))
+
+    await T.js("document.getElementById('btnNext').click()")
+    await T.wait("G && G.phase==='ready'", 10, "準備")
+    await T.js("document.getElementById('btnReady').click()")
+    await T.wait("G && G.phase==='running'", 12, "出題")
+
+    before = await T.js("G.judged||0")
+    await T.js("document.dispatchEvent(new KeyboardEvent('keydown',{key:'k',code:'KeyK',bubbles:true}))")
+    await asyncio.sleep(0.55)
+    after = await T.js("G.judged||0")
+    check("新鍵 K 判到犯規", after == before + 1, f"{before}→{after}")
+
+    before2 = after
+    await T.js("document.dispatchEvent(new KeyboardEvent('keydown',{key:'ArrowRight',code:'ArrowRight',bubbles:true}))")
+    await asyncio.sleep(0.55)
+    check("舊鍵 → 唔會再判定", (await T.js("G.judged||0")) == before2)
+
+    check("HUD 晶片顯示新鍵", "K" in (await T.js("document.querySelector('.key-foul').style.getPropertyValue('--kfoul')")))
+
+    # 重新載入：設定要跟住
+    await T.cmd("Page.reload"); await asyncio.sleep(2.0)
+    await T.wait("!!document.getElementById('btnEnter')", 15, "重載首頁")
+    check("重載後仍然係自訂鍵", "K" in (await T.js("document.querySelector('.key-foul').style.getPropertyValue('--kfoul')")))
+
 async def main(url):
     print("\n[1] 暫停／繼續時鐘")
     await session(url, {"teams": 2, "sec": 20, "roundsPer": 1, "skipCap": 3, "allowSkip": True}, t_pause)
@@ -339,6 +389,9 @@ async def main(url):
 
     print("\n[14] 準備畫面退出／落閘封鎖")
     await session(url, {"teams": 2, "sec": 90, "roundsPer": 1}, t_quitfloat)
+
+    print("\n[15] 鍵盤快捷鍵")
+    await session(url, {"teams": 2, "sec": 90, "roundsPer": 1}, t_keys)
 
     print("\n[5] 全員同分")
     await session(url, {"teams": 8, "sec": 3, "roundsPer": 1, "skipCap": 3, "allowSkip": True}, t_tie)

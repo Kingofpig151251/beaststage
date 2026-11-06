@@ -248,6 +248,7 @@
   /* 確認視窗一律置中（唔用底部動作表） */
   .sheet-wrap.center{place-items:center; padding:24px}
   .sheet-wrap.center .sheet-card{width:min(380px,100%); gap:14px; padding:22px 20px;
+    max-height:calc(100dvh - 32px); overflow-y:auto; overscroll-behavior:contain;
     box-shadow:inset 0 0 0 1px var(--sep), 0 24px 60px var(--vs-shadow)}
   .sheet-wrap.center .sheet-title{font-size:19px; font-weight:600; color:var(--ink); text-align:center}
   .sheet-wrap.center .sheet-note{text-align:center; margin:0}
@@ -257,6 +258,8 @@
   .sheet-btn{flex:1 1 0; min-height:50px; border:0; border-radius:var(--r-lg); font:inherit;
     font-size:17px; font-weight:600; background:var(--fill); color:var(--ink); cursor:pointer}
   .sheet-btn:active{background:var(--fill-2)}
+  .sheet-btn.primary{background:var(--blue-fill); color:var(--on-accent)}
+  .sheet-btn.primary:active{background:var(--blue-fill-press)}
   .sheet-btn.danger{background:color-mix(in oklab, var(--red) 16%, transparent); color:var(--red)}
   .sheet-btn.danger:active{background:color-mix(in oklab, var(--red) 26%, transparent)}
   .sheet-card{width:min(560px,100%); background:var(--surface); border-radius:var(--r-xl);
@@ -480,9 +483,10 @@
     .undo-btn .glyph{font-size:13px}
     .top-right{gap:8px}
   }
-  .flash-hud .key-foul::before{content:"←"}
-  .flash-hud .key-pass::before{content:"↓"}
-  .flash-hud .key-ok::after{content:"→"}
+  /* 鍵位由 JS 寫入（可自訂）；冇設定時才用預設箭嘴 */
+  .flash-hud .key-foul::before{content:var(--kfoul,"←")}
+  .flash-hud .key-pass::before{content:var(--kpass,"↓")}
+  .flash-hud .key-ok::after{content:var(--kok,"→")}
   .flash-hud .key-foul{justify-self:start; background:var(--fill); color:var(--ink)}
   .flash-hud .key-foul:active{background:var(--fill-2)}
   .flash-hud .key-pass{justify-self:center; background:var(--fill); color:var(--ink)}
@@ -716,6 +720,17 @@
   }
 
   .rules{display:flex; flex-direction:column; gap:2px; margin-top:8px}
+  .key-edit{height:38px; padding:0 16px; border:0; border-radius:var(--r-md); background:var(--fill);
+    color:var(--ink); font:inherit; font-size:14px; font-weight:600; cursor:pointer}
+  .key-edit:active{background:var(--fill-2)}
+  .key-rows{display:flex; flex-direction:column; gap:8px}
+  .key-row{display:grid; grid-template-columns:1fr auto; align-items:center; gap:12px;
+    padding:9px 12px; border-radius:var(--r-md); background:var(--surface-2)}
+  .key-row b{font-size:15px; font-weight:600}
+  .key-chip{min-width:92px; height:40px; padding:0 12px; border:0; border-radius:10px; font:inherit;
+    font-family:var(--font-mono); font-size:15px; font-weight:600; color:var(--ink); cursor:pointer;
+    background:var(--surface); box-shadow:inset 0 0 0 1px var(--sep)}
+  .key-chip.listening{color:var(--blue); box-shadow:inset 0 0 0 2px var(--blue)}
   .rule{display:grid; grid-template-columns:minmax(0,1fr) auto; align-items:center; gap:16px;
     padding:14px 4px; border-bottom:var(--hair) solid var(--sep)}
   .rule:last-child{border-bottom:0}
@@ -1093,6 +1108,11 @@
             <button class="switch" id="swFoulPen" role="switch" aria-checked="false" aria-label="犯規扣分"><i></i></button>
           </div>
 
+          <div class="rule" id="ruleKeys">
+            <div class="rule-txt"><b>鍵盤快捷鍵</b><span id="keysSum">犯規 ←　跳過 ↓　正確 →　撤回 ↑</span></div>
+            <button class="key-edit" id="btnKeys" type="button" aria-label="更改鍵盤快捷鍵">更改</button>
+          </div>
+
       </section>
 
     </div>
@@ -1208,6 +1228,18 @@
     <div class="sheet-actions">
       <button class="sheet-btn" id="exitCancel">取消</button>
       <button class="sheet-btn danger" id="exitConfirm">退出</button>
+    </div>
+  </div>
+</div>
+
+<div class="sheet-wrap center" id="keysSheet" role="dialog" aria-modal="true" aria-labelledby="keysTitle">
+  <div class="sheet-card">
+    <div class="sheet-title" id="keysTitle">鍵盤快捷鍵</div>
+    <div class="key-rows" id="keyRows"></div>
+    <p class="sheet-note" id="keysNote">按一下右邊的鍵，再按鍵盤上的新鍵。Esc 取消。</p>
+    <div class="sheet-actions">
+      <button class="sheet-btn" id="keysReset" type="button">還原預設</button>
+      <button class="sheet-btn primary" id="keysDone" type="button">完成</button>
     </div>
   </div>
 </div>
@@ -1348,6 +1380,13 @@ const EN = {
   "時間到！": "Time's up!",
   "切換語言": "Switch language",
   "撤回": "Undo",
+  "撤回上一個判定": "Undo last call",
+  "鍵盤快捷鍵": "Keyboard shortcuts",
+  "更改": "Change",
+  "按鍵…": "Press a key",
+  "還原預設": "Reset to default",
+  "完成": "Done",
+  "按一下右邊的鍵，再按鍵盤上的新鍵。Esc 取消。": "Tap the key on the right, then press a new one. Esc cancels.",
   "繼續（Esc）": "Continue (Esc)",
   "題": "questions",
   "分": "pts",
@@ -1401,6 +1440,7 @@ function setLang(next){
   applyBrand(BRAND_RAW.t, BRAND_RAW.s, false);   // 品牌名按語言重譯
   translateTree(document.body);
   if(G){ syncSkipBtn(); }                     // 跳過鍵嘅 aria/title 係即時組字，要跟語言重算
+  applyKeys();                                // 鍵位提示同樣係即時組字
   if(G && G.phase === "running") renderPlay();
   else if(document.body.dataset.view === "home") renderHome();
   else renderSetup();
@@ -2860,28 +2900,135 @@ document.addEventListener("keydown", e=>{
   }
 });
 
+
+/* ================= 鍵盤快捷鍵（每部機自己記，唔跟帳號） ================= */
+const KEY_DEF  = { foul:"ArrowLeft", skip:"ArrowDown", ok:"ArrowRight", undo:"ArrowUp" };
+const KEY_WHAT = { foul:"犯規", skip:"跳過", ok:"正確", undo:"撤回" };
+const KEY_ORDER = ["foul","skip","ok","undo"];
+
+function loadKeys(){
+  const out = { ...KEY_DEF };
+  try{
+    const j = JSON.parse(localStorage.getItem("beasttv.keys") || "{}");
+    for(const k of KEY_ORDER) if(j && typeof j[k] === "string" && j[k]) out[k] = j[k];
+  }catch(e){}
+  return out;
+}
+const KKEYS = loadKeys();
+let ACT_BY_CODE = {};
+function saveKeys(){
+  try{ localStorage.setItem("beasttv.keys", JSON.stringify(KKEYS)); }catch(e){}
+}
+function keyLabel(code){
+  const m = { ArrowLeft:"←", ArrowRight:"→", ArrowUp:"↑", ArrowDown:"↓", Space:"空格",
+              Enter:"Enter", Backspace:"⌫", Delete:"Del", Home:"Home", End:"End",
+              PageUp:"PgUp", PageDown:"PgDn", Insert:"Ins", Escape:"Esc" };
+  if(m[code]) return m[code];
+  if(/^Key[A-Z]$/.test(code)) return code.slice(3);
+  if(/^Digit\d$/.test(code)) return code.slice(5);
+  if(/^Numpad\d$/.test(code)) return "Num" + code.slice(6);
+  return code.replace(/^Numpad/, "Num");
+}
+function codeOf(e){
+  if(e.code) return e.code;
+  const k = e.key || "";                       // 冇 code（合成事件）就用 key 反推
+  if(/^Arrow(Left|Right|Up|Down)$/.test(k)) return k;
+  if(k === " " || k === "Spacebar") return "Space";
+  if(/^[a-zA-Z]$/.test(k)) return "Key" + k.toUpperCase();
+  if(/^\d$/.test(k)) return "Digit" + k;
+  return k;
+}
+function applyKeys(){
+  ACT_BY_CODE = {};
+  for(const k of KEY_ORDER) ACT_BY_CODE[KKEYS[k]] = k;
+
+  const set = (sel, prop, code) => {
+    const el = $(sel); if(el) el.style.setProperty(prop, '"' + keyLabel(code) + '"');
+  };
+  set(".key-foul", "--kfoul", KKEYS.foul);
+  set(".key-pass", "--kpass", KKEYS.skip);
+  set(".key-ok",  "--kok",   KKEYS.ok);
+
+  const t = (sel, txt) => { const el = $(sel); if(el) el.setAttribute("title", txt); };
+  t(".key-foul", `${T("犯規")} (${keyLabel(KKEYS.foul)})`);
+  t(".key-pass", `${T("跳過")} (${keyLabel(KKEYS.skip)})`);
+  t(".key-ok",   `${T("正確")} (${keyLabel(KKEYS.ok)})`);
+  const u = $("#btnUndo");
+  if(u) u.setAttribute("title", `${T("撤回上一個判定")} (${keyLabel(KKEYS.undo)})`);
+
+  const sum = $("#keysSum");
+  if(sum) sum.textContent = KEY_ORDER.map(k => `${T(KEY_WHAT[k])} ${keyLabel(KKEYS[k])}`).join("　");
+}
+
+/* 面板 */
+let KEY_LISTEN = null;
+function renderKeyRows(){
+  const box = $("#keyRows"); if(!box) return;
+  box.innerHTML = KEY_ORDER.map(k => `
+    <div class="key-row">
+      <b>${esc(T(KEY_WHAT[k]))}</b>
+      <button class="key-chip${KEY_LISTEN === k ? " listening" : ""}" type="button" data-k="${k}"
+        aria-label="${esc(T(KEY_WHAT[k]))}：${KEY_LISTEN === k ? esc(T("按鍵…")) : esc(keyLabel(KKEYS[k]))}"
+      >${KEY_LISTEN === k ? esc(T("按鍵…")) : esc(keyLabel(KKEYS[k]))}</button>
+    </div>`).join("");
+}
+function openKeys(){ KEY_LISTEN = null; renderKeyRows(); $("#keysSheet").classList.add("on"); }
+function closeKeys(){ KEY_LISTEN = null; $("#keysSheet").classList.remove("on"); }
+
+if($("#btnKeys")) $("#btnKeys").onclick = openKeys;
+if($("#keysDone")) $("#keysDone").onclick = closeKeys;
+if($("#keysReset")) $("#keysReset").onclick = ()=>{
+  for(const k of KEY_ORDER) KKEYS[k] = KEY_DEF[k];
+  KEY_LISTEN = null; saveKeys(); renderKeyRows(); applyKeys();
+};
+if($("#keysSheet")){
+  $("#keysSheet").addEventListener("click", e=>{ if(e.target.id === "keysSheet") closeKeys(); });
+  $("#keyRows").addEventListener("click", e=>{
+    const b = e.target.closest(".key-chip"); if(!b) return;
+    KEY_LISTEN = b.dataset.k; renderKeyRows();
+  });
+}
+/* 監聽新鍵：capture 階段，唔會被遊戲嘅判定 handler 搶走 */
+document.addEventListener("keydown", e=>{
+  if(!KEY_LISTEN) return;
+  e.preventDefault(); e.stopPropagation();
+  if(e.key === "Escape"){ KEY_LISTEN = null; renderKeyRows(); return; }
+  if(["Shift","Control","Alt","Meta","CapsLock","Tab"].includes(e.key)) return;
+  const code = codeOf(e);
+  if(!code || code === "Unidentified") return;
+  const me = KEY_LISTEN;
+  for(const other of KEY_ORDER){
+    if(other !== me && KKEYS[other] === code) KKEYS[other] = KKEYS[me];   // 撞鍵 → 兩者交換
+  }
+  KKEYS[me] = code;
+  KEY_LISTEN = null; saveKeys(); renderKeyRows(); applyKeys();
+}, true);
+
 /* 鍵盤控場 */
 document.addEventListener("keydown", e=>{
   if(e.repeat) return;                       // 長按唔連發
   if(!$("#v-play").classList.contains("active")) return;
   if(["INPUT","TEXTAREA"].includes(document.activeElement.tagName)) return;
   if(!G) return;
-  if(e.key === "ArrowRight"){
+  if($("#keysSheet") && $("#keysSheet").classList.contains("on")) return;   // 改鍵中，唔好判定
+  const a = ACT_BY_CODE[codeOf(e)];
+  if(a === "ok"){
     e.preventDefault();
     if(G.phase === "ready") startRound();
     else if(G.phase === "running") act("ok");
     else if(G.phase === "interstitial") closeTurnEnd();     // 結算卡：繼續
-  }else if(e.key === "ArrowLeft"){
+  }else if(a === "foul"){
     e.preventDefault();
     if(G.phase === "running") act("foul");
-  }else if(e.key === "ArrowDown"){
+  }else if(a === "skip"){
     e.preventDefault();
     if(G.phase === "running") act("skip");
-  }else if(e.key === "ArrowUp"){
+  }else if(a === "undo"){
     e.preventDefault();
     undoJudge();
   }else if(e.key === "Escape"){
     e.preventDefault();
+    if($("#keysSheet") && $("#keysSheet").classList.contains("on")){ closeKeys(); return; }
     if($("#exitSheet").classList.contains("on")){ closeExit(); return; }
     if(gateOn()) return;                                     // 落閘／結算過場：唔接受暫停或退出
     if(G.phase === "ready" || G.phase === "countdown"){ exitTap(); return; }
@@ -2920,6 +3067,8 @@ document.addEventListener("visibilitychange", ()=>{
 window.addEventListener("focus", ()=>{
   if(!G && document.body.dataset.view === "home") pullText();
 });
+
+applyKeys();          // 鍵位提示：開機就按已存設定寫入
 
 /* 身份：登入後自動用自己題庫 */
 function renderIdentity(){
