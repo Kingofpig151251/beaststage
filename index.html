@@ -1507,6 +1507,7 @@ const BRAND_KEY = "beastbrand.v1";
   if(c && c.t){ applyBrand(c.t, c.s, false); }
   else{ document.documentElement.classList.add("brand-pending"); }
   setTimeout(()=>document.documentElement.classList.remove("brand-pending"), 1400);
+  applyBrand("", "", false);                       // 先用預設品牌寫好分頁標題，唔好等題庫
 })();
 
 function applyBrand(title, sub, save){
