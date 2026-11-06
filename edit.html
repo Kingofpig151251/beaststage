@@ -315,7 +315,12 @@ $("#authForm").addEventListener("submit", async (e)=>{
     if(!r.ok){ err.textContent = d.error || "失敗，請再試"; return; }
     localStorage.setItem("beasttv.token", d.token);
     localStorage.removeItem("beasttv.mybank");
-    location.href = "/edit";                   // reload：由 /api/me 取自己題庫
+    BANK = (d.bank && d.bank.slug) || "default";   // 就地切換，唔跳頁（跳頁會觸發離開警告）
+    if(d.bank && d.bank.name) document.title = `設定 · ${d.bank.name}`;
+    syncBack();
+    $("#authPass").value = "";
+    hideGate();
+    await load();
   }catch(_){
     err.textContent = "網絡問題，請再試";
   }finally{
@@ -390,7 +395,8 @@ $("#text").oninput = () => { paintMeta(); scheduleSave(); };
 $("#brandTitle").oninput = scheduleSave;
 $("#brandSub").oninput = scheduleSave;
 window.addEventListener("beforeunload", e => {
-  if(sig() !== lastSaved){ e.preventDefault(); e.returnValue = ""; }
+  const editorVisible = !$("#gate").classList.contains("on");
+  if(editorVisible && sig() !== lastSaved){ e.preventDefault(); e.returnValue = ""; }
 });
 
 /* 斷線自動重試；同時接收其他人的修改（有未儲存內容時不覆蓋） */
