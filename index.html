@@ -120,6 +120,11 @@
     font-size:clamp(76px,16vh,168px); letter-spacing:-.045em; line-height:.98; text-wrap:balance;
     animation:rise .62s .06s var(--ease) both}
   @media (max-width:560px){ .landing-title{font-size:clamp(58px, 26vw, 116px); letter-spacing:-.03em} }
+  /* 窄屏：版權行同品牌圖示分兩行，避免斷字成三欄 */
+  @media (max-width:560px){
+    .landing-foot{flex-direction:column; gap:6px; row-gap:6px}
+    .brand-links{border-left:0; padding-left:0; margin-left:0}
+  }
   .landing-title[data-len="mid"]{font-size:clamp(52px, 11vh, 118px); letter-spacing:-.035em}
   .landing-title[data-len="long"]{font-size:clamp(38px, 7.4vh, 82px); letter-spacing:-.025em; line-height:1.06}
   @media (max-width:560px){ .landing-title[data-len="long"]{font-size:clamp(30px, 9.4vw, 46px); letter-spacing:-.02em} }
@@ -128,13 +133,14 @@
     animation:rise .62s .12s var(--ease) both}
   .landing-go{margin-top:clamp(28px,3.8vh,40px); min-width:260px; min-height:60px; font-size:21px; border-radius:var(--pill);
     animation:rise .62s .18s var(--ease) both}
-  .landing-foot{display:flex; align-items:center; justify-content:center; gap:8px;
+  .landing-foot{display:flex; align-items:center; justify-content:center; gap:8px; flex-wrap:wrap; row-gap:6px;
     padding:0 0 4px; animation:rise .62s .3s var(--ease) both}
+  .landing-credit{font-size:13px; color:var(--ink-2); font-variant-numeric:tabular-nums;
+    display:inline-flex; align-items:center; gap:6px; white-space:nowrap}
   .credit-link{font:inherit; font-size:13px; color:var(--ink-2); background:none; border:0; padding:2px 0;
     min-height:0; cursor:pointer; font-variant-numeric:tabular-nums}
   .credit-link:hover{color:var(--ink)}
   .credit-link:focus-visible{outline:0; box-shadow:0 0 0 3px var(--focus-ring); border-radius:6px}
-  .credit-dot{font-size:13px; color:var(--ink-3, var(--ink-2))}
   #toast.multi{text-align:left; white-space:pre-line; line-height:1.6; font-size:14px;
     bottom:calc(84px + env(safe-area-inset-bottom));
     border-radius:var(--r-lg); padding:14px 16px; width:min(560px, calc(100% - 40px))}
@@ -892,9 +898,9 @@
         <span class="beast" style="--x:63%;--y:91%;--xl:73%;--yl:11%;--k:.86;--r:-4deg;--d:7.0s;--i:.42s"><span class="sway"><img src="/art/team/bear.webp" alt=""></span></span>
       </div>
       <div class="landing-foot">
-        <button class="credit-link" id="btnLicense" type="button">授權</button>
-        <span class="credit-dot" aria-hidden="true">·</span>
-        <button class="credit-link" id="btnCredits" type="button">素材鳴謝</button>
+        <span class="landing-credit">© 2026 Leung Tung Lam ·
+          <button class="credit-link" id="btnLicense" type="button">MIT License</button>
+          <button class="credit-link" id="btnCredits" type="button">素材鳴謝</button></span>
         <span class="brand-links">
           <a class="brand" href="https://github.com/Kingofpig151251/beaststage" target="_blank" rel="noopener"
              aria-label="GitHub 原始碼" title="GitHub 原始碼"><svg viewBox="0 0 16 16" width="1em" height="1em" fill="currentColor" aria-hidden="true"><path d="M8 0C3.58 0 0 3.58 0 8a8 8 0 0 0 5.47 7.59c.4.07.55-.17.55-.38 0-.19-.01-.82-.01-1.49-2.01.37-2.53-.49-2.69-.94-.09-.23-.48-.94-.82-1.13-.28-.15-.68-.52-.01-.53.63-.01 1.08.58 1.23.82.72 1.21 1.87.87 2.33.66.07-.52.28-.87.51-1.07-1.78-.2-3.64-.89-3.64-3.95 0-.87.31-1.59.82-2.15-.08-.2-.36-1.02.08-2.12 0 0 .67-.21 2.2.82a7.4 7.4 0 0 1 2-.27c.68 0 1.36.09 2 .27 1.53-1.04 2.2-.82 2.2-.82.44 1.1.16 1.92.08 2.12.51.56.82 1.27.82 2.15 0 3.07-1.87 3.75-3.65 3.95.29.25.54.73.54 1.48 0 1.07-.01 1.93-.01 2.2 0 .21.15.46.55.38A8.01 8.01 0 0 0 16 8c0-4.42-3.58-8-8-8z"/></svg></a>
@@ -2311,7 +2317,7 @@ $("#btnPause").onclick = ()=>{
   renderTimer();
 };
 
-$("#btnLicense").onclick = ()=> toast("© 2026 Leung Tung Lam · MIT License\n可自由使用、修改、商用，需保留本聲明。", 6000);
+$("#btnLicense").onclick = ()=> toast("MIT License · © 2026 Leung Tung Lam\n可自由使用、修改、合併、發佈、商用，需保留版權聲明與本授權條文。\n本授權只覆蓋程式碼；音效素材依各自授權（見「素材鳴謝」）。\n授權全文見 repo 根目錄的 LICENSE 檔。", 9000);
 $("#btnCredits").onclick = ()=> toast("音效素材\nWikimedia Commons：門鐘、滴答（公有領域）｜心跳 Benboncan·Freesound（CC BY 3.0）\nOpenGameArt：倒數、哨子、結算、鼓（CC0）\n音樂 Kevin MacLeod《Celebration》CC BY 4.0｜圖示 SenseNova 生成", 9000);
 
 $("#btnBackHome").onclick = ()=>{

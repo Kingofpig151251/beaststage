@@ -196,18 +196,21 @@ samples/hk-icebreaker.json 首次 seed 題庫
 - 主持台連不到後端就冇題可玩（冇本機 fallback）
 - 猜的人要**背向**屏幕（不是閉眼），一隊 4–8 人最順
 
-## 授權
+## 授權範圍
 
-**MIT License**，全文見 [`LICENSE`](LICENSE)。
+| 範圍 | 授權 |
+|---|---|
+| **程式碼**（`index.html`、`edit.html`、`api/`、`tests/`、`sw.js` 等） | **MIT**，全文見 [`LICENSE`](LICENSE) |
+| **音效素材**（`sfx/`） | 各自原授權（CC0 / 公有領域 / **CC BY 3.0 / 4.0**） |
+| **圖像**（`art/`、icons） | SenseNova 生成，本項目自製 |
 
 > Copyright (c) 2026 **Leung Tung Lam**
 
-可自由使用、修改、商用，唯一要求是保留版權聲明與授權條文。
+MIT 只覆蓋程式碼，**不代表 `sfx/` 變成 MIT**。素材逐項來源、授權與需要的署名見 [`CREDITS.md`](CREDITS.md)。
 
-主頁右下（三個品牌圖示左邊）有兩個可按的文字鍵：
+兩個需要署名的素材：`hb3.mp3`（Benboncan／Freesound，CC BY 3.0）、`champion.mp3`（Kevin MacLeod《Celebration》，CC BY 4.0）。介面上「素材鳴謝」吐司已列出，符合授權要求。
 
-- **授權** → 彈出「© 2026 Leung Tung Lam · MIT License」吐司
-- **素材鳴謝** → 彈出音效素材來源與授權吐司（CC BY 的素材依授權要求在此署名）
+主頁 footer 保留 `© 2026 Leung Tung Lam · MIT License`，其中 `MIT License` 可按，彈出授權聲明摘要與全文位置；旁邊的「素材鳴謝」彈出素材來源。
 
 ## 版權、致謝與商標
 
