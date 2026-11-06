@@ -69,7 +69,12 @@
 
   /* ---------- 主頁（入口） ---------- */
   #v-home{display:none}
-  #v-home.active{display:flex; flex-direction:column; min-height:calc(100dvh - 50px)}
+  /* 主頁永遠唔可以滾：用 svh（最細視窗，計埋 Safari 工具列），唔用 dvh；
+     再預留 24px 俾瀏覽器底部工具列，footer 唔會貼住／俾人切走 */
+  #v-home.active{display:flex; flex-direction:column;
+    min-height:calc(100vh - 50px);
+    min-height:calc(100svh - 74px)}
+  body[data-view="home"]{overflow:hidden}
   #v-home.active{position:relative; overflow:hidden}
   #v-home.active::before{content:""; position:absolute; width:min(120vh,900px); aspect-ratio:1;
     border-radius:50%; pointer-events:none; z-index:0;
@@ -122,7 +127,9 @@
     display:flex; align-items:center; justify-content:center;
     min-height:calc(min(16vh, 168px) * .98);      /* 中英字階不同，但佔位一樣高 */
     animation:rise .62s .06s var(--ease) both}
-  @media (max-width:560px){ .landing-title{font-size:clamp(58px, 26vw, 116px); letter-spacing:-.03em;
+  @media (max-width:560px){
+    .landing-go{margin-top:clamp(18px, 2.8vh, 32px)}
+    .landing-title{font-size:clamp(58px, 26vw, 116px); letter-spacing:-.03em;
     min-height:calc(min(26vw, 116px) * .98)} }
   /* 窄屏：版權行同品牌圖示分兩行，避免斷字成三欄 */
   @media (max-width:560px){
