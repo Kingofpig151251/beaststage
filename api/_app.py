@@ -281,6 +281,25 @@ async def banks_selfserve(request: Request):
             "play": f"/b/{slug}", "edit": f"/edit?b={slug}"}
 
 
+@app.post("/api/findbank")
+async def find_bank(request: Request):
+    """用戶唔記得連結：用「題庫名稱 + 密碼」搵返 slug（名稱可以重複，逐個試）。"""
+    body = await request.json()
+    name = str(body.get("name") or "").strip()
+    key = str(body.get("key") or "")
+    if not name or not key:
+        return JSONResponse({"error": "請填題庫名稱同密碼"}, status_code=400)
+    schema()
+    h = hashlib.sha256(key.encode()).hexdigest()
+    with db() as (c, cur):
+        cur.execute("SELECT slug,name,key_hash FROM banks WHERE lower(name)=lower(%s)", (name,))
+        rows = cur.fetchall()
+    hits = [{"slug": r["slug"], "name": r["name"]} for r in rows if r["key_hash"] == h]
+    if not hits:
+        return JSONResponse({"error": "名稱或密碼不正確"}, status_code=401)
+    return {"ok": True, "count": len(hits), "items": hits}
+
+
 @app.get("/api/text")
 def text_get(request: Request, check: int = 0, b: str = "default"):
     slug = norm_slug(b)

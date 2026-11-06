@@ -123,7 +123,11 @@
   .gate-alt{margin-top:2px; padding:8px 0; background:none; border:0; font:inherit; font-size:13.5px;
     color:var(--blue); min-height:0}
   .gate-alt:focus-visible{outline:0; box-shadow:0 0 0 3px var(--focus-ring); border-radius:8px}
-  .done-lb{font-size:12.5px; color:var(--ink-2); margin-top:4px}
+  .done-lb{font-size:12.5px; color:var(--ink-2); margin-top:10px; display:block}
+  .share{margin-top:18px; border-top:1px solid var(--sep); padding-top:12px}
+  .share summary{font-size:13.5px; color:var(--blue); cursor:pointer; list-style:none; padding:6px 0}
+  .share summary::-webkit-details-marker{display:none}
+  .share summary:focus-visible{outline:0; box-shadow:0 0 0 3px var(--focus-ring); border-radius:8px}
   .copy-row{display:flex; gap:8px; align-items:center}
   .copy-row input{flex:1; min-width:0; font-size:14px; color:var(--ink-2)}
   .copy-btn{flex:none; height:42px; padding:0 14px; border:0; border-radius:var(--r-md);
@@ -146,6 +150,7 @@
     <input id="gatePass" type="password" autocomplete="current-password" aria-label="密碼" placeholder="密碼">
     <button type="submit" class="gate-go">進入</button>
     <p class="gate-err" id="gateErr"></p>
+    <button type="button" class="gate-alt" id="btnFindBank">唔記得連結？用名稱＋密碼搵返</button>
     <button type="button" class="gate-alt" id="btnNewBank">第一次用？用開庫碼開一份新題庫</button>
   </form>
 </div>
@@ -163,22 +168,38 @@
   </form>
 </div>
 
+<div class="gate" id="findGate" hidden>
+  <form class="gate-card" id="findForm">
+    <h2>搵返我嘅題庫</h2>
+    <p>輸入你開庫時嘅名稱同密碼。</p>
+    <input id="findName" type="text" autocomplete="off" aria-label="題庫名稱" placeholder="題庫名稱">
+    <input id="findPass" type="password" autocomplete="current-password" aria-label="密碼" placeholder="密碼">
+    <button type="submit" class="gate-go" id="findGo">搵返</button>
+    <p class="gate-err" id="findErr"></p>
+    <button type="button" class="gate-alt" id="btnBackGate2">返回</button>
+  </form>
+</div>
+
 <div class="gate" id="doneGate" hidden>
   <div class="gate-card">
     <h2>開好了</h2>
     <p id="doneName"></p>
-    <label class="done-lb">玩嘅連結</label>
-    <div class="copy-row"><input id="donePlay" type="text" readonly><button type="button" class="copy-btn" data-copy="donePlay">複製</button></div>
-    <label class="done-lb">改嘅連結</label>
-    <div class="copy-row"><input id="doneEdit" type="text" readonly><button type="button" class="copy-btn" data-copy="doneEdit">複製</button></div>
-    <p class="gate-err" style="color:var(--ink-2)">密碼就係你啱啱設定嘅嗰個，請自行記住（我哋唔會顯示返）。</p>
     <button type="button" class="gate-go" id="btnGoEdit">開始設定題目</button>
+    <p class="gate-err" style="color:var(--ink-2)">以後打開 <b>beasttv.vercel.app</b> 就會自動載入你嘅題庫，唔需要記連結。</p>
+    <details class="share">
+      <summary>想分享畀朋友玩？</summary>
+      <label class="done-lb">朋友玩嘅連結</label>
+      <div class="copy-row"><input id="donePlay" type="text" readonly><button type="button" class="copy-btn" data-copy="donePlay">複製</button></div>
+      <label class="done-lb">換裝置時用嘅改題連結</label>
+      <div class="copy-row"><input id="doneEdit" type="text" readonly><button type="button" class="copy-btn" data-copy="doneEdit">複製</button></div>
+      <p class="gate-err" style="color:var(--ink-2)">密碼就係你啱啱設定嘅嗰個（伺服器唔會顯示返）。第日忘記連結，喺設定頁用「名稱＋密碼」搵返就得。</p>
+    </details>
   </div>
 </div>
 
   <div class="wrap">
   <div class="top">
-    <a class="back" href="/" aria-label="返回主持台" title="返回主持台">
+    <a class="back" href="/" id="backHome" aria-label="返回主持台" title="返回主持台">
       <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M14.5 5 7.5 12l7 7"/></svg>
     </a>
     <div class="titles">
@@ -229,6 +250,10 @@ const BANK = (()=>{
 const apiUrl = (p)=> p + (p.includes("?") ? "&" : "?") + "b=" + encodeURIComponent(BANK);
 
 const editKey = () => sessionStorage.getItem(KEYNAME) || "";
+if(BANK !== "default"){
+  const bh = document.getElementById("backHome");
+  if(bh) bh.setAttribute("href", "/b/" + encodeURIComponent(BANK));
+}
 const withKey = (h) => { const o = Object.assign({}, h || {}); const k = editKey(); if(k) o["x-edit-key"] = k; return o; };
 
 async function checkKey(k){
@@ -266,6 +291,38 @@ $("#gateForm").addEventListener("submit", async (e)=>{
 const SHOWNEW = new URLSearchParams(location.search).get("new") === "1";
 const gNew = $("#newGate"), gDone = $("#doneGate"), gGate = $("#gate");
 
+const gFind = $("#findGate");
+function showFind(){
+  gGate.classList.remove("on"); gNew.classList.remove("on"); gDone.classList.remove("on");
+  gNew.hidden = true; gDone.hidden = true;
+  gFind.hidden = false; gFind.classList.add("on");
+  $("#findName").focus();
+}
+$("#btnFindBank").onclick = showFind;
+$("#btnBackGate2").onclick = ()=> showGate();
+
+$("#findForm").addEventListener("submit", async (e)=>{
+  e.preventDefault();
+  const name = $("#findName").value.trim(), key = $("#findPass").value;
+  const err = $("#findErr");
+  if(!name || !key){ err.textContent = "兩樣都要填"; return; }
+  err.textContent = ""; $("#findGo").disabled = true;
+  try{
+    const r = await fetch("/api/findbank", { method:"POST", headers:{ "content-type":"application/json" },
+      body: JSON.stringify({ name, key }) });
+    const d = await r.json().catch(()=>({}));
+    if(!r.ok){ err.textContent = d.error || "搵唔到"; return; }
+    const hit = d.items[0];
+    localStorage.setItem("beasttv.mybank", JSON.stringify({ slug: hit.slug, name: hit.name }));
+    sessionStorage.setItem(KEYNAME, key);
+    location.href = "/edit?b=" + encodeURIComponent(hit.slug);
+  }catch(_){
+    err.textContent = "網絡問題，請再試";
+  }finally{
+    $("#findGo").disabled = false;
+  }
+});
+
 function showNew(){
   gGate.classList.remove("on"); gDone.classList.remove("on");
   gDone.hidden = true;
@@ -273,8 +330,8 @@ function showNew(){
   $("#newName").focus();
 }
 function showGate(){
-  gNew.classList.remove("on"); gDone.classList.remove("on");
-  gNew.hidden = true; gDone.hidden = true;
+  gNew.classList.remove("on"); gDone.classList.remove("on"); gFind.classList.remove("on");
+  gNew.hidden = true; gDone.hidden = true; gFind.hidden = true;
   gGate.classList.add("on");
 }
 
@@ -298,7 +355,8 @@ $("#newForm").addEventListener("submit", async (e)=>{
     const d = await r.json().catch(()=>({}));
     if(!r.ok){ err.textContent = d.error || "開唔到，請再試"; return; }
     sessionStorage.setItem(KEYNAME, key);
-    $("#doneName").textContent = `${name} · ${location.origin}${d.play}`;
+    localStorage.setItem("beasttv.mybank", JSON.stringify({ slug: d.slug, name }));
+    $("#doneName").textContent = name;
     $("#donePlay").value = location.origin + d.play;
     $("#doneEdit").value = location.origin + d.edit;
     $("#btnGoEdit").onclick = ()=>{ location.href = d.edit; };

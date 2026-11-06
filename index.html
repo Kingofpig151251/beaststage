@@ -136,6 +136,9 @@
     animation:rise .62s .18s var(--ease) both}
   .landing-foot{display:flex; align-items:center; justify-content:center; gap:8px; flex-wrap:wrap; row-gap:6px;
     padding:0 0 4px; animation:rise .62s .3s var(--ease) both}
+  .my-bank{margin:10px 0 0; font-size:13px; color:var(--ink-2); display:flex; align-items:center; gap:8px; justify-content:center}
+  .my-bank b{font-weight:600; color:var(--ink)}
+  .my-bank button{font:inherit; font-size:12.5px; color:var(--blue); background:none; border:0; padding:2px 0; min-height:0}
   .landing-credit{font-size:13px; color:var(--ink-2); font-variant-numeric:tabular-nums;
     display:inline-flex; align-items:center; gap:6px; white-space:nowrap}
   .credit-link{font:inherit; font-size:13px; color:var(--ink-2); background:none; border:0; padding:2px 0;
@@ -932,6 +935,7 @@
       <p class="landing-sub">派對猜詞主持台</p>
       <button class="btn-primary landing-go" id="btnEnter">開始</button>
       <a class="landing-link" id="btnEditHome" href="/edit">設定</a>
+      <p class="my-bank" id="myBank" hidden></p>
       </div>
       <div class="landing-beasts" aria-hidden="true">
         <span class="beast" style="--x:13%;--y:15%;--xl:9%;--yl:22%;--k:1.00;--r:-9deg;--d:7.4s;--i:.00s"><span class="sway"><img src="/art/team/turtle.webp" alt=""></span></span>
@@ -1265,10 +1269,11 @@ function esc(s){ return String(s).replace(/[&<>"']/g, c=>({"&":"&amp;","<":"&lt;
 
 /* 題目一律以 {t:"..."} 存；舊格式（字串 / {t,ban}）都食得住 */
 /* 題庫 slug：/b/<slug> 或 ?b=<slug>，默認 default */
+const MY = (()=>{ try{ return JSON.parse(localStorage.getItem("beasttv.mybank") || "null"); }catch(_){ return null; } })();
 const BANK = (()=>{
   const m = location.pathname.match(/^\/b\/([a-z0-9][a-z0-9-]{1,31})\/?$/i);
   const q = new URLSearchParams(location.search).get("b");
-  const v = (m ? m[1] : q || "default").toLowerCase();
+  const v = (m ? m[1] : q || (MY && MY.slug) || "default").toLowerCase();
   return /^[a-z0-9][a-z0-9-]{1,31}$/.test(v) ? v : "default";
 })();
 const apiUrl = (p)=> p + (p.includes("?") ? "&" : "?") + "b=" + encodeURIComponent(BANK);
@@ -2624,6 +2629,26 @@ document.addEventListener("visibilitychange", ()=>{
 window.addEventListener("focus", ()=>{
   if(!G && document.body.dataset.view === "home") pullText();
 });
+
+/* 自己嘅題庫：本機記住，唔需要記連結 */
+(function bindMyBank(){
+  const link = $("#btnEditHome");
+  if(link) link.setAttribute("href", "/edit?b=" + encodeURIComponent(BANK));
+  const el = $("#myBank");
+  if(!el) return;
+  if(MY && MY.slug === BANK && MY.name){
+    el.hidden = false;
+    el.innerHTML = "";
+    const span = document.createElement("span");
+    span.append("我的題庫：");
+    const b = document.createElement("b"); b.textContent = MY.name; span.append(b);
+    el.append(span);
+    const btn = document.createElement("button");
+    btn.type = "button"; btn.textContent = "切換";
+    btn.onclick = ()=>{ localStorage.removeItem("beasttv.mybank"); location.href = "/"; };
+    el.append(btn);
+  }
+})();
 
 document.body.dataset.view = "home";
 renderHome();
