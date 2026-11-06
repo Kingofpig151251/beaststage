@@ -418,7 +418,7 @@
     100%{opacity:0; translate:0 -64px; scale:1}
   }
 
-  .flash-hud{display:grid; grid-template-columns:1fr auto 1fr; gap:clamp(8px,1.6vw,16px); align-items:center;
+  .flash-hud{position:relative; display:grid; grid-template-columns:1fr auto 1fr; gap:clamp(8px,1.6vw,16px); align-items:center;
     padding:12px max(18px,env(safe-area-inset-right)) calc(14px + env(safe-area-inset-bottom)) max(18px,env(safe-area-inset-left))}
   .flash-hud .key{display:inline-flex; align-items:center; justify-content:center; gap:12px;
     width:clamp(104px,22vw,180px); height:clamp(62px,9.2vh,80px); border-radius:var(--r-lg);
@@ -428,10 +428,17 @@
   .flash-hud .key::after{display:inline-grid; place-items:center; min-width:30px; height:30px;
     padding:0 8px; border-radius:8px; font-family:var(--font-mono); font-size:16px; line-height:1;
     background:color-mix(in oklab, currentColor 14%, transparent); opacity:.9}
-  .undo-tip{position:fixed; right:max(18px,env(safe-area-inset-right));
-    bottom:calc(124px + env(safe-area-inset-bottom)); font-size:12px; letter-spacing:.02em;
-    color:var(--ink-3); pointer-events:none; opacity:0; transition:opacity .25s var(--ease)}
-  .undo-tip.on{opacity:1}
+  .hud-undo{position:absolute; right:max(18px,env(safe-area-inset-right)); bottom:calc(100% + 10px);
+    display:inline-flex; align-items:center; gap:6px; min-height:44px; padding:0 16px;
+    border-radius:999px; border:0; font-size:13px; font-weight:600; letter-spacing:.01em;
+    color:var(--ink-2); background:var(--fill); touch-action:manipulation;
+    transition:opacity .2s var(--ease), background-color .2s var(--ease), color .2s var(--ease)}
+  .hud-undo.off{background:var(--fill); color:var(--ink-2);
+    box-shadow:inset 0 0 0 1px var(--sep)}
+  .hud-undo:active{background:var(--fill-2); color:var(--ink)}
+  .hud-undo:focus-visible{outline:0; box-shadow:0 0 0 3px var(--focus-ring)}
+  .hud-undo.fresh{background:color-mix(in oklab, var(--blue) 12%, var(--fill)); color:var(--blue);
+    box-shadow:inset 0 0 0 1px color-mix(in oklab, var(--blue) 34%, transparent)}
   .flash-hud .key-foul::before{content:"←"}
   .flash-hud .key-pass::before{content:"↓"}
   .flash-hud .key-ok::after{content:"→"}
@@ -1054,8 +1061,8 @@
       <button class="key key-foul" data-judge="foul" aria-label="犯規" title="犯規（←）">犯規</button>
       <button class="key key-pass" data-judge="skip" aria-label="跳過" title="跳過（↓）">跳過</button>
       <button class="key key-ok" data-judge="ok" aria-label="正確" title="正確（→）">正確</button>
+      <button class="hud-undo off" id="btnUndo" type="button" aria-disabled="true" aria-label="撤回上一個判定" title="撤回上一個判定（↑）">↺ 撤回</button>
     </div>
-    <div class="undo-tip" id="undoTip" aria-hidden="true">↑ 撤回</div>
 
     <div class="ready" id="readyOverlay" style="display:none">
       <div class="readyCard">
@@ -1864,6 +1871,7 @@ if("ResizeObserver" in window){
 
 function renderPlay(){
   syncExitLabel();
+  paintUndo();
   const chip = $("#turnChip");
   if(chip && G){
     const t = curTeam();
@@ -1904,13 +1912,20 @@ function act(name){
   return true;
 }
 
-/* 判定後輕輕提一句：提咗先發現手誤都救得返 */
-let UNDO_TIP_T = 0;
+/* 撤回鍵：有嘢可撤先著燈；判定後亮藍一下，提示「仲救得返」 */
+let UNDO_HL_T = 0;
+function paintUndo(){
+  const b = $("#btnUndo"); if(!b) return;
+  const ok = !!(G && G.phase === "running" && G.lastUndo);
+  b.classList.toggle("off", !ok);
+  b.setAttribute("aria-disabled", String(!ok));
+  if(!ok){ b.classList.remove("fresh"); clearTimeout(UNDO_HL_T); }
+}
 function hintUndo(){
-  const el = $("#undoTip"); if(!el) return;
-  el.classList.add("on");
-  clearTimeout(UNDO_TIP_T);
-  UNDO_TIP_T = setTimeout(()=> el.classList.remove("on"), 2600);
+  const b = $("#btnUndo"); if(!b) return;
+  b.classList.add("fresh");
+  clearTimeout(UNDO_HL_T);
+  UNDO_HL_T = setTimeout(()=> b.classList.remove("fresh"), 2600);
 }
 
 /* ↑ 撤回：只可撤回本回合最後一次判定（新判定或回合結束即失效） */
@@ -1928,8 +1943,7 @@ function undoJudge(){
   if(q) q.classList.remove("fx-down","fx-left","fx-right","fx-ok","fx-bad");
   syncSkipBtn();
   renderPlay();
-  clearTimeout(UNDO_TIP_T);
-  const tip = $("#undoTip"); if(tip) tip.classList.remove("on");
+  paintUndo();
   toast("已撤回上一個判定", 1200);
   sfx("tap", 0.7);
   return true;
@@ -1950,6 +1964,7 @@ function judge(kind){
   t.score += delta;
   G.judged = (G.judged || 0) + 1;
   G.lastUndo = snap;
+  paintUndo();
   hintUndo();
 
   setTimeout(()=>{                          // 三個判定都等文字滑走，再換下一題
@@ -2050,6 +2065,8 @@ function settleAdjust(kind, d){
   sfx("tap", 0.5);
 }
 
+$("#btnUndo").onclick = ()=>{ if(!undoJudge()) toast("沒有可撤回的判定", 1200); };
+
 $("#teStats").addEventListener("click", e=>{
   const b = e.target.closest("button[data-d]");
   if(b) settleAdjust(b.parentElement.dataset.k, +b.dataset.d);
@@ -2083,8 +2100,7 @@ function endTurn(){
                   foul: (team.foul||0) - (base.foul||0), score: team.score - base.score };
   G.phase = "interstitial";
   G.lastUndo = null;                       // 跨回合唔可以撤回
-  clearTimeout(UNDO_TIP_T);
-  const tipEl = $("#undoTip"); if(tipEl) tipEl.classList.remove("on");
+  paintUndo();
   G.settle = { id: team.id, name: team.name, color: team.color,
                ok: stats.ok, skip: stats.skip, foul: stats.foul, score: stats.score };
   slamGate(()=>{

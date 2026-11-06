@@ -199,6 +199,18 @@ async def t_undo(T):
     check("撤回：正確次數回退", (await T.js("G.teams[0].ok")) == 0)
     check("撤回：該題放返畫面", (await T.js("G.cur && G.cur.t")) == q0)
 
+    # 撤回鍵（觸控）：判定後著燈，撳一下即退
+    await T.js("act('ok')")
+    await asyncio.sleep(0.3)
+    check("撤回鍵：判定後可按", (await T.js("!document.getElementById('btnUndo').classList.contains('off')")))
+    await T.js("document.getElementById('btnUndo').click()")
+    await asyncio.sleep(0.3)
+    check("撤回鍵：撳完分數回退", (await T.js("G.teams[0].score")) == 0)
+    check("撤回鍵：撳完變灰", (await T.js("document.getElementById('btnUndo').classList.contains('off')")))
+    await T.js("document.getElementById('btnUndo').click()")
+    await asyncio.sleep(0.3)
+    check("撤回鍵：冇嘢可撤有提示", "沒有可撤回" in ((await T.js("document.getElementById('toast').textContent")) or ""))
+
     left1 = await T.js("G.skipLeft")
     await T.js("act('skip')")
     await T.js("document.dispatchEvent(new KeyboardEvent('keydown',{key:'ArrowUp'}))")
