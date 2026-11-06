@@ -215,43 +215,29 @@ samples/hk-icebreaker.json 首次 seed 題庫
 - 主持台連不到後端就冇題可玩（冇本機 fallback）
 - 猜的人要**背向**屏幕（不是閉眼），一隊 4–8 人最順
 
-## 多題庫（每組人自己一份）
+## 帳號與題庫（每人一份，互不影響）
 
-一份題庫＝`banks` 表一行，用 **slug** 分辨，網址直接帶走：
+**一個帳號 = 一個人 = 一份題庫。** 登入之後，主持台自動載入自己的題庫，其他人完全碰不到。
 
-- 玩：`/b/<slug>`（例：`/b/party2026`）；`/` 等於 `/b/default`
-- 改：`/edit?b=<slug>`
-- 每份題庫可以有自己的密碼（存 sha256）；master `EDIT_KEY` 可以改任何一份
-- 開新題庫要 master key：
+- 註冊：`/edit` → 「未有帳號？註冊一個」→ 用戶名 + 密碼（≥6 字）
+- 新帳號即開一份自己的題庫，**用預設題目起頭**（即刻玩得到，之後自己改）
+- 登入後首頁顯示「已登入：<用戶名>（登出）」；未登入顯示「登入 / 註冊」
+- 分享給朋友玩：`/b/<slug>` 是公開唯讀連結（對方不用登入也能玩，但不能改）
+- 換裝置：同一個用戶名＋密碼登入即可，題庫一模一樣
+
+安全：密碼 `scrypt(n=2^14, r=8, p=1)` + 每人隨機 salt；session token 30 日，伺服器只存 `sha256(token)`；`PUT /api/text` 只認題庫擁有者（master `EDIT_KEY` 仍可介入維護）。
+
+API：`POST /api/signup`、`POST /api/login`、`POST /api/logout`、`GET /api/me`、`GET/PUT /api/text?b=<slug>`。
+
+### 管理工具（你自己用）
 
 ```bash
-python3 scripts/bank.py list                       # 睇有幾份、幾多字、有冇鎖
-python3 scripts/bank.py new party2026 "派對題庫" --key 自訂密碼
-python3 scripts/bank.py new copy-of-default "副本" --from default   # 由現有題庫抄一份
-python3 scripts/bank.py text party2026              # 印出內容
-python3 scripts/bank.py rm party2026                # 刪（API 冇 DELETE，直接 SQL）
-python3 scripts/bank.py list                        # 睇齊所有人開嘅題庫
+python3 scripts/bank.py list          # 睇所有題庫（slug、字數、有冇擁有者）
+python3 scripts/bank.py text <slug>   # 印出內容
+python3 scripts/bank.py rm <slug>     # 刪
 ```
 
-API：`GET/PUT /api/text?b=<slug>`、`GET /api/banks`（master）、`POST /api/banks`（master）、`POST /api/newbank`（自助，要開庫碼）。`b` 省略＝`default`，舊網址完全照行。
-
-### 自助開庫（朋友自己開一份）
-
-`/edit?new=1`（或設定頁密碼閘下面的「第一次用？用開庫碼開一份新題庫」）：
-
-1. 填題庫名稱、**開庫碼**、自訂密碼 → 開一份
-2. **不需要記連結**：開完即刻寫入該裝置的 `localStorage`，以後打開 `beasttv.vercel.app` 就自動是自己的題庫；首頁「設定」自動帶 `?b=<slug>`，上方顯示「我的題庫：X（切換）」
-3. 要分享給朋友，才在「想分享畀朋友玩？」裡拿連結（有複製鍵）
-4. 換裝置／忘記連結：設定頁「唔記得連結？用名稱＋密碼搵返」（`POST /api/findbank`，名稱不區分大小寫；同名多份時回第一份）
-5. 全程不需要你介入；`CREATE_KEY` 環境變數就是開庫碼，改了即刻令舊碼失效
-
-新開的題庫是空的：首頁主鍵會變成「先設定題目」，直接帶去該題庫的設定頁。
-
-限制：每個來源 IP 每日 5 份、全站上限 120 份。未設 `CREATE_KEY`＝自助開庫關閉。
-
-原本的 141 題已一次性遷移到 `slug='default'`（`meta` 表保留但不再使用）。
-
-## 授權範圍
+## 授權範圍## 授權範圍
 
 | 範圍 | 授權 |
 |---|---|
