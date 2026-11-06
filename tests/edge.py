@@ -287,7 +287,7 @@ async def t_quitfloat(T):
                      "return r.right<=innerWidth && r.bottom>0 && (r.left>=t.right || r.bottom<=t.top)})()"))
     await T.js("document.getElementById('btnReady').click()")
     await T.wait("G.phase==='countdown'", 5, "倒數")
-    check("倒數畫面：浮動鍵仍然在", await T.js("!document.getElementById('btnQuitFloat').hidden"))
+    check("倒數畫面：唔再顯示退出鍵（用戶要求）", await T.js("document.getElementById('btnQuitFloat').hidden"))
     await T.wait("G.phase==='running'", 12, "出題")
     check("出題中：浮動鍵收起", await T.js("document.getElementById('btnQuitFloat').hidden"))
     # 落閘期間撳 × 唔可以開面板

@@ -17,7 +17,8 @@
 <title>版權聲明 · 百獸台</title>
 <style>
   /* Hallmark · legal page · theme: bright system · scope: app
-     One job: say exactly what is licensed and by whom. */
+     One job: say exactly what is licensed and by whom.
+     語言跟首頁設定：html[lang="en"] 時整個 .t-zh 收起、.t-en 顯示。 */
   :root{
     color-scheme:light;
     --bg:#F2F2F7; --surface:#FFFFFF;
@@ -34,6 +35,11 @@
   body{font-family:var(--font); font-size:16px; line-height:1.6; -webkit-font-smoothing:antialiased;
     padding:22px max(20px,env(safe-area-inset-right)) 40px max(20px,env(safe-area-inset-left))}
   .wrap{width:min(720px,100%); margin:0 auto; display:flex; flex-direction:column; gap:16px}
+
+  /* 雙語：預設中文，html[lang="en"] 時切換 */
+  .t-en{display:none}
+  html[lang="en"] .t-zh{display:none}
+  html[lang="en"] .t-en{display:inline}
 
   .top{display:flex; align-items:center; gap:12px}
   .back{display:grid; place-items:center; width:44px; height:44px; border-radius:50%;
@@ -82,19 +88,21 @@
 <body>
 <div class="wrap">
   <div class="top">
-    <a class="back" href="/" aria-label="返回主持台" title="返回主持台">
+    <a class="back" href="/" aria-label="返回主持台" title="返回主持台" data-aria-zh="返回主持台" data-aria-en="Back to the host console">
       <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M14.5 5 7.5 12l7 7"/></svg>
     </a>
     <div>
-      <h1>版權聲明</h1>
-      <p class="sub">百獸台 · 2026</p>
+      <h1><span class="t-zh">版權聲明</span><span class="t-en">Credits &amp; licences</span></h1>
+      <p class="sub"><span class="t-zh">百獸台 · 2026</span><span class="t-en">Beast TV 2026</span></p>
     </div>
   </div>
 
   <section class="card">
-    <h2>程式碼 · MIT License</h2>
-    <p>本項目的程式碼（<strong>index.html、edit.html、api/、sw.js、tests/</strong> 等）以 MIT 授權，
-       可自由使用、修改、合併、發佈、商用，唯一條件是保留下列版權聲明與授權條文。</p>
+    <h2><span class="t-zh">程式碼 · MIT License</span><span class="t-en">Code under the MIT licence</span></h2>
+    <p><span class="t-zh">本項目的程式碼（<strong>index.html、edit.html、credits.html、api/、sw.js、tests/</strong> 等）以 MIT 授權，
+       可自由使用、修改、合併、發佈、商用，唯一條件是保留下列版權聲明與授權條文。</span><span class="t-en">The source code of this project
+       (<strong>index.html, edit.html, credits.html, api/, sw.js, tests/</strong> and others) is released under the MIT licence:
+       free to use, copy, modify, merge, publish and sell, provided the copyright notice and permission notice below are kept.</span></p>
     <p><strong>Copyright (c) 2026 Leung Tung Lam</strong></p>
     <pre>Permission is hereby granted, free of charge, to any person obtaining a copy
 of this software and associated documentation files (the "Software"), to deal
@@ -116,44 +124,63 @@ SOFTWARE.</pre>
   </section>
 
   <section class="card">
-    <h2>音效素材</h2>
-    <p>下列音效<strong>不屬於 MIT 授權範圍</strong>，各自依原始授權使用。重新使用本項目時，
-       請一併保留這些署名與授權說明。</p>
+    <h2><span class="t-zh">音效素材</span><span class="t-en">Sound effects</span></h2>
+    <p><span class="t-zh">下列音效<strong>不屬於 MIT 授權範圍</strong>，各自依原始授權使用。重新使用本項目時，
+       請一併保留這些署名與授權說明。</span><span class="t-en">The sound effects below are <strong>not covered by the MIT licence</strong>;
+       each is used under its own terms. If you reuse this project, keep these credits and licence notes with it.</span></p>
     <ul>
-      <li><b>心跳 <span class="must">（必須署名）</span></b>
-        <span>「Human heart beating at 61 bpm」by Benboncan（Freesound），經 Wikimedia Commons</span>
+      <li><b><span class="t-zh">心跳</span><span class="t-en">Heartbeat</span> <span class="must"><span class="t-zh">（必須署名）</span><span class="t-en">(attribution required)</span></span></b>
+        <span>“Human heart beating at 61 bpm” by Benboncan (Freesound)<span class="t-zh">，經 Wikimedia Commons</span><span class="t-en">, via Wikimedia Commons</span></span>
         <a class="tag" href="https://creativecommons.org/licenses/by/3.0/" target="_blank" rel="noopener">CC BY 3.0</a>
-        <span>本項目作了裁剪、升調 5× 與音量正規化。</span></li>
-      <li><b>冠軍音樂 <span class="must">（必須署名）</span></b>
-        <span>「Celebration」by Kevin MacLeod（incompetech.com）</span>
+        <span class="t-zh">本項目作了裁剪、升調 5× 與音量正規化。</span><span class="t-en">This project trimmed it, pitched it up 5× and normalised the level.</span></li>
+      <li><b><span class="t-zh">冠軍音樂</span><span class="t-en">Champion music</span> <span class="must"><span class="t-zh">（必須署名）</span><span class="t-en">(attribution required)</span></span></b>
+        <span>“Celebration” by Kevin MacLeod (incompetech.com)</span>
         <a class="tag" href="https://creativecommons.org/licenses/by/4.0/" target="_blank" rel="noopener">CC BY 4.0</a>
-        <span>本項目節錄 8 小節，經交叉淡化做成無縫 loop。</span></li>
-      <li><b>門鐘</b><span>Wikimedia Commons《Doorbell-cheap-dingdong》</span>
-        <span class="tag">公有領域</span></li>
-      <li><b>滴答</b><span>Wikimedia Commons《Clock ticking》（pdsounds.org）</span>
-        <span class="tag">公有領域</span></li>
-      <li><b>倒數</b><span>OpenGameArt《race start countdown》</span>
+        <span class="t-zh">本項目節錄 8 小節，經交叉淡化做成無縫 loop。</span><span class="t-en">This project uses an 8-bar excerpt, cross-faded so the loop has no gap.</span></li>
+      <li><b><span class="t-zh">門鐘</span><span class="t-en">Doorbell</span></b><span>Wikimedia Commons <q>Doorbell-cheap-dingdong</q></span>
+        <span class="tag"><span class="t-zh">公有領域</span><span class="t-en">Public domain</span></span></li>
+      <li><b><span class="t-zh">滴答</span><span class="t-en">Ticking</span></b><span>Wikimedia Commons <q>Clock ticking</q> (pdsounds.org)</span>
+        <span class="tag"><span class="t-zh">公有領域</span><span class="t-en">Public domain</span></span></li>
+      <li><b><span class="t-zh">倒數</span><span class="t-en">Countdown</span></b><span>OpenGameArt <q>race start countdown</q></span>
         <a class="tag" href="https://creativecommons.org/publicdomain/zero/1.0/" target="_blank" rel="noopener">CC0 1.0</a></li>
-      <li><b>時間到哨子</b><span>SpliceSound 裁判哨</span>
+      <li><b><span class="t-zh">時間到哨子</span><span class="t-en">Time-up whistle</span></b><span><span class="t-zh">SpliceSound 裁判哨</span><span class="t-en">SpliceSound referee whistle</span></span>
         <span class="tag">CC0</span></li>
-      <li><b>回合結算</b><span>OpenGameArt《Classic fanfare lick》</span>
+      <li><b><span class="t-zh">回合結算</span><span class="t-en">Round settle</span></b><span>OpenGameArt <q>Classic fanfare lick</q></span>
         <a class="tag" href="https://creativecommons.org/publicdomain/zero/1.0/" target="_blank" rel="noopener">CC0 1.0</a></li>
-      <li><b>冠軍前鼓聲</b><span>OpenGameArt《Horde War Drums》by William Hector</span>
+      <li><b><span class="t-zh">冠軍前鼓聲</span><span class="t-en">Drum roll</span></b><span>OpenGameArt <q>Horde War Drums</q> by William Hector</span>
         <a class="tag" href="https://creativecommons.org/publicdomain/zero/1.0/" target="_blank" rel="noopener">CC0 1.0</a></li>
-      <li><b>Snare</b><span>OpenGameArt《An interesting snare drum sound》</span>
+      <li><b>Snare</b><span>OpenGameArt <q>An interesting snare drum sound</q></span>
         <a class="tag" href="https://creativecommons.org/publicdomain/zero/1.0/" target="_blank" rel="noopener">CC0 1.0</a></li>
-      <li><b>按鍵音、跳過音</b><span>本項目自製</span>
-        <span class="tag">同本項目（MIT）</span></li>
+      <li><b><span class="t-zh">按鍵音、跳過音</span><span class="t-en">Tap and skip sounds</span></b><span class="t-zh">本項目自製</span><span class="t-en">Made for this project</span>
+        <span class="tag"><span class="t-zh">同本項目（MIT）</span><span class="t-en">Same licence as this project (MIT)</span></span></li>
     </ul>
   </section>
 
   <section class="card">
-    <h2>圖像</h2>
-    <p>動物隊伍圖示（<strong>art/team/*.webp</strong>）與 App 圖示由 SenseNova 圖像模型生成，
-       本項目自行去背、裁切與縮放，<strong>不含第三方素材</strong>。</p>
+    <h2><span class="t-zh">圖像</span><span class="t-en">Artwork</span></h2>
+    <p><span class="t-zh">動物隊伍圖示（<strong>art/team/*.webp</strong>）與 App 圖示由 SenseNova 圖像模型生成，
+       本項目自行去背、裁切與縮放，<strong>不含第三方素材</strong>。</span><span class="t-en">Team icons (<strong>art/team/*.webp</strong>) and the app icons
+       were generated with the SenseNova image model, then keyed, cropped and resized by this project.
+       <strong>No third-party artwork is included.</strong></span></p>
   </section>
 
-  <p class="foot">原始碼：<a href="https://github.com/Kingofpig151251/beaststage" target="_blank" rel="noopener">github.com/Kingofpig151251/beaststage</a></p>
+  <p class="foot"><span class="t-zh">原始碼：</span><span class="t-en">Source: </span><a href="https://github.com/Kingofpig151251/beaststage" target="_blank" rel="noopener">github.com/Kingofpig151251/beaststage</a></p>
 </div>
+<script>
+/* 語言跟首頁設定（語言只在首頁切換，呢頁唔設切換鍵） */
+(function(){
+  var lang = "zh";
+  try { lang = localStorage.getItem("beasttv.lang") === "en" ? "en" : "zh"; } catch(e) {}
+  if(lang !== "en") return;
+  var root = document.documentElement;
+  root.lang = "en";
+  document.title = "Credits & licences · Beast TV";
+  var back = document.querySelector(".back");
+  if(back){
+    back.setAttribute("aria-label", "Back to the host console");
+    back.setAttribute("title", "Back to the host console");
+  }
+})();
+</script>
 </body>
 </html>

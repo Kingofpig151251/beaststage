@@ -136,11 +136,15 @@
   .landing-sub{margin:clamp(12px,1.9vh,18px) 0 0; font-size:clamp(17px,2.5vh,22px);
     font-weight:500; color:var(--ink-2); letter-spacing:.02em;
     animation:rise .62s .12s var(--ease) both}
-  .landing-go{margin-top:clamp(28px,3.8vh,40px); min-width:260px; min-height:60px; font-size:21px; border-radius:var(--pill);
+  /* 開始鍵同下面 設定＋語言 那一行等寬（132×2＋10＝274），三粒左中右邊緣齊 */
+  .landing-go{margin-top:clamp(28px,3.8vh,40px); width:274px; max-width:100%; min-height:60px; font-size:21px; border-radius:var(--pill);
     animation:rise .62s .18s var(--ease) both}
   .landing-foot{display:flex; align-items:center; justify-content:center; gap:8px; flex-wrap:wrap; row-gap:6px;
     padding:0 0 4px; animation:rise .62s .3s var(--ease) both}
-  .lang-row{margin:12px 0 0; display:flex; justify-content:center}
+  /* 設定同語言：同一行、同高、同寬，切語言時兩粒都唔會跳 */
+  .home-tools{display:flex; align-items:center; justify-content:center; gap:10px; margin-top:20px}
+  .home-tools .landing-link{margin-top:0; width:132px; min-width:132px; padding:0; gap:6px;
+    min-height:48px; font-size:17px; line-height:1; color:var(--ink)}
   .lang-toggle{min-width:92px; min-height:34px; padding:0 14px; border:0; border-radius:999px; background:var(--fill);
     color:var(--ink-2); font:inherit; font-size:12.5px; font-weight:600; letter-spacing:.01em;
     touch-action:manipulation; white-space:nowrap}
@@ -845,8 +849,10 @@
     html[lang="en"] .landing-sub{font-size:clamp(13px, 3.4vh, 16px)}
     html[lang="en"] .sstep-title{font-size:18px}
   .landing-sub{margin-top:6px; font-size:14px}
-    .landing-go{margin-top:14px; min-height:48px; min-width:200px; font-size:17px}
+    .landing-go{margin-top:14px; min-height:48px; width:248px; max-width:100%; font-size:17px}
     .landing-link{min-width:132px; justify-content:center; margin-top:10px; min-height:40px; padding:0 20px; font-size:15px}
+    .home-tools{margin-top:12px; gap:8px}
+    .home-tools .landing-link{width:120px; min-width:120px; min-height:40px; font-size:15px; margin-top:0; padding:0}
     .landing-foot{padding-bottom:0}
   }
   /* 手機橫向／矮視窗：設定頁壓縮，唔會壓住圓點同「繼續」 */
@@ -979,8 +985,10 @@
       <h1 class="landing-title">百獸台</h1>
       <p class="landing-sub">派對猜詞主持台</p>
       <button class="btn-primary landing-go" id="btnEnter">開始</button>
-      <a class="landing-link" id="btnEditHome" href="/edit">設定</a>
-      <p class="lang-row"><button type="button" class="lang-toggle" id="btnLang" aria-label="切換語言">English</button></p>
+      <div class="home-tools">
+        <a class="landing-link" id="btnEditHome" href="/edit">設定</a>
+        <button type="button" class="landing-link lang-toggle" id="btnLang" aria-label="切換語言">English</button>
+      </div>
       <p class="my-bank" id="myBank" hidden></p>
       </div>
       <div class="landing-beasts" aria-hidden="true">
@@ -1883,7 +1891,7 @@ const gateOn = () => $("#gate").classList.contains("on");
 
 function syncQuitFloat(){
   const b = $("#btnQuitFloat"); if(!b) return;
-  const on = !!G && (G.phase === "ready" || G.phase === "countdown")
+  const on = !!G && G.phase === "ready"
              && !gateOn() && !$("#exitSheet").classList.contains("on");
   b.hidden = !on;
   if(on){

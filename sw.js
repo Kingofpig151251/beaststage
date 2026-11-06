@@ -4,7 +4,7 @@
    - 圖片、音效：cache-first（檔名不變、內容少變）
    - /api/*：唔攔，永遠直上網絡（題庫唯一真相源在雲端）
 */
-const CACHE = "beast-v8";
+const CACHE = "beast-v9";
 const SHELL = [
   "/", "/edit", "/credits",
   "/manifest.json",
