@@ -378,6 +378,11 @@
     background:var(--fill); color:var(--ink)}
   .icon-btn svg{width:22px; height:22px; fill:none; stroke:currentColor; stroke-width:2; stroke-linecap:round; stroke-linejoin:round}
   .icon-btn:active{background:var(--fill-2)}
+  /* 浮動退出鍵：z-index 要蓋過 ready(60)／countdown(65)，但唔參與版面流 */
+  .quit-float{position:fixed; z-index:90; top:calc(14px + env(safe-area-inset-top));
+    inset-inline-end:14px; background:var(--fill); color:var(--ink-2);
+    box-shadow:inset 0 0 0 1px var(--sep)}
+  .quit-float:active{background:var(--fill-2); color:var(--ink)}
 
   .turn-chip{display:inline-flex; align-items:center; gap:8px; height:44px; padding:0 16px 0 10px;
     border-radius:var(--pill); background:color-mix(in oklab, var(--tc,var(--ink-2)) 14%, transparent);
@@ -1091,6 +1096,11 @@
 
   <!-- ========== 遊戲 ========== -->
   <section class="view" id="v-play">
+    <!-- 準備／倒數畫面蓋住頂欄，所以另設一粒浮動退出鍵；遊戲中唔顯示（頂欄已有） -->
+    <button class="icon-btn quit-float" id="btnQuitFloat" data-mode="exit" hidden aria-label="退出遊戲" title="退出遊戲">
+      <svg class="i-close" viewBox="0 0 24 24" aria-hidden="true"><path d="M6.4 6.4 17.6 17.6"/><path d="M17.6 6.4 6.4 17.6"/></svg>
+      <svg class="i-back" viewBox="0 0 24 24" aria-hidden="true"><path d="M14.5 5 7.5 12l7 7"/></svg>
+    </button>
     <div class="flash-top">
       <div class="top-left">
         <button class="icon-btn stroke" id="btnExit" data-mode="exit" aria-label="退出遊戲" title="退出遊戲">
@@ -1868,6 +1878,22 @@ function syncSkipBtn(){
   b.setAttribute("title", inf ? T("跳過（↓）不限次數") : LANG === "en" ? `Skip (↓) · ${left} left` : `跳過（↓）剩 ${left} 次`);
 }
 
+/* 準備／倒數時浮動退出鍵；跑緊時收起（頂欄已有同一粒） */
+const gateOn = () => $("#gate").classList.contains("on");
+
+function syncQuitFloat(){
+  const b = $("#btnQuitFloat"); if(!b) return;
+  const on = !!G && (G.phase === "ready" || G.phase === "countdown")
+             && !gateOn() && !$("#exitSheet").classList.contains("on");
+  b.hidden = !on;
+  if(on){
+    const back = isPristine();
+    b.dataset.mode = back ? "back" : "exit";
+    b.setAttribute("aria-label", back ? T("上一步") : T("退出遊戲"));
+    b.setAttribute("title", back ? T("上一步（Esc）") : T("退出遊戲"));
+  }
+}
+
 /* 每隊出場前先停頓：不計時、不出題，待隊伍準備完成 */
 function syncExitLabel(){
   const b = $("#btnExit"); if(!b) return;
@@ -1903,6 +1929,7 @@ function enterReady(){
   document.body.classList.add("is-ready");
   renderPlay();
   syncExitLabel();
+  syncQuitFloat();
 }
 
 function hideReady(){
@@ -2001,6 +2028,7 @@ function startRound(){
   clearInterval(CD_TIMER);
   G.phase = "countdown";
   $("#btnReady").style.display = "none";
+  syncQuitFloat();
   const t = curTeam();
   const box = $("#countdown"), num = $("#cdNum"), prog = $("#cdProg"), team = $("#cdTeam");
   box.style.setProperty("--tc", t.color);
@@ -2036,6 +2064,7 @@ function startRound(){
 function beginRunning(){
   if(!G) return;                       // 倒數期間被退出
   G.phase = "running";
+  syncQuitFloat();                     // 倒數完 → 收起浮動鍵，交返頂欄
   const t0 = curTeam();
   G.skipLeft = G.skipCap; syncSkipBtn();
   G.base = { ok: t0.ok, skip: t0.skip, foul: t0.foul||0, score: t0.score };   // 回合起點，用嚟算本回合成績
@@ -2725,6 +2754,7 @@ function backToSetup(){clearTurnEnd();
   G = null;
   $("#readyOverlay").style.display = "none";
   document.body.classList.remove("is-ready");
+  syncQuitFloat();
   showView("v-setup");
   goStep(3, -1);
 }
@@ -2736,6 +2766,7 @@ function doExit(){
   G = null;
   document.querySelector("#readyOverlay").style.display = "none";
   document.body.classList.remove("is-ready");
+  syncQuitFloat();
   showView("v-home");
   renderHome();
 }
@@ -2762,11 +2793,14 @@ $("#exitCancel").onclick = closeExit;
 $("#exitConfirm").onclick = ()=>{ closeExit(); doExit(); };
 $("#exitSheet").addEventListener("click", e=>{ if(e.target.id === "exitSheet") closeExit(); });
 
-$("#btnExit").onclick = ()=>{
+function exitTap(){
+  if(gateOn()) return;                         // 落閘／結算過場期間唔接受退出，避免半途拆畫面
   if(!G){ stopBgm(); showView("v-home"); renderHome(); return; }
   if(isPristine()){ backToSetup(); return; }   // 未開始過 → 上一步回設定
   askExit();                                   // 遊戲中 → 自訂確認面板
-};
+}
+$("#btnExit").onclick = exitTap;
+$("#btnQuitFloat").onclick = exitTap;
 
 function setPauseIcon(p){
   const b = $("#btnPause"); if(!b) return;
@@ -2841,6 +2875,8 @@ document.addEventListener("keydown", e=>{
   }else if(e.key === "Escape"){
     e.preventDefault();
     if($("#exitSheet").classList.contains("on")){ closeExit(); return; }
+    if(gateOn()) return;                                     // 落閘／結算過場：唔接受暫停或退出
+    if(G.phase === "ready" || G.phase === "countdown"){ exitTap(); return; }
     $("#btnPause").click();
   }
 });

@@ -275,6 +275,29 @@ async def t_i18n(T):
     ttl = await T.js("document.getElementById('btnPause').getAttribute('title')")
     check("英文模式：暫停 tooltip 已翻譯", "暫停" not in str(ttl), ttl)
 
+
+# ⑭ 準備／倒數時要退得到；落閘期間要封鎖
+async def t_quitfloat(T):
+    await T.js("__bigtv.startGame()"); await asyncio.sleep(0.3)
+    await T.js("__bigtv.enterReady()"); await asyncio.sleep(0.5)
+    check("準備畫面：浮動鍵出現", await T.js("!document.getElementById('btnQuitFloat').hidden"))
+    check("準備畫面：浮動鍵唔會壓住標題",
+          await T.js("(()=>{const r=document.getElementById('btnQuitFloat').getBoundingClientRect();"
+                     "const t=document.getElementById('rdRound').getBoundingClientRect();"
+                     "return r.right<=innerWidth && r.bottom>0 && (r.left>=t.right || r.bottom<=t.top)})()"))
+    await T.js("document.getElementById('btnReady').click()")
+    await T.wait("G.phase==='countdown'", 5, "倒數")
+    check("倒數畫面：浮動鍵仍然在", await T.js("!document.getElementById('btnQuitFloat').hidden"))
+    await T.wait("G.phase==='running'", 12, "出題")
+    check("出題中：浮動鍵收起", await T.js("document.getElementById('btnQuitFloat').hidden"))
+    # 落閘期間撳 × 唔可以開面板
+    await T.js("__bigtv.endTurn()")
+    await _poll(T, "document.getElementById('gate').classList.contains('on')", 5)
+    await T.js("document.getElementById('btnExit').click()"); await asyncio.sleep(0.3)
+    check("落閘期間撳 × 唔會開退出面板", await T.js("!document.getElementById('exitSheet').classList.contains('on')"))
+    await T.js("document.dispatchEvent(new KeyboardEvent('keydown',{key:'Escape'}))"); await asyncio.sleep(0.2)
+    check("落閘期間按 Esc 唔會開面板", await T.js("!document.getElementById('exitSheet').classList.contains('on')"))
+
 async def main(url):
     print("\n[1] 暫停／繼續時鐘")
     await session(url, {"teams": 2, "sec": 20, "roundsPer": 1, "skipCap": 3, "allowSkip": True}, t_pause)
@@ -313,6 +336,9 @@ async def main(url):
 
     print("\n[13] 英文模式殘留中文")
     await session(url, {"teams": 2, "sec": 60, "roundsPer": 1, "skipCap": 3, "allowSkip": True}, t_i18n)
+
+    print("\n[14] 準備畫面退出／落閘封鎖")
+    await session(url, {"teams": 2, "sec": 90, "roundsPer": 1}, t_quitfloat)
 
     print("\n[5] 全員同分")
     await session(url, {"teams": 8, "sec": 3, "roundsPer": 1, "skipCap": 3, "allowSkip": True}, t_tie)

@@ -70,6 +70,26 @@ def conn():
     return _CONN
 
 
+def client_ip(request) -> str:
+    """Vercel 會覆寫 x-forwarded-for，取第一個就係真實來源。"""
+    fwd = request.headers.get("x-forwarded-for") or ""
+    return (fwd.split(",")[0].strip() or request.client.host or "?")
+
+
+def too_many(cur, bucket: str, key: str, limit: int, window_s: int) -> bool:
+    """滑動視窗計數：同一 bucket+key 在 window 秒內超過 limit 就拒。
+    純 Postgres，唔使額外服務；每次只掃索引範圍，成本約 1ms。"""
+    cur.execute("SELECT count(*) AS n FROM rl WHERE bucket=%s AND key=%s "
+                "AND ts > now() - make_interval(secs => %s)", (bucket, key, window_s))
+    n = cur.fetchone()["n"]
+    if n >= limit:
+        return True
+    cur.execute("INSERT INTO rl (bucket,key) VALUES (%s,%s)", (bucket, key))
+    if secrets.randbelow(50) == 0:                 # 約 2% 機會順手清一日前嘅紀錄
+        cur.execute("DELETE FROM rl WHERE ts < now() - interval '1 day'")
+    return False
+
+
 @contextmanager
 def db():
     """沿用 conn() 的寫法，但唔會關掉快取連線；用鎖避免並行請求共用同一條連線。"""
@@ -209,6 +229,7 @@ def new_salt():
 def issue_token(cur, user_id):
     tok = secrets.token_urlsafe(32)
     ts = datetime.now(timezone.utc)
+    cur.execute("DELETE FROM auth_sessions WHERE expires_at::timestamptz < now()")   # 過期即清，表唔會無限長
     cur.execute("INSERT INTO auth_sessions (token_hash,user_id,created_at,expires_at) VALUES (%s,%s,%s,%s)",
                 (hashlib.sha256(tok.encode()).hexdigest(), user_id, ts.isoformat(timespec="seconds"),
                  (ts + timedelta(days=30)).isoformat(timespec="seconds")))
@@ -224,7 +245,7 @@ def session_user(request):
     h = hashlib.sha256(tok.encode()).hexdigest()
     with db() as (c, cur):
         cur.execute("SELECT u.id,u.username,u.bank_slug FROM auth_sessions s JOIN users u ON u.id=s.user_id "
-                    "WHERE s.token_hash=%s AND s.expires_at > %s", (h, now()))
+                    "WHERE s.token_hash=%s AND s.expires_at::timestamptz > now()", (h,))
         return cur.fetchone()
 
 
@@ -273,6 +294,8 @@ async def signup(request: Request):
     salt = new_salt()
     schema()
     with db() as (c, cur):
+        if too_many(cur, "signup", client_ip(request), 10, 3600):
+            return JSONResponse({"error": "嘗試太頻密，請遲一點再試"}, status_code=429)
         ts = now()
         # 先插入用戶（ON CONFLICT 不插），避免「建咗題庫但用戶名撞咗」留孤兒
         cur.execute("INSERT INTO users (username,pass_hash,salt,created_at,bank_slug) "
@@ -298,6 +321,9 @@ async def login(request: Request):
     pw = str(body.get("password") or "")
     schema()
     with db() as (c, cur):
+        ip = client_ip(request)
+        if too_many(cur, "login", ip, 30, 600) or too_many(cur, "login_u", ip + "|" + username, 8, 600):
+            return JSONResponse({"error": "嘗試太頻密，請 10 分鐘後再試"}, status_code=429)
         cur.execute("SELECT id,username,pass_hash,salt,bank_slug FROM users WHERE username=%s", (username,))
         u = cur.fetchone()
         if not u or not secrets.compare_digest(hash_pw(pw, u["salt"]), u["pass_hash"]):
@@ -433,6 +459,8 @@ async def find_bank(request: Request):
     schema()
     h = hashlib.sha256(key.encode()).hexdigest()
     with db() as (c, cur):
+        if too_many(cur, "find", client_ip(request), 20, 600):
+            return JSONResponse({"error": "嘗試太頻密，請 10 分鐘後再試"}, status_code=429)
         cur.execute("SELECT slug,name,key_hash FROM banks WHERE lower(name)=lower(%s)", (name,))
         rows = cur.fetchall()
     hits = [{"slug": r["slug"], "name": r["name"]} for r in rows
@@ -505,6 +533,8 @@ async def report_post(request: Request):
         return JSONResponse({"error": "body 要係物件"}, status_code=400)
     blob = json.dumps(body, ensure_ascii=False)[:20000]
     with db() as (c, cur):
+        if too_many(cur, "report", client_ip(request), 40, 3600):
+            return JSONResponse({"error": "回報太頻密"}, status_code=429)
         cur.execute("INSERT INTO reports (created_at, kind, ua, vw, vh, body) "
                     "VALUES (%s,%s,%s,%s,%s,%s)",
                     (now(), str(body.get("kind") or "")[:40], str(body.get("ua") or "")[:300],
