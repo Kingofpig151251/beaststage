@@ -120,10 +120,6 @@
   .gate-card input{font:inherit; font-size:17px; padding:12px 14px; border-radius:var(--r-md);
     border:0; background:var(--fill); color:var(--ink); margin-top:6px}
   .gate-card input:focus{outline:0; box-shadow:inset 0 0 0 2px var(--focus-ring)}
-  .lang-btn{margin-left:auto; align-self:flex-start; min-height:34px; padding:0 12px; border:0;
-    border-radius:999px; background:var(--fill); color:var(--ink-2); font:inherit; font-size:12.5px; font-weight:600}
-  .lang-btn:active{background:var(--fill-2)}
-  .lang-btn:focus-visible{outline:0; box-shadow:0 0 0 3px var(--focus-ring)}
   .gate-alt{margin-top:2px; padding:8px 0; background:none; border:0; font:inherit; font-size:13.5px;
     color:var(--blue); min-height:0}
   .gate-alt:focus-visible{outline:0; box-shadow:0 0 0 3px var(--focus-ring); border-radius:8px}
@@ -147,6 +143,7 @@
     <h2 id="authTitle">登入</h2>
     <p id="authSub">用你嘅帳號，題庫只屬於你，同其他人分開。</p>
     <input id="authUser" type="text" autocomplete="username" autocapitalize="off" spellcheck="false" aria-label="用戶名" placeholder="用戶名">
+    <input id="authCode" type="text" autocomplete="off" autocapitalize="characters" spellcheck="false" aria-label="邀請碼" placeholder="邀請碼" hidden>
     <input id="authPass" type="password" autocomplete="current-password" aria-label="密碼" placeholder="密碼">
     <button type="submit" class="gate-go" id="authGo">登入</button>
     <p class="gate-err" id="authErr"></p>
@@ -161,7 +158,6 @@
     </a>
     <div class="titles">
       <h1>設定</h1>
-      <button type="button" id="btnLang" class="lang-btn" aria-label="切換語言">EN</button>
       <p class="sub">改完自動儲存</p>
     </div>
     <span class="state" id="state"></span>
@@ -270,21 +266,8 @@ function syncBack(){
 }
 syncBack();
 
-const btnLang = document.getElementById("btnLang");
-if(btnLang){
-  btnLang.textContent = LANG === "en" ? "中文" : "EN";
-  document.documentElement.lang = LANG === "en" ? "en" : "zh-Hant-HK";
-  btnLang.addEventListener("click", ()=>{
-    LANG = LANG === "en" ? "zh" : "en";
-    try{ localStorage.setItem(LANG_KEY, LANG); }catch(_){}
-    btnLang.textContent = LANG === "en" ? "中文" : "EN";
-    document.documentElement.lang = LANG === "en" ? "en" : "zh-Hant-HK";
-    translateTree(document.body);
-    paintAuth();
-    paintMeta();
-  });
-  translateTree(document.body);
-}
+document.documentElement.lang = LANG === "en" ? "en" : "zh-Hant-HK";
+translateTree(document.body);
 const withKey = (h) => { const o = Object.assign({}, h || {}); const k = editKey(); if(k) o["x-edit-key"] = k;
   const t = TOKEN(); if(t) o["authorization"] = "Bearer " + t; return o; };
 
@@ -299,6 +282,8 @@ function paintAuth(){
                                        : "開一個帳號，即刻有你專屬嘅題庫。");
   $("#authGo").textContent = T(login ? "登入" : "註冊");
   $("#authSwap").textContent = T(login ? "未有帳號？註冊一個" : "已有帳號？返回登入");
+  const codeEl = $("#authCode");
+  if(codeEl){ codeEl.hidden = login; if(login) codeEl.value = ""; }
   $("#authPass").setAttribute("autocomplete", login ? "current-password" : "new-password");
   $("#authErr").textContent = "";
 }
@@ -316,14 +301,16 @@ $("#authForm").addEventListener("submit", async (e)=>{
   e.preventDefault();
   const username = $("#authUser").value.trim().toLowerCase();
   const password = $("#authPass").value;
+  const code = ($("#authCode")?.value || "").trim();
   const err = $("#authErr");
-  if(!username || !password){ err.textContent = "兩樣都要填"; return; }
+  if(!username || !password){ err.textContent = T("兩樣都要填"); return; }
+  if(AUTH_MODE === "signup" && !code){ err.textContent = T("請填邀請碼"); return; }
   err.textContent = "";
   $("#authGo").disabled = true;
   try{
     const path = AUTH_MODE === "login" ? "/api/login" : "/api/signup";
     const r = await fetch(path, { method:"POST", headers:{ "content-type":"application/json" },
-      body: JSON.stringify({ username, password }) });
+      body: JSON.stringify({ username, password, code }) });
     const d = await r.json().catch(()=>({}));
     if(!r.ok){ err.textContent = d.error || "失敗，請再試"; return; }
     localStorage.setItem("beasttv.token", d.token);

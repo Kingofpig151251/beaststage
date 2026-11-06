@@ -259,6 +259,9 @@ async def signup(request: Request):
     body = await request.json()
     username = str(body.get("username") or "").strip().lower()
     pw = str(body.get("password") or "")
+    code = str(body.get("code") or "")
+    if CREATE_KEY and not secrets.compare_digest(code, CREATE_KEY):
+        return JSONResponse({"error": "邀請碼不正確"}, status_code=401)
     if not USER_RE.match(username):
         return JSONResponse({"error": "用戶名 3-24 個字，只可用細楷英數、_ . -"}, status_code=400)
     if len(pw) < 6:
