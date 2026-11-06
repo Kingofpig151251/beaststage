@@ -1397,7 +1397,7 @@ function renderHome(){
 /* 空白題庫（例如啱啱開嘅新題庫）：主鍵改帶去設定，唔好撳落去得一句錯誤 */
 function paintEnter(){
   const b = $("#btnEnter"); if(!b) return;
-  const empty = REMOTE.ok && lines.length === 0;
+  const empty = REMOTE.ok && lines.length === 0 && !!ME;   // 只有自己帳號嘅空白題庫才帶去設定
   b.textContent = empty ? "先設定題目" : "開始";
   b.dataset.mode = empty ? "setup-bank" : "";
   const set = $("#btnEditHome"); if(set) set.hidden = empty;   // 空白題庫時，主鍵已經帶去設定，唔好兩個鍵指同一件事
