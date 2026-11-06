@@ -116,6 +116,13 @@
     box-shadow:inset 0 0 0 1px var(--sep), 0 18px 48px var(--vs-shadow);
     padding:26px 22px 20px; display:flex; flex-direction:column; gap:8px}
   .gate-card h2{margin:0; font-size:22px; letter-spacing:-.01em}
+  /* 返回鍵：閘門係全屏覆蓋，頁面自己左上角那粒會被蓋住，所以閘門自己要有一粒 */
+  .gate-top{display:flex; align-items:center; gap:10px; margin:-4px 0 2px}
+  .gate-back{display:grid; place-items:center; flex:none; width:36px; height:36px; border-radius:50%;
+    background:var(--fill); color:var(--ink); text-decoration:none}
+  .gate-back svg{width:18px; height:18px; fill:none; stroke:currentColor; stroke-width:2;
+    stroke-linecap:round; stroke-linejoin:round}
+  .gate-back:active{background:var(--fill-2)}
   .gate-card p{margin:0; color:var(--ink-2); font-size:14px}
   .gate-card input{font:inherit; font-size:17px; padding:12px 14px; border-radius:var(--r-md);
     border:0; background:var(--fill); color:var(--ink); margin-top:6px}
@@ -140,7 +147,12 @@
 <body>
 <div class="gate" id="gate">
   <form class="gate-card" id="authForm">
-    <h2 id="authTitle">登入</h2>
+    <div class="gate-top">
+      <a class="gate-back" href="/" id="gateBack" aria-label="返回主持台" title="返回主持台">
+        <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M14.5 5 7.5 12l7 7"/></svg>
+      </a>
+      <h2 id="authTitle">登入</h2>
+    </div>
     <p id="authSub">登入你的帳號。題庫只屬於你，與他人分開。</p>
     <input id="authUser" type="text" autocomplete="username" autocapitalize="off" spellcheck="false" aria-label="用戶名" placeholder="用戶名">
     <input id="authPass" type="password" autocomplete="current-password" aria-label="密碼" placeholder="密碼">
