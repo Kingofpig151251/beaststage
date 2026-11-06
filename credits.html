@@ -1,0 +1,159 @@
+<!DOCTYPE html>
+<html lang="zh-Hant-HK">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<meta name="author" content="Leung Tung Lam">
+<meta name="copyright" content="© 2026 Leung Tung Lam. MIT License.">
+<meta name="description" content="百獸台版權聲明：程式碼 MIT 授權全文，以及音效、圖像素材的來源與授權。">
+<link rel="manifest" href="/manifest.json">
+<meta name="theme-color" content="#FFFFFF">
+<meta name="mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-title" content="百獸台">
+<link rel="icon" href="/favicon.ico" sizes="any">
+<link rel="icon" type="image/png" href="/icon-192.png">
+<link rel="apple-touch-icon" href="/apple-touch-icon.png">
+<title>版權聲明 · 百獸台</title>
+<style>
+  /* Hallmark · legal page · theme: bright system · scope: app
+     One job: say exactly what is licensed and by whom. */
+  :root{
+    color-scheme:light;
+    --bg:#F2F2F7; --surface:#FFFFFF;
+    --ink:#1D1D1F; --ink-2:rgba(60,60,67,.72); --ink-3:rgba(60,60,67,.42);
+    --sep:rgba(60,60,67,.18); --fill:rgba(118,118,128,.12);
+    --blue:#0071E3; --red:#FF3B30;
+    --r-xl:22px; --r-lg:16px; --r-md:12px;
+    --focus-ring:rgba(0,113,227,.85);
+    --font:-apple-system,BlinkMacSystemFont,system-ui,"PingFang HK","Noto Sans HK",sans-serif;
+    --mono:ui-monospace,SFMono-Regular,Menlo,monospace;
+  }
+  *{box-sizing:border-box}
+  html,body{margin:0; background:var(--bg); color:var(--ink); overflow-x:clip}
+  body{font-family:var(--font); font-size:16px; line-height:1.6; -webkit-font-smoothing:antialiased;
+    padding:22px max(20px,env(safe-area-inset-right)) 40px max(20px,env(safe-area-inset-left))}
+  .wrap{width:min(720px,100%); margin:0 auto; display:flex; flex-direction:column; gap:16px}
+
+  .top{display:flex; align-items:center; gap:12px}
+  .back{display:grid; place-items:center; width:44px; height:44px; border-radius:50%;
+    background:var(--surface); box-shadow:inset 0 0 0 1px var(--sep); color:var(--ink);
+    text-decoration:none; flex:none}
+  .back svg{width:20px; height:20px; fill:none; stroke:currentColor; stroke-width:2;
+    stroke-linecap:round; stroke-linejoin:round}
+  .back:focus-visible{outline:0; box-shadow:inset 0 0 0 1px var(--sep), 0 0 0 3px var(--focus-ring)}
+  h1{margin:0; font-size:26px; letter-spacing:-.02em; text-wrap:balance}
+  .sub{margin:2px 0 0; font-size:14px; color:var(--ink-2)}
+
+  .card{background:var(--surface); border-radius:var(--r-xl); padding:20px 22px;
+    box-shadow:inset 0 0 0 1px var(--sep); display:flex; flex-direction:column; gap:10px}
+  .card h2{margin:0; font-size:18px; letter-spacing:-.01em}
+  .card p{margin:0; color:var(--ink-2); font-size:15px}
+  .card p strong{color:var(--ink)}
+
+  pre{margin:0; padding:14px 16px; border-radius:var(--r-md); background:var(--fill);
+    font-family:var(--mono); font-size:12.5px; line-height:1.65; white-space:pre-wrap;
+    word-break:break-word; color:var(--ink-2)}
+
+  ul{margin:0; padding:0; list-style:none; display:flex; flex-direction:column; gap:10px}
+  li{display:flex; flex-direction:column; gap:2px; padding-bottom:10px;
+    border-bottom:1px solid var(--sep)}
+  li:last-child{border-bottom:0; padding-bottom:0}
+  li b{font-weight:600}
+  li span{font-size:14px; color:var(--ink-2)}
+  .tag{font-size:12px; color:var(--ink-2); background:var(--fill); border-radius:999px;
+    padding:2px 8px; align-self:flex-start}
+  .must{color:var(--red); font-weight:600}
+  a{color:var(--blue); text-decoration:none}
+  a:focus-visible{outline:0; box-shadow:0 0 0 3px var(--focus-ring); border-radius:4px}
+
+  .foot{margin:4px 0 0; text-align:center; font-size:13px; color:var(--ink-3)}
+  @media (max-width:520px){
+    body{padding-top:16px}
+    h1{font-size:22px}
+    .card{padding:16px 16px}
+    pre{font-size:11.5px}
+  }
+  @media (prefers-reduced-motion: reduce){
+    *{animation-duration:.001ms !important; transition-duration:.001ms !important}
+  }
+</style>
+</head>
+<body>
+<div class="wrap">
+  <div class="top">
+    <a class="back" href="/" aria-label="返回主持台" title="返回主持台">
+      <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M14.5 5 7.5 12l7 7"/></svg>
+    </a>
+    <div>
+      <h1>版權聲明</h1>
+      <p class="sub">百獸台 · 2026</p>
+    </div>
+  </div>
+
+  <section class="card">
+    <h2>程式碼 · MIT License</h2>
+    <p>本項目的程式碼（<strong>index.html、edit.html、api/、sw.js、tests/</strong> 等）以 MIT 授權，
+       可自由使用、修改、合併、發佈、商用，唯一條件是保留下列版權聲明與授權條文。</p>
+    <p><strong>Copyright (c) 2026 Leung Tung Lam</strong></p>
+    <pre>Permission is hereby granted, free of charge, to any person obtaining a copy
+of this software and associated documentation files (the "Software"), to deal
+in the Software without restriction, including without limitation the rights
+to use, copy, modify, merge, publish, distribute, sublicense, and/or sell
+copies of the Software, and to permit persons to whom the Software is
+furnished to do so, subject to the following conditions:
+
+The above copyright notice and this permission notice shall be included in all
+copies or substantial portions of the Software.
+
+THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR
+IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY,
+FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL THE
+AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER
+LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM,
+OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
+SOFTWARE.</pre>
+  </section>
+
+  <section class="card">
+    <h2>音效素材</h2>
+    <p>下列音效<strong>不屬於 MIT 授權範圍</strong>，各自依原始授權使用。重新使用本項目時，
+       請一併保留這些署名與授權說明。</p>
+    <ul>
+      <li><b>心跳 <span class="must">（必須署名）</span></b>
+        <span>「Human heart beating at 61 bpm」by Benboncan（Freesound），經 Wikimedia Commons</span>
+        <a class="tag" href="https://creativecommons.org/licenses/by/3.0/" target="_blank" rel="noopener">CC BY 3.0</a>
+        <span>本項目作了裁剪、升調 5× 與音量正規化。</span></li>
+      <li><b>冠軍音樂 <span class="must">（必須署名）</span></b>
+        <span>「Celebration」by Kevin MacLeod（incompetech.com）</span>
+        <a class="tag" href="https://creativecommons.org/licenses/by/4.0/" target="_blank" rel="noopener">CC BY 4.0</a>
+        <span>本項目節錄 8 小節，經交叉淡化做成無縫 loop。</span></li>
+      <li><b>門鐘</b><span>Wikimedia Commons《Doorbell-cheap-dingdong》</span>
+        <span class="tag">公有領域</span></li>
+      <li><b>滴答</b><span>Wikimedia Commons《Clock ticking》（pdsounds.org）</span>
+        <span class="tag">公有領域</span></li>
+      <li><b>倒數</b><span>OpenGameArt《race start countdown》</span>
+        <a class="tag" href="https://creativecommons.org/publicdomain/zero/1.0/" target="_blank" rel="noopener">CC0 1.0</a></li>
+      <li><b>時間到哨子</b><span>SpliceSound 裁判哨</span>
+        <span class="tag">CC0</span></li>
+      <li><b>回合結算</b><span>OpenGameArt《Classic fanfare lick》</span>
+        <a class="tag" href="https://creativecommons.org/publicdomain/zero/1.0/" target="_blank" rel="noopener">CC0 1.0</a></li>
+      <li><b>冠軍前鼓聲</b><span>OpenGameArt《Horde War Drums》by William Hector</span>
+        <a class="tag" href="https://creativecommons.org/publicdomain/zero/1.0/" target="_blank" rel="noopener">CC0 1.0</a></li>
+      <li><b>Snare</b><span>OpenGameArt《An interesting snare drum sound》</span>
+        <a class="tag" href="https://creativecommons.org/publicdomain/zero/1.0/" target="_blank" rel="noopener">CC0 1.0</a></li>
+      <li><b>按鍵音、跳過音</b><span>本項目自製</span>
+        <span class="tag">同本項目（MIT）</span></li>
+    </ul>
+  </section>
+
+  <section class="card">
+    <h2>圖像</h2>
+    <p>動物隊伍圖示（<strong>art/team/*.webp</strong>）與 App 圖示由 SenseNova 圖像模型生成，
+       本項目自行去背、裁切與縮放，<strong>不含第三方素材</strong>。</p>
+  </section>
+
+  <p class="foot">原始碼：<a href="https://github.com/Kingofpig151251/beaststage" target="_blank" rel="noopener">github.com/Kingofpig151251/beaststage</a></p>
+</div>
+</body>
+</html>

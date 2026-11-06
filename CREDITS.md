@@ -1,5 +1,7 @@
 # 素材來源與授權（Assets & Credits）
 
+> 網頁版：**`/credits`**（`credits.html`）。兩邊內容一致；改動時要一齊改。
+
 本 repo 的**程式碼**以 MIT License 授權（見 [`LICENSE`](LICENSE)）。
 **音效與圖像素材不屬於 MIT 授權範圍**，各自依下列原始授權使用。
 
