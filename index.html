@@ -949,7 +949,8 @@
       </div>
       <div class="landing-foot">
         <span class="landing-credit">© 2026 <a class="credit-link" id="linkAuthor" href="https://king.kingleung.synology.me/" target="_blank" rel="noopener">Leung Tung Lam</a> ·
-          <a class="credit-link" href="/credits">版權聲明</a></span>
+          <a class="credit-link" href="/credits" id="linkRights">版權聲明</a>
+          <button class="credit-link" id="btnLang" type="button" aria-label="切換語言">EN</button></span>
         <span class="brand-links">
           <a class="brand" href="https://github.com/Kingofpig151251/beaststage" target="_blank" rel="noopener"
              aria-label="GitHub 原始碼" title="GitHub 原始碼"><svg viewBox="0 0 16 16" width="1em" height="1em" fill="currentColor" aria-hidden="true"><path d="M8 0C3.58 0 0 3.58 0 8a8 8 0 0 0 5.47 7.59c.4.07.55-.17.55-.38 0-.19-.01-.82-.01-1.49-2.01.37-2.53-.49-2.69-.94-.09-.23-.48-.94-.82-1.13-.28-.15-.68-.52-.01-.53.63-.01 1.08.58 1.23.82.72 1.21 1.87.87 2.33.66.07-.52.28-.87.51-1.07-1.78-.2-3.64-.89-3.64-3.95 0-.87.31-1.59.82-2.15-.08-.2-.36-1.02.08-2.12 0 0 .67-.21 2.2.82a7.4 7.4 0 0 1 2-.27c.68 0 1.36.09 2 .27 1.53-1.04 2.2-.82 2.2-.82.44 1.1.16 1.92.08 2.12.51.56.82 1.27.82 2.15 0 3.07-1.87 3.75-3.65 3.95.29.25.54.73.54 1.48 0 1.07-.01 1.93-.01 2.2 0 .21.15.46.55.38A8.01 8.01 0 0 0 16 8c0-4.42-3.58-8-8-8z"/></svg></a>
@@ -1065,7 +1066,7 @@
         <span class="turn-name" id="turnName"></span>
       </div>
       <div class="top-right">
-        <button class="undo-btn off" id="btnUndo" type="button" aria-disabled="true" aria-label="撤回上一個判定" title="撤回上一個判定（↑）"><span class="glyph" aria-hidden="true">↺</span>撤回</button>
+        <button class="undo-btn off" id="btnUndo" type="button" aria-disabled="true" aria-label="撤回上一個判定" title="撤回上一個判定（↑）"><span class="glyph" aria-hidden="true">↺</span><span class="lbl">撤回</span></button>
       <button class="ring" id="btnPause" aria-label="暫停" title="暫停（Esc）">
         <svg viewBox="0 0 44 44" aria-hidden="true">
           <circle class="ring-track" cx="22" cy="22" r="16"/>
@@ -1189,6 +1190,160 @@
 <script>
 "use strict";
 
+/* ================= 語言 ================= */
+const LANG_KEY = "beasttv.lang";
+let LANG = (()=>{ try{ return localStorage.getItem(LANG_KEY) === "en" ? "en" : "zh"; }catch(_){ return "zh"; } })();
+const EN = {
+  "百獸台": "Beast Stage",
+  "派對猜詞主持台": "Party word-guessing host console",
+  "開始": "Start",
+  "設定": "Settings",
+  "繼續": "Continue",
+  "準備好": "Ready",
+  "犯規": "Foul",
+  "跳過": "Skip",
+  "正確": "Correct",
+  "上一步": "Back",
+  "上一步（Esc）": "Back (Esc)",
+  "開始遊戲": "Start game",
+  "隊伍數量": "Teams",
+  "每隊回合數": "Rounds per team",
+  "每回合秒數": "Seconds per round",
+  "每回合可跳次數": "Skips per round",
+  "可以跳過": "Allow skipping",
+  "跳過扣分": "Skipping costs 1",
+  "犯規扣分": "Foul costs 1",
+  "選擇隊色": "Pick a colour",
+  "更改隊色": "Change colour",
+  "減少一隊": "Fewer teams",
+  "增加一隊": "More teams",
+  "減少回合": "Fewer rounds",
+  "增加回合": "More rounds",
+  "減少可跳次數": "Fewer skips",
+  "增加可跳次數": "More skips",
+  "跳過，不限次數": "Skip, unlimited",
+  "跳過（↓）不限次數": "Skip (↓) · unlimited",
+  "跳過 ∞": "Skip ∞",
+  "沒有可撤回的判定": "Nothing to undo",
+  "已撤回上一個判定": "Undone",
+  "撤回上一個判定": "Undo last call",
+  "撤回上一個判定（↑）": "Undo last call (↑)",
+  "回報問題": "Report",
+  "回報問題（空白題目等）": "Report a problem (blank question etc.)",
+  "已回報，多謝": "Reported, thanks",
+  "回報未送出，已存本機": "Report saved on this device",
+  "退出遊戲": "Exit game",
+  "暫停": "Pause",
+  "暫停（Esc）": "Pause (Esc)",
+  "重試載入": "Retry loading",
+  "題目尚未載入": "Questions not loaded yet",
+  "題目尚未載入，重新連線中…": "Questions not loaded — reconnecting…",
+  "題目尚未連線，正在重試…": "Not connected — retrying…",
+  "題目已用完，正在重新洗牌": "Out of questions — reshuffling",
+  "一行一題，任何人皆可修改": "One question per line",
+  "先設定題目": "Set up questions",
+  "登出": "Log out",
+  "登入 / 註冊": "Log in / Sign up",
+  "已登入：": "Signed in: ",
+  "烏龜隊": "Turtle",
+  "狐狸隊": "Fox",
+  "鯨魚隊": "Whale",
+  "章魚隊": "Octopus",
+  "蜜蜂隊": "Bee",
+  "火烈鳥隊": "Flamingo",
+  "海豚隊": "Dolphin",
+  "棕熊隊": "Bear",
+  "正確加一": "Correct +1",
+  "正確減一": "Correct −1",
+  "犯規加一": "Foul +1",
+  "犯規減一": "Foul −1",
+  "跳過加一": "Skip +1",
+  "跳過減一": "Skip −1",
+  "正確（→）": "Correct (→)",
+  "犯規（←）": "Foul (←)",
+  "跳過（↓）": "Skip (↓)",
+  "更改第 ${i+1} 隊的隊色": "Change colour of team ${i+1}",
+  "版權聲明": "Legal",
+  "GitHub 原始碼": "Source on GitHub",
+  "有多少隊參賽？": "How many teams are playing?",
+  "最少 2 隊，最多 8 隊": "Minimum 2, maximum 8",
+  "每隊出場幾回合？": "How many turns per team?",
+  "1 至 5 回合": "1 to 5 turns",
+  "為每一隊命名": "Name each team",
+  "每回合時間": "Time per turn",
+  "秒": "sec",
+  "規則": "Rules",
+  "主持可按「↓ 跳過」直接換下一題": "The host can press ↓ to skip straight to the next question",
+  "每回合可跳": "Skips per turn",
+  "用完之後不能再跳": "No more skips once these are used up",
+  "跳過扣 1 分": "Skipping costs 1 point",
+  "每跳過一題，該隊扣一分": "Each skip costs that team one point",
+  "犯規扣 1 分": "A foul costs 1 point",
+  "每犯規一次，該隊扣一分": "Each foul costs that team one point",
+  "最終排名": "Final standings",
+  "返回主頁": "Back to home",
+  "退出遊戲？": "Exit the game?",
+  "本局成績將不會記錄。": "This game will not be recorded.",
+  "取消": "Cancel",
+  "退出": "Exit",
+  "選擇動物與隊色": "Choose an animal and colour",
+  "時間到！": "Time's up!",
+  "切換語言": "Switch language",
+  "撤回": "Undo",
+  "繼續（Esc）": "Continue (Esc)",
+  "題": "questions",
+  "分": "pts",
+  "中文": "中文",
+  "隊名": "Team name"
+};
+const T = (zh)=> LANG === "en" ? (EN[zh] || zh) : zh;
+
+const ATTR_I18N = ["title","aria-label","placeholder"];
+function translateTree(root){
+  if(!root) return;
+  const walker = document.createTreeWalker(root, NodeFilter.SHOW_TEXT);
+  const nodes = [];
+  while(walker.nextNode()) nodes.push(walker.currentNode);
+  for(const n of nodes){
+    const p = n.parentElement;
+    if(p && (p.closest("#pText,script,style") )) continue;   // 題目本身唔翻譯
+    if(n.__zh === undefined) n.__zh = n.nodeValue;
+    const key = n.__zh.trim();
+    if(!key) continue;
+    const en = EN[key];
+    n.nodeValue = (LANG === "en" && en) ? n.__zh.replace(key, en) : n.__zh;
+  }
+  if(!root.querySelectorAll) return;
+  root.querySelectorAll("[title],[aria-label],[placeholder]").forEach(el=>{
+    for(const a of ATTR_I18N){
+      if(!el.hasAttribute(a)) continue;
+      const store = "__zh_" + a.replace("-","_");
+      if(el[store] === undefined) el[store] = el.getAttribute(a);
+      const src = el[store];
+      const en = EN[String(src).trim()];
+      el.setAttribute(a, (LANG === "en" && en) ? en : src);
+    }
+  });
+}
+
+function setLang(next){
+  LANG = next === "en" ? "en" : "zh";
+  try{ localStorage.setItem(LANG_KEY, LANG); }catch(_){}
+  document.documentElement.lang = LANG === "en" ? "en" : "zh-Hant-HK";
+  const b = document.getElementById("btnLang");
+  if(b) b.textContent = LANG === "en" ? "中文" : "EN";
+  translateTree(document.body);
+  if(G && G.phase === "running") renderPlay();
+  else if(document.body.dataset.view === "home") renderHome();
+  else renderSetup();
+}
+const btnLang = document.getElementById("btnLang");
+if(btnLang) btnLang.addEventListener("click", ()=>{
+  const b = document.getElementById("btnLang");
+  b.__tapAt = 0;                                  // 語言鍵唔受 260ms 防連按影響
+  setLang(LANG === "en" ? "zh" : "en");
+});
+
 
 /* ================= 狀態 ================= */
 const K_CFG="beaststage.cfg.v3", K_CFG_OLD=["baishoutai.cfg.v3","bigtv.cfg.v3"];   // 題目不存本機，只存雲端
@@ -1206,14 +1361,14 @@ const ICONS = Object.fromEntries(TEAM_IDS.map(id =>
 
 /* 隊伍動物：名稱、圖示、顏色三者綁定；改動物＝改色，但唔會覆蓋自己改過嘅隊名 */
 const ANIMALS = [
-  { id:"turtle", name:"烏龜隊", color:"#34C759" },
-  { id:"fox", name:"狐狸隊", color:"#FF9500" },
-  { id:"whale", name:"鯨魚隊", color:"#0071E3" },
-  { id:"octopus", name:"章魚隊", color:"#AF52DE" },
-  { id:"bee", name:"蜜蜂隊", color:"#F5A300" },
-  { id:"flamingo", name:"火烈鳥隊", color:"#FF2D55" },
-  { id:"dolphin", name:"海豚隊", color:"#30B0C7" },
-  { id:"bear", name:"棕熊隊", color:"#A2845E" }
+  { id:"turtle", name:T("烏龜隊"), color:"#34C759" },
+  { id:"fox", name:T("狐狸隊"), color:"#FF9500" },
+  { id:"whale", name:T("鯨魚隊"), color:"#0071E3" },
+  { id:"octopus", name:T("章魚隊"), color:"#AF52DE" },
+  { id:"bee", name:T("蜜蜂隊"), color:"#F5A300" },
+  { id:"flamingo", name:T("火烈鳥隊"), color:"#FF2D55" },
+  { id:"dolphin", name:T("海豚隊"), color:"#30B0C7" },
+  { id:"bear", name:T("棕熊隊"), color:"#A2845E" }
 ];
 const animalById = id => ANIMALS.find(a=>a.id===id) || ANIMALS[0];
 const animalAt = i => animalById((cfg.animals && cfg.animals[i]) || ANIMALS[i % ANIMALS.length].id);
@@ -1313,7 +1468,7 @@ $("#toast").addEventListener("click", ()=>{ clearTimeout(toastT); $("#toast").cl
 function shuffle(a){ for(let i=a.length-1;i>0;i--){ const j=Math.floor(Math.random()*(i+1)); [a[i],a[j]]=[a[j],a[i]]; } return a; }
 
 /* ================= 品牌（可由 /edit 自訂） ================= */
-const BRAND = { title: "百獸台", sub: "派對猜詞主持台" };
+const BRAND = { title: T("百獸台"), sub: T("派對猜詞主持台") };
 const BRAND_KEY = "beastbrand.v1";
 
 /* 開頁即用上次的品牌（冇快取就暫時收埋標題，避免先閃「百獸台」再變） */
@@ -1398,7 +1553,7 @@ function renderHome(){
 function paintEnter(){
   const b = $("#btnEnter"); if(!b) return;
   const empty = REMOTE.ok && lines.length === 0 && !!ME;   // 只有自己帳號嘅空白題庫才帶去設定
-  b.textContent = empty ? "先設定題目" : "開始";
+  b.textContent = empty ? T("先設定題目") : T("開始");
   b.dataset.mode = empty ? "setup-bank" : "";
   const set = $("#btnEditHome"); if(set) set.hidden = empty;   // 空白題庫時，主鍵已經帶去設定，唔好兩個鍵指同一件事
 }
@@ -1410,10 +1565,11 @@ $("#btnEnter").addEventListener("click", (e)=>{
 }, true);
 
 function renderSetup(){
+  translateTree(document.body);
   const qc = $("#qCount");
-  if(qc) qc.innerHTML = lines.length ? `${lines.length}<span class="unit">題</span>` : "";
+  if(qc) qc.innerHTML = lines.length ? `${lines.length}<span class="unit">${LANG==="en"?"questions":"題"}</span>` : "";
   const qh = $("#qHint");
-  if(qh) qh.textContent = lines.length ? "一行一題，任何人皆可修改" : "題目尚未連線，正在重試…";
+  if(qh) qh.textContent = lines.length ? T("一行一題，任何人皆可修改") : T("題目尚未連線，正在重試…");
   $("#teamInput").value = cfg.teams;
   $("#teamMinus").disabled = cfg.teams <= 2;
   $("#teamPlus").disabled  = cfg.teams >= 8;
@@ -1424,12 +1580,12 @@ function renderSetup(){
     $("#rpPlus").disabled  = cfg.roundsPer >= 5;
   }
   const sum = $("#roundSum");
-  if(sum) sum.textContent = `${cfg.teams} 隊 × ${cfg.roundsPer} 回合 = 共 ${cfg.teams * cfg.roundsPer} 回合`;
+  if(sum) sum.textContent = LANG === "en" ? `${cfg.teams} teams × ${cfg.roundsPer} rounds = ${cfg.teams * cfg.roundsPer} turns` : `${cfg.teams} 隊 × ${cfg.roundsPer} 回合 = 共 ${cfg.teams * cfg.roundsPer} 回合`;
 
   $("#nameList").innerHTML = Array.from({length:cfg.teams},(_,i)=>{
     const a = animalAt(i);
     return `<div class="name-row" style="--tc:${a.color}">
-      <button class="animal-btn" data-animal="${i}" aria-label="更改第 ${i+1} 隊的隊色" title="更改隊色">
+      <button class="animal-btn" data-animal="${i}" aria-label="更改第 ${i+1} 隊的隊色" title=T("更改隊色")>
         <span class="animal-mark">${ICONS[a.id]}</span>
         <svg class="animal-edit" viewBox="0 0 24 24" aria-hidden="true"><path d="M4 20h4l10-10-4-4L4 16v4z"/></svg>
       </button>
@@ -1509,7 +1665,7 @@ function syncNext(){
   const ok = lines.length > 0;
   const next = $("#btnNext");
   next.disabled = false;                       // 題目未載入時唔可以靜靜封死（派對現場會卡住、又冇提示）
-  next.textContent = ok ? (SETUP.i < LAST_STEP ? "繼續" : "開始遊戲") : "重試載入";
+  next.textContent = ok ? (SETUP.i < LAST_STEP ? T("繼續") : T("開始遊戲")) : T("重試載入");
 }
 
 function goStep(i, dir){
@@ -1523,7 +1679,7 @@ function goStep(i, dir){
     d.classList.toggle("on", n <= SETUP.i);
     d.classList.toggle("cur", n === SETUP.i);
   });
-  $("#btnNext").textContent = SETUP.i < LAST_STEP ? "繼續" : "開始遊戲";
+  $("#btnNext").textContent = SETUP.i < LAST_STEP ? T("繼續") : T("開始遊戲");
   syncNext();
   if(SETUP.i === 2){
     const first = $("#nameList input");
@@ -1561,7 +1717,7 @@ function skipLaunch(){
 }
 
 function launchGame(){
-  if(!lines.length){ toast("題目尚未載入"); return; }
+  if(!lines.length){ toast(T("題目尚未載入")); return; }
   if(SETUP.busy) return;
   SETUP.busy = true;
   clearLaunch();
@@ -1611,7 +1767,7 @@ function startGame(){
   const names = Array.from({length:cfg.teams},(_,i)=> teamName(i));
   const looks = Array.from({length:cfg.teams},(_,i)=>{ const a = animalAt(i); return { id:a.id, color:a.color }; });
   const pool = lines.map(t=>({ t }));
-  if(!pool.length){ toast("題目尚未載入"); return; }
+  if(!pool.length){ toast(T("題目尚未載入")); return; }
 
   const order = [];                                  // 每隊出場 2 次：A B C D → A B C D
   for(let r = 0; r < cfg.roundsPer; r++) for(let i = 0; i < names.length; i++) order.push(i);
@@ -1646,10 +1802,10 @@ function syncSkipBtn(){
   const cap = G ? G.skipCap : SKIP_CAP;
   const left = G ? Math.max(0, G.skipLeft) : cap;
   const inf = cap === 0;
-  b.textContent = inf ? "跳過 ∞" : `跳過 ${left}/${cap}`;
+  b.textContent = inf ? T("跳過 ∞") : LANG === "en" ? `Skip ${left}/${cap}` : `跳過 ${left}/${cap}`;
   b.disabled = !G || !G.allowSkip || (!inf && left <= 0);
-  b.setAttribute("aria-label", inf ? "跳過，不限次數" : `跳過，剩 ${left} 次`);
-  b.setAttribute("title", inf ? "跳過（↓）不限次數" : `跳過（↓）剩 ${left} 次`);
+  b.setAttribute("aria-label", inf ? T("跳過，不限次數") : LANG === "en" ? `Skip · ${left} left` : `跳過，剩 ${left} 次`);
+  b.setAttribute("title", inf ? T("跳過（↓）不限次數") : LANG === "en" ? `Skip (↓) · ${left} left` : `跳過（↓）剩 ${left} 次`);
 }
 
 /* 每隊出場前先停頓：不計時、不出題，待隊伍準備完成 */
@@ -1657,8 +1813,8 @@ function syncExitLabel(){
   const b = $("#btnExit"); if(!b) return;
   const back = isPristine();
   b.dataset.mode = back ? "back" : "exit";
-  b.setAttribute("aria-label", back ? "上一步" : "退出遊戲");
-  b.setAttribute("title", back ? "上一步（Esc）" : "退出遊戲");
+  b.setAttribute("aria-label", back ? T("上一步") : T("退出遊戲"));
+  b.setAttribute("title", back ? T("上一步（Esc）") : T("退出遊戲"));
 }
 
 function enterReady(){
@@ -1669,7 +1825,7 @@ function enterReady(){
   G.remaining = G.sec;
   G.paused = false;
   setPauseIcon(false);
-  $("#rdRound").textContent = `第 ${G.turn+1} 回合，共 ${G.rounds} 回合`;
+  $("#rdRound").textContent = LANG === "en" ? `Round ${G.turn+1} of ${G.rounds}` : `第 ${G.turn+1} 回合，共 ${G.rounds} 回合`;
   const cur = curTeam();
   $("#rdMark").innerHTML = ICONS[cur.id] || "";
   $("#rdTeam").textContent = cur.name;
@@ -1807,7 +1963,7 @@ function startRound(){
   CD_TIMER = setInterval(()=>{
     n--;
     if(n > 0){ paint(n); }
-    else if(n === 0){ paint("開始"); }
+    else if(n === 0){ paint(T("開始")); }
     else {
       clearInterval(CD_TIMER); CD_TIMER = 0;
       box.classList.remove("on");
@@ -1832,7 +1988,7 @@ function beginRunning(){
 }
 
 function drawItem(){
-  if(!G.pool.length){ G.pool = shuffle(G.used.slice()); G.used = []; toast("題目已用完，正在重新洗牌"); }
+  if(!G.pool.length){ G.pool = shuffle(G.used.slice()); G.used = []; toast(T("題目已用完，正在重新洗牌")); }
   let it = G.pool.pop();
   while(it && !String(it.t || "").trim() && G.pool.length) it = G.pool.pop();   // 跳過空白題，唔好交出嚟
   if(!it || !String(it.t || "").trim()) it = { t: (lines.find(x=>x && x.trim()) || "（題庫為空）") };
@@ -1923,6 +2079,7 @@ if("ResizeObserver" in window){
 
 function renderPlay(){
   syncExitLabel();
+  translateTree(document.body);
   paintUndo();
   const chip = $("#turnChip");
   if(chip && G){
@@ -1950,9 +2107,9 @@ function fmtScore(v){ return (v < 0 ? "−" : "+") + Math.abs(v); }
 /* 統計文字：對 N · 跳過 M · 犯規 K（跳過關閉時不顯示） */
 function statLine(t, bold){
   const b = v => bold ? `<b>${v}</b>` : `${v}`;
-  const parts = [`答中 ${b(t.ok || 0)}`];
-  if(t.foul) parts.push(`犯規 ${b(t.foul)}`);                       // 有犯規才提，解釋扣分
-  if(G && G.skipPenalty && t.skip) parts.push(`跳過 ${b(t.skip)}`);  // 跳過扣分時才提
+  const parts = [LANG === "en" ? `${b(t.ok || 0)} correct` : `答中 ${b(t.ok || 0)}`];
+  if(t.foul) parts.push(LANG === "en" ? `${b(t.foul)} foul` : `犯規 ${b(t.foul)}`);                       // 有犯規才提，解釋扣分
+  if(G && G.skipPenalty && t.skip) parts.push(LANG === "en" ? `${b(t.skip)} skipped` : `跳過 ${b(t.skip)}`);  // 跳過扣分時才提
   return parts.join(" · ");
 }
 
@@ -2013,9 +2170,9 @@ async function reportProblem(kind){
   try{
     const r = await fetch("/api/report", { method: "POST",
       headers: { "content-type": "application/json" }, body: JSON.stringify(p) });
-    toast(r && r.ok ? "已回報，多謝" : "回報未送出，已存本機", 1900);
+    toast(r && r.ok ? T("已回報，多謝") : T("回報未送出，已存本機"), 1900);
   }catch(e){
-    toast("回報未送出，已存本機", 1900);
+    toast(T("回報未送出，已存本機"), 1900);
   }
 }
 
@@ -2051,7 +2208,7 @@ function undoJudge(){
   syncSkipBtn();
   renderPlay();
   paintUndo();
-  toast("已撤回上一個判定", 1200);
+  toast(T("已撤回上一個判定"), 1200);
   sfx("tap", 0.7);
   return true;
 }
@@ -2123,15 +2280,15 @@ function showTurnEnd(team, stats, done){
   const target = stats.score;
   if(target > 0 && !REDUCE){
     let v = 0;
-    sc.innerHTML = `+0<em>分</em>`;
+    sc.innerHTML = `+0<em>${LANG==="en"?"pts":"分"}</em>`;
     const step = Math.max(1, Math.round(target / 5));
     TE_IV = setInterval(()=>{
       v = Math.min(target, v + step);
-      sc.innerHTML = `+${v}<em>分</em>`;
+      sc.innerHTML = `+${v}<em>${LANG==="en"?"pts":"分"}</em>`;
       if(v >= target){ clearInterval(TE_IV); TE_IV = 0; }
     }, 95);
   } else {
-    sc.innerHTML = `${fmtScore(target)}<em>分</em>`;
+    sc.innerHTML = `${fmtScore(target)}<em>${LANG==="en"?"pts":"分"}</em>`;
   }
   const box = $("#teStats");
   if(box){
@@ -2153,7 +2310,7 @@ function paintStats(){
   clearInterval(TE_IV); TE_IV = 0;         // 停分數滾動動畫，直接顯示新值
   const sc = $("#teScore");
   sc.classList.toggle("zero", S.score === 0);
-  sc.innerHTML = `${fmtScore(S.score)}<em>分</em>`;
+  sc.innerHTML = `${fmtScore(S.score)}<em>${LANG==="en"?"pts":"分"}</em>`;
 }
 
 function settleAdjust(kind, d){
@@ -2172,7 +2329,7 @@ function settleAdjust(kind, d){
   sfx("tap", 0.5);
 }
 
-$("#btnUndo").onclick = ()=>{ if(!undoJudge()) toast("沒有可撤回的判定", 1200); };
+$("#btnUndo").onclick = ()=>{ if(!undoJudge()) toast(T("沒有可撤回的判定"), 1200); };
 $("#btnReport").onclick = ()=> reportProblem("blank-question");
 
 $("#teStats").addEventListener("click", e=>{
@@ -2231,7 +2388,7 @@ function endGame(){
   const sorted = G.teams.map((t,i)=>({...t,i})).sort((a,b)=> b.score-a.score || b.ok-a.ok);
   const total = G.teams.reduce((s,t)=>s+t.score,0);
   const okTotal = G.teams.reduce((s,t)=>s+t.ok,0);
-  $("#rSub").textContent = `全場答對 ${okTotal} 題 · 總分 ${total}`;
+  $("#rSub").textContent = LANG === "en" ? `${okTotal} correct · ${total} points in total` : `全場答對 ${okTotal} 題 · 總分 ${total}`;
 
   const topScore = sorted[0].score;
   const tied = sorted.filter(t=>t.score === topScore).length > 1;
@@ -2453,7 +2610,7 @@ $("#btnStepBack").onclick = ()=>{
   else goStep(SETUP.i - 1, -1);
 };
 $("#btnNext").onclick = ()=>{
-  if(!lines.length){ toast("題目尚未載入，重新連線中…"); pullText(); return; }
+  if(!lines.length){ toast(T("題目尚未載入，重新連線中…")); pullText(); return; }
   if(SETUP.i < LAST_STEP) goStep(SETUP.i + 1, 1); else launchGame();
 };
 
@@ -2542,8 +2699,8 @@ $("#btnExit").onclick = ()=>{
 
 function setPauseIcon(p){
   const b = $("#btnPause"); if(!b) return;
-  b.setAttribute("aria-label", p ? "繼續" : "暫停");
-  b.setAttribute("title", p ? "繼續（Esc）" : "暫停（Esc）");
+  b.setAttribute("aria-label", p ? T("繼續") : T("暫停"));
+  b.setAttribute("title", p ? "繼續（Esc）" : T("暫停（Esc）"));
   b.classList.toggle("paused", !!p);
   const el = $("#pClock");
   if(p){ el.textContent = "▶"; }
@@ -2659,11 +2816,11 @@ function renderIdentity(){
   el.innerHTML = "";
   const span = document.createElement("span");
   if(ME){
-    span.append("已登入：");
+    span.append(T("已登入："));
     const b = document.createElement("b"); b.textContent = ME.user.username; span.append(b);
     el.append(span);
     const btn = document.createElement("button");
-    btn.type = "button"; btn.textContent = "登出";
+    btn.type = "button"; btn.textContent = T("登出");
     btn.onclick = async ()=>{
       try{ await fetch("/api/logout", { method:"POST", headers:{ authorization:"Bearer " + TOKEN() } }); }catch(_){}
       localStorage.removeItem("beasttv.token");
@@ -2671,11 +2828,7 @@ function renderIdentity(){
     };
     el.append(btn);
   }else{
-    const a = document.createElement("a");
-    a.href = "/edit"; a.textContent = "登入 / 註冊";
-    a.style.cssText = "color:var(--blue); text-decoration:none; font-size:12.5px";
-    span.append("未登入 · ");
-    el.append(span, a);
+    el.hidden = true;                            // 未登入：唔重複，設定鍵本身就係入口
   }
 }
 
@@ -2701,6 +2854,8 @@ async function boot(){
 }
 
 document.body.dataset.view = "home";
+document.documentElement.lang = LANG === "en" ? "en" : "zh-Hant-HK";
+if(btnLang) btnLang.textContent = LANG === "en" ? "中文" : "EN";
 renderHome();
 boot();
 window.__bigtv = { get G(){return G}, get lines(){return lines}, get cfg(){return cfg},

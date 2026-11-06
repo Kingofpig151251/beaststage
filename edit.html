@@ -120,6 +120,10 @@
   .gate-card input{font:inherit; font-size:17px; padding:12px 14px; border-radius:var(--r-md);
     border:0; background:var(--fill); color:var(--ink); margin-top:6px}
   .gate-card input:focus{outline:0; box-shadow:inset 0 0 0 2px var(--focus-ring)}
+  .lang-btn{margin-left:auto; align-self:flex-start; min-height:34px; padding:0 12px; border:0;
+    border-radius:999px; background:var(--fill); color:var(--ink-2); font:inherit; font-size:12.5px; font-weight:600}
+  .lang-btn:active{background:var(--fill-2)}
+  .lang-btn:focus-visible{outline:0; box-shadow:0 0 0 3px var(--focus-ring)}
   .gate-alt{margin-top:2px; padding:8px 0; background:none; border:0; font:inherit; font-size:13.5px;
     color:var(--blue); min-height:0}
   .gate-alt:focus-visible{outline:0; box-shadow:0 0 0 3px var(--focus-ring); border-radius:8px}
@@ -157,6 +161,7 @@
     </a>
     <div class="titles">
       <h1>設定</h1>
+      <button type="button" id="btnLang" class="lang-btn" aria-label="切換語言">EN</button>
       <p class="sub">改完自動儲存</p>
     </div>
     <span class="state" id="state"></span>
@@ -189,6 +194,62 @@
   </div>
 
 <script>
+const LANG_KEY = "beasttv.lang";
+let LANG = (()=>{ try{ return localStorage.getItem(LANG_KEY) === "en" ? "en" : "zh"; }catch(_){ return "zh"; } })();
+const EN = {
+  "設定": "Settings",
+  "題目": "Questions",
+  "品牌": "Brand",
+  "已儲存": "Saved",
+  "儲存中…": "Saving…",
+  "未連接，自動重試中": "Not connected — retrying",
+  "儲存失敗，稍後重試": "Save failed — will retry",
+  "登入": "Log in",
+  "註冊": "Sign up",
+  "用戶名": "Username",
+  "密碼": "Password",
+  "用你嘅帳號，題庫只屬於你，同其他人分開。": "Sign in — your question bank is yours alone.",
+  "開一個帳號，即刻有你專屬嘅題庫。": "Create an account and get your own question bank.",
+  "未有帳號？註冊一個": "No account? Sign up",
+  "已有帳號？返回登入": "Already have an account? Log in",
+  "返回主持台": "Back to the console",
+  "返回": "Back",
+  "兩樣都要填": "Fill in both fields",
+  "網絡問題，請再試": "Network problem — try again",
+  "失敗，請再試": "Failed — try again",
+  "登入已失效，請重新登入": "Session expired — please sign in again",
+  "題庫名稱": "Bank name",
+  "開庫碼": "Invite code",
+  "自訂密碼（至少 4 個字）": "Your password (min 4 chars)",
+  "一行一題": "One question per line",
+  "題": "questions",
+  "未有題目": "No questions yet",
+  "設定頁": "Settings",
+  "密碼已失效，請重新輸入": "Password expired — enter again"
+};
+const T = (zh)=> LANG === "en" ? (EN[zh] || zh) : zh;
+function translateTree(root){
+  if(!root) return;
+  const w = document.createTreeWalker(root, NodeFilter.SHOW_TEXT), nodes = [];
+  while(w.nextNode()) nodes.push(w.currentNode);
+  for(const n of nodes){
+    if(n.parentElement && n.parentElement.closest("textarea,script,style")) continue;
+    if(n.__zh === undefined) n.__zh = n.nodeValue;
+    const k = n.__zh.trim(); if(!k) continue;
+    const en = EN[k];
+    n.nodeValue = (LANG === "en" && en) ? n.__zh.replace(k, en) : n.__zh;
+  }
+  root.querySelectorAll?.("[title],[aria-label],[placeholder]").forEach(el=>{
+    for(const a of ["title","aria-label","placeholder"]){
+      if(!el.hasAttribute(a)) continue;
+      const st = "__zh_" + a;
+      if(el[st] === undefined) el[st] = el.getAttribute(a);
+      const en = EN[String(el[st]).trim()];
+      el.setAttribute(a, (LANG === "en" && en) ? en : el[st]);
+    }
+  });
+}
+
 "use strict";
 const $ = s => document.querySelector(s);
 let saveTimer = null, lastSaved = "";
@@ -208,6 +269,22 @@ function syncBack(){
   if(bh) bh.setAttribute("href", BANK === "default" ? "/" : "/b/" + encodeURIComponent(BANK));
 }
 syncBack();
+
+const btnLang = document.getElementById("btnLang");
+if(btnLang){
+  btnLang.textContent = LANG === "en" ? "中文" : "EN";
+  document.documentElement.lang = LANG === "en" ? "en" : "zh-Hant-HK";
+  btnLang.addEventListener("click", ()=>{
+    LANG = LANG === "en" ? "zh" : "en";
+    try{ localStorage.setItem(LANG_KEY, LANG); }catch(_){}
+    btnLang.textContent = LANG === "en" ? "中文" : "EN";
+    document.documentElement.lang = LANG === "en" ? "en" : "zh-Hant-HK";
+    translateTree(document.body);
+    paintAuth();
+    paintMeta();
+  });
+  translateTree(document.body);
+}
 const withKey = (h) => { const o = Object.assign({}, h || {}); const k = editKey(); if(k) o["x-edit-key"] = k;
   const t = TOKEN(); if(t) o["authorization"] = "Bearer " + t; return o; };
 
@@ -217,11 +294,11 @@ let AUTH_MODE = "login";                      // login | signup
 
 function paintAuth(){
   const login = AUTH_MODE === "login";
-  $("#authTitle").textContent = login ? "登入" : "註冊";
-  $("#authSub").textContent = login ? "用你嘅帳號，題庫只屬於你，同其他人分開。"
-                                    : "開一個帳號，即刻有你專屬嘅題庫。";
-  $("#authGo").textContent = login ? "登入" : "註冊";
-  $("#authSwap").textContent = login ? "未有帳號？註冊一個" : "已有帳號？返回登入";
+  $("#authTitle").textContent = T(login ? "登入" : "註冊");
+  $("#authSub").textContent = T(login ? "用你嘅帳號，題庫只屬於你，同其他人分開。"
+                                       : "開一個帳號，即刻有你專屬嘅題庫。");
+  $("#authGo").textContent = T(login ? "登入" : "註冊");
+  $("#authSwap").textContent = T(login ? "未有帳號？註冊一個" : "已有帳號？返回登入");
   $("#authPass").setAttribute("autocomplete", login ? "current-password" : "new-password");
   $("#authErr").textContent = "";
 }
@@ -268,13 +345,14 @@ function setState(kind, text, autoHide){
   el.className = "state" + (kind ? " " + kind : "") + (text ? " on" : "");
   el.textContent = text || "";
   if(autoHide) stateTimer = setTimeout(()=>{ el.className = "state"; el.textContent = ""; }, 1400);
+  translateTree(document.body);
 }
 function countLines(t){
   return String(t || "").split(/\r?\n/).map(l => l.trim()).filter(Boolean).length;
 }
 function paintMeta(){
   const n = countLines($("#text").value);
-  $("#meta").textContent = n ? `${n} 題` : "未有題目";
+  $("#meta").textContent = n ? (LANG === "en" ? `${n} questions` : `${n} 題`) : T("未有題目");
 }
 
 async function load(){
