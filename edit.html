@@ -141,10 +141,10 @@
 <div class="gate" id="gate">
   <form class="gate-card" id="authForm">
     <h2 id="authTitle">登入</h2>
-    <p id="authSub">用你嘅帳號，題庫只屬於你，同其他人分開。</p>
+    <p id="authSub">登入你的帳號。題庫只屬於你，與他人分開。</p>
     <input id="authUser" type="text" autocomplete="username" autocapitalize="off" spellcheck="false" aria-label="用戶名" placeholder="用戶名">
-    <input id="authCode" type="text" autocomplete="off" autocapitalize="characters" spellcheck="false" aria-label="邀請碼" placeholder="邀請碼" hidden>
     <input id="authPass" type="password" autocomplete="current-password" aria-label="密碼" placeholder="密碼">
+    <input id="authCode" type="text" autocomplete="off" autocapitalize="characters" spellcheck="false" aria-label="邀請碼" placeholder="邀請碼" hidden>
     <button type="submit" class="gate-go" id="authGo">登入</button>
     <p class="gate-err" id="authErr"></p>
     <button type="button" class="gate-alt" id="authSwap">未有帳號？註冊一個</button>
@@ -204,8 +204,8 @@ const EN = {
   "註冊": "Sign up",
   "用戶名": "Username",
   "密碼": "Password",
-  "用你嘅帳號，題庫只屬於你，同其他人分開。": "Sign in — your question bank is yours alone.",
-  "開一個帳號，即刻有你專屬嘅題庫。": "Create an account and get your own question bank.",
+  "登入你的帳號。題庫只屬於你，與他人分開。": "Sign in to your account. Your question bank is yours alone.",
+  "建立新帳號，立即擁有專屬題庫。": "Create an account and get a question bank of your own.",
   "未有帳號？註冊一個": "No account? Sign up",
   "已有帳號？返回登入": "Already have an account? Log in",
   "返回主持台": "Back to the console",
@@ -287,8 +287,8 @@ let AUTH_MODE = "login";                      // login | signup
 function paintAuth(){
   const login = AUTH_MODE === "login";
   $("#authTitle").textContent = T(login ? "登入" : "註冊");
-  $("#authSub").textContent = T(login ? "用你嘅帳號，題庫只屬於你，同其他人分開。"
-                                       : "開一個帳號，即刻有你專屬嘅題庫。");
+  $("#authSub").textContent = T(login ? "登入你的帳號。題庫只屬於你，與他人分開。"
+                                       : "建立新帳號，立即擁有專屬題庫。");
   $("#authGo").textContent = T(login ? "登入" : "註冊");
   $("#authSwap").textContent = T(login ? "未有帳號？註冊一個" : "已有帳號？返回登入");
   const codeEl = $("#authCode");
