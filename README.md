@@ -170,7 +170,7 @@ sfx/whistle.mp3            時間到：球證哨單響
 sfx/settle.mp3             結算卡：銅管 fanfare（2.9s）
 sfx/champion.mp3           冠軍揭曉：Celebration loop（16.7s）
 sfx/tick.mp3               結果頁每行揭曉的一下短音；亦疊在最後 10 秒的心跳上
-sfx/hb.mp3                 最後 10 秒的心跳（真人 61 BPM 錄音，剪一下 lub-dub，0.85s）
+sfx/hb3.mp3                最後 10 秒的心跳（真人 61 BPM 錄音，升調 5× ＋ 6dB 對齊喇叭，0.31s）
 sfx/tap.mp3                通用按鍵音（介面 chrome 用）
 sfx/drums.mp3              冠軍前 build-up 的密集鼓聲（可加速）
 sfx/snare.mp3              鼓停、冠軍揭曉的一下重擊
@@ -223,7 +223,7 @@ samples/hk-icebreaker.json 首次 seed 題庫
   `sfx/whoosh.mp3` 為本項目自行合成（掃頻噪音），無第三方素材。
 - **倒數音效**：`sfx/countdown.mp3` 來自 OpenGameArt《race start countdown》（CC0 1.0）。
 - **滴答音效**：`sfx/tick.mp3` 取自 Wikimedia Commons《Clock ticking》（pdsounds.org，public domain），只做裁剪、正規化與淡出。
-- **心跳音效**：`sfx/hb.mp3` 取自 Wikimedia Commons《Human heart beating at 61 bpm》（CC BY 3.0，原錄音 Benboncan／Freesound），只做裁剪與正規化。
+- **心跳音效**：`sfx/hb3.mp3` 取自 Wikimedia Commons《Human heart beating at 61 bpm》（CC BY 3.0，原錄音 Benboncan／Freesound）。做過裁剪、升調 5×、+6dB：原版 500Hz 以上只有 −44.6dB，iPad 內置喇叭出唔到，調完 −25.3dB 才聽得到。
 - **時間到哨子**：`sfx/whistle.mp3` 由 SpliceSound 裁判哨（CC0）剪成三吹。
 - **結算 fanfare**：`sfx/settle.mp3` 來自 OpenGameArt《Classic fanfare lick》（CC0 1.0）。
 - **結果頁鼓聲**：`sfx/drums.mp3` 為 OpenGameArt《Horde War Drums》（William Hector，CC0 1.0）節錄；
