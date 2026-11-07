@@ -200,7 +200,7 @@ cd tests && python3 edge.py                      # 46 項邊界（暫停、退�
 - 動效：步進 420ms `cubic-bezier(.32,.72,0,1)`、開場幕 460ms、藍幕以 `clip-path` 夾合、倒數每拍 1s、回合結算停留 1.55s
 - 落閘、倒數、結算共用同一套藍幕 `clip-path`／位移語言：幕合 → 幕上出字 → 幕開
 - 音效走「電視節目」路線，全部係真音源檔（**程式內已無合成音**）：
-  **對**＝門鐘叮噹（`sfx/dingdong.mp3`）／**跳過**＝子彈飛過（`sfx/whoosh.mp3`）／**犯規**＝短 snare（`sfx/snare.mp3`）／
+  **對**＝金幣叮（`sfx/dingdong.mp3`）／**跳過**＝紙張翻頁（`sfx/whoosh.mp3`）／**犯規**＝低音蜂鳴（`sfx/foul.mp3`）／
   **倒數**＝賽車起步錄音（`sfx/countdown.mp3`）／**最後 10 秒**＝心跳＋滴答（`sfx/hb.mp3`＋`sfx/tick.mp3`）／**時間到**＝球證哨單響（`sfx/whistle.mp3`）／
   **結算卡**＝銅管 fanfare（`sfx/settle.mp3`，2.9s）／**冠軍**＝Celebration 背景音樂（`sfx/champion.mp3`，16.7s 無縫 loop）
 - 倒數錄音三個起音正好在 0／1／2 秒、GO 在 3 秒，同畫面每拍 1 秒天生對齊，所以整段照播、不逐拍發聲
@@ -287,7 +287,7 @@ python3 scripts/bank.py rm <slug>     # 刪
 | 範圍 | 授權 |
 |---|---|
 | **程式碼**（`index.html`、`edit.html`、`api/`、`tests/`、`sw.js` 等） | **MIT**，全文見 [`LICENSE`](LICENSE) |
-| **音效素材**（`sfx/`） | 各自原授權（CC0 / 公有領域 / **CC BY 3.0 / 4.0**） |
+| **音效素材**（`sfx/`） | 混合：AI 生成（Stability AI Community License）／CC0／**CC BY 3.0 / 4.0** |
 | **圖像**（`art/`、icons） | SenseNova 生成，本項目自製 |
 
 > Copyright (c) 2026 **Leung Tung Lam**
@@ -321,13 +321,12 @@ MIT 只覆蓋程式碼，**不代表 `sfx/` 變成 MIT**。素材逐項來源、
 - **GitHub 圖示**：取自 **Octicons**（MIT）。GitHub 名稱與 Octocat 圖案為 GitHub, Inc. 的商標，
   此處僅用作連結本項目原始碼，不代表任何認可或關聯。
 - **字體**：沒有內嵌任何字體檔，只用 `system-ui`；裝置上的系統字體依該裝置授權，不隨本項目轉授。
-- **判定音效**：`sfx/dingdong.mp3` 來自 Wikimedia Commons《Doorbell-cheap-dingdong》（Public domain）。
-  `sfx/whoosh.mp3` 為本項目自行合成（掃頻噪音），無第三方素材。
+- **AI 生成音效**：`sfx/tap.mp3`、`sfx/dingdong.mp3`、`sfx/whoosh.mp3`、`sfx/tick.mp3`、`sfx/foul.mp3`、`sfx/settle.mp3`
+  以 **Stable Audio 3 Small-SFX**（Stability AI，Stability AI Community License）於本機 CPU 生成（2026-11），
+  未取樣任何第三方錄音；本項目只作裁剪、淡出與音量正規化。
 - **倒數音效**：`sfx/countdown.mp3` 來自 OpenGameArt《race start countdown》（CC0 1.0）。
-- **滴答音效**：`sfx/tick.mp3` 取自 Wikimedia Commons《Clock ticking》（pdsounds.org，public domain），只做裁剪、正規化與淡出。
 - **心跳音效**：`sfx/hb3.mp3` 取自 Wikimedia Commons《Human heart beating at 61 bpm》（CC BY 3.0，原錄音 Benboncan／Freesound）。做過裁剪、升調 5×、+6dB：原版 500Hz 以上只有 −44.6dB，iPad 內置喇叭出唔到，調完 −25.3dB 才聽得到。
 - **時間到哨子**：`sfx/whistle.mp3` 由 SpliceSound 裁判哨（CC0）剪成單響。
-- **結算 fanfare**：`sfx/settle.mp3` 來自 OpenGameArt《Classic fanfare lick》（CC0 1.0）。
 - **結果頁鼓聲**：`sfx/drums.mp3` 為 OpenGameArt《Horde War Drums》（William Hector，CC0 1.0）節錄；
   `sfx/snare.mp3` 為 OpenGameArt《An interesting snare drum sound》（CC0 1.0）。
 - **冠軍 BGM**：`sfx/champion.mp3` 為 Kevin MacLeod《Celebration》節錄（[incompetech.com](https://incompetech.com)），

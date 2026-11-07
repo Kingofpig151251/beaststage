@@ -1975,13 +1975,13 @@ const SFX_SRC = { ding: "/sfx/dingdong.mp3", whoosh: "/sfx/whoosh.mp3", heart: "
                    countdown: "/sfx/countdown.mp3", whistle: "/sfx/whistle.mp3",
                    settle: "/sfx/settle.mp3", champion: "/sfx/champion.mp3",
                    tick: "/sfx/tick.mp3", drums: "/sfx/drums.mp3", snare: "/sfx/snare.mp3",
-                   tap: "/sfx/tap.mp3" };
+                   foul: "/sfx/foul.mp3", tap: "/sfx/tap.mp3" };
 const SFX = {};
 let SFX_LOADING = false;
 /* 分層載入：頁面一開就備好判定用的四聲（26KB），其餘等第一次觸碰才拉。
    全部一次過拉會令第一下按掣冇聲——loadSfx 同 pointerdown 同時開始，buffer 未 decode 完。 */
 const SFX_CORE = ["tap","ding","whoosh","tick"];
-const SFX_REST = ["countdown","whistle","settle","champion","drums","snare","heart"];
+const SFX_REST = ["countdown","whistle","settle","champion","drums","snare","foul","heart"];
 async function loadSfx(keys){
   const c = audioCtx(); if(!c || !keys) return;
   const todo = keys.filter(k => !SFX[k]);
@@ -2340,7 +2340,7 @@ function judge(kind){
   let delta = 0;
   if(kind === "ok"){ t.ok++; delta = 1; fxOk(); sfx("ding"); }
   else if(kind === "skip"){ t.skip++; if(G.skipCap !== 0) G.skipLeft--; syncSkipBtn(); if(G.skipPenalty) delta = -1; fxSkipDown(); sfx("whoosh", 0.75); }
-  else { t.foul++; if(G.foulPenalty) delta = -1; fxFoul(G.foulPenalty); sfx("snare", 0.45); }
+  else { t.foul++; if(G.foulPenalty) delta = -1; fxFoul(G.foulPenalty); sfx("foul", 0.55); }
   if(delta) fxScore(delta);
   t.score += delta;
   G.judged = (G.judged || 0) + 1;
