@@ -41,10 +41,12 @@
   html[lang="en"] .t-zh{display:none}
   html[lang="en"] .t-en{display:inline}
 
-  .top{display:flex; align-items:center; gap:12px}
-  .back{display:grid; place-items:center; width:44px; height:44px; border-radius:50%;
+  .top{display:flex; align-items:center; gap:12px; padding-left:56px}
+  /* 與全站一致：固定在畫面左上（20px / 22px），文字欄位照舊靠 56px 起 */
+  .back{position:fixed; left:max(20px,env(safe-area-inset-left)); top:calc(22px + env(safe-area-inset-top));
+    z-index:5; display:grid; place-items:center; width:44px; height:44px; border-radius:50%;
     background:var(--surface); box-shadow:inset 0 0 0 1px var(--sep); color:var(--ink);
-    text-decoration:none; flex:none}
+    text-decoration:none}
   .back svg{width:20px; height:20px; fill:none; stroke:currentColor; stroke-width:2;
     stroke-linecap:round; stroke-linejoin:round}
   .back:focus-visible{outline:0; box-shadow:inset 0 0 0 1px var(--sep), 0 0 0 3px var(--focus-ring)}

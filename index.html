@@ -373,13 +373,13 @@
   /* ---------- play ---------- */
   body[data-view="play"]{background:var(--surface)}
   #v-play{position:relative; height:100dvh; overflow:hidden; flex-direction:column;
-    padding:max(10px,env(safe-area-inset-top)) 0 0}
+    padding:max(4px,env(safe-area-inset-top)) 0 0}   /* 令頂欄第一粒鍵落在 22px，同其他畫面一致 */
   body[data-view="play"]{overflow:hidden}
   body[data-view="play"] .wrap{padding:0; max-width:none}
   #v-play.active{display:flex}
 
   .flash-top{display:grid; grid-template-columns:1fr auto 1fr; align-items:center; gap:10px;
-    padding:8px max(18px,env(safe-area-inset-right)) 8px max(18px,env(safe-area-inset-left))}
+    padding:8px max(20px,env(safe-area-inset-right)) 8px max(20px,env(safe-area-inset-left))}
   .top-left{display:flex; align-items:center; gap:8px; justify-self:start; min-width:0}
   .top-right{display:flex; align-items:center; gap:12px; justify-self:end; min-width:0}
   .icon-btn{width:44px; height:44px; padding:0; display:grid; place-items:center; border-radius:50%;
@@ -387,8 +387,9 @@
   .icon-btn svg{width:22px; height:22px; fill:none; stroke:currentColor; stroke-width:2; stroke-linecap:round; stroke-linejoin:round}
   .icon-btn:active{background:var(--fill-2)}
   /* 浮動退出鍵：z-index 要蓋過 ready(60)／countdown(65)，但唔參與版面流 */
-  .quit-float{position:fixed; z-index:90; top:calc(14px + env(safe-area-inset-top));
-    inset-inline-end:14px; background:var(--fill); color:var(--ink-2);
+  /* 與其他畫面的離開鍵同一角：左上 20px、上 22px；固定係「退出遊戲」（×） */
+  .quit-float{position:fixed; z-index:90; top:calc(22px + env(safe-area-inset-top));
+    inset-inline-start:20px; inset-inline-end:auto; background:var(--fill); color:var(--ink);
     box-shadow:inset 0 0 0 1px var(--sep)}
   .quit-float:active{background:var(--fill-2); color:var(--ink)}
 
@@ -530,10 +531,7 @@
     font-variant-numeric:tabular-nums}
   .readyCard button{margin-top:clamp(24px,4vh,36px); min-height:56px; padding:0 40px;
     background:var(--blue-fill); color:var(--on-accent); font-size:19px; font-weight:600; border-radius:var(--r-lg)}
-  #btnReady::after{content:"→"; display:inline-grid; place-items:center; min-width:30px; height:30px;
-    margin-left:12px; padding:0 8px; border-radius:8px;
-    background:color-mix(in oklab, currentColor 14%, transparent); color:inherit;
-    font-family:var(--font-mono); font-size:17px; line-height:1; vertical-align:2px; opacity:.85}
+  /* 「準備好」唔再顯示 → ：鍵位可自訂，方向符號會誤導（同 HUD 三粒鍵一致） */
   /* ---------- 倒數（獨立過場動畫） ---------- */
   .countdown{position:fixed; inset:0; z-index:70; display:none; place-items:center;
     background:var(--surface); overflow:hidden}
@@ -622,9 +620,7 @@
     background:var(--on-accent); color:var(--blue); font-size:19px; font-weight:600;
     border-radius:var(--r-lg)}
   .te-next:active{background:color-mix(in oklab, var(--on-accent) 84%, var(--blue))}
-  .te-next::after{content:"→"; display:inline-grid; place-items:center; min-width:30px; height:30px;
-    padding:0 8px; border-radius:8px; font-family:var(--font-mono); font-size:16px; line-height:1;
-    background:color-mix(in oklab, var(--blue) 16%, transparent); opacity:1}
+  /* 結算卡「繼續」同樣唔顯示 → */
 
   /* ---------- result：逐格揭榜 ---------- */
   #v-result{position:relative; overflow:hidden}
@@ -1121,7 +1117,6 @@
     <!-- 準備／倒數畫面蓋住頂欄，所以另設一粒浮動退出鍵；遊戲中唔顯示（頂欄已有） -->
     <button class="icon-btn quit-float" id="btnQuitFloat" data-mode="exit" hidden aria-label="退出遊戲" title="退出遊戲">
       <svg class="i-close" viewBox="0 0 24 24" aria-hidden="true"><path d="M6.4 6.4 17.6 17.6"/><path d="M17.6 6.4 6.4 17.6"/></svg>
-      <svg class="i-back" viewBox="0 0 24 24" aria-hidden="true"><path d="M14.5 5 7.5 12l7 7"/></svg>
     </button>
     <div class="flash-top">
       <div class="top-left">
@@ -1917,10 +1912,9 @@ function syncQuitFloat(){
              && !gateOn() && !$("#exitSheet").classList.contains("on");
   b.hidden = !on;
   if(on){
-    const back = isPristine();
-    b.dataset.mode = back ? "back" : "exit";
-    b.setAttribute("aria-label", back ? T("上一步") : T("退出遊戲"));
-    b.setAttribute("title", back ? T("上一步（Esc）") : T("退出遊戲"));
+    b.dataset.mode = "exit";
+    b.setAttribute("aria-label", T("退出遊戲"));
+    b.setAttribute("title", T("退出遊戲"));
   }
 }
 
@@ -2830,7 +2824,7 @@ function exitTap(){
   askExit();                                   // 遊戲中 → 自訂確認面板
 }
 $("#btnExit").onclick = exitTap;
-$("#btnQuitFloat").onclick = exitTap;
+$("#btnQuitFloat").onclick = ()=>{ if(gateOn()) return; askExit(); };
 
 function setPauseIcon(p){
   const b = $("#btnPause"); if(!b) return;
@@ -2995,7 +2989,7 @@ document.addEventListener("keydown", e=>{
     e.preventDefault();
     if($("#exitSheet").classList.contains("on")){ closeExit(); return; }
     if(gateOn()) return;                                     // 落閘／結算過場：唔接受暫停或退出
-    if(G.phase === "ready" || G.phase === "countdown"){ exitTap(); return; }
+    if(G.phase === "ready" || G.phase === "countdown"){ askExit(); return; }
     $("#btnPause").click();
   }
 });
