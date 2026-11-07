@@ -115,14 +115,14 @@ async def main(url, shot):
             else:
                 raise AssertionError("等唔到：第一步")
             overflow = []
-            for i in range(5):
+            for i in range(6):
                 h = await T.js("(()=>{const s=document.querySelector('.sstep.on');return s.scrollHeight-s.clientHeight})()")
                 if h > 0: overflow.append((i + 1, h))
-                if i < 4:
+                if i < 5:
                     await T.js("document.getElementById('btnNext').click()")
                     await asyncio.sleep(0.45)
-            check("五步全部零溢出（834×1194）", not overflow, str(overflow))
-            check("到達第 5 步", await T.js("SETUP.i") == 4, f"i={await T.js('SETUP.i')}")
+            check("六步全部零溢出（834×1194）", not overflow, str(overflow))
+            check("到達第 6 步", await T.js("SETUP.i") == 5, f"i={await T.js('SETUP.i')}")
 
             print("\n[3] 8 隊隊名頁")
             await T.js("goStep(2, 1)")
@@ -132,7 +132,7 @@ async def main(url, shot):
             check("8 隊名字有預設值", await T.js("[...document.querySelectorAll('.name-row input')].every(i=>i.value.trim().length>0)"))
 
             print("\n[4] 準備畫面")
-            await T.js("goStep(4, 1)"); await asyncio.sleep(0.3)
+            await T.js("goStep(5, 1)"); await asyncio.sleep(0.3)
             await T.js("document.getElementById('btnNext').click()")   # 真正開局
             await T.wait("G && G.phase==='ready'", 8, "準備畫面")
             check("準備畫面 8 張分數卡", await T.js("document.querySelectorAll('#rdScores .score-tile').length") == 8)

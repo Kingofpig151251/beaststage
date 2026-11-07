@@ -44,7 +44,8 @@ async def start_game(T, rounds=None):
     for _ in range(3):
         await T.js("(()=>{const b=document.getElementById('btnEnter');if(b&&b.offsetParent)b.click()})()")
         if await _poll(T, "!!document.querySelector('.sstep.on')", 4): break
-    for _ in range(5):
+    n = await T.js("document.querySelectorAll('.sstep').length") or 6
+    for _ in range(n):
         await T.js("document.getElementById('btnNext').click()"); await asyncio.sleep(0.45)
     await T.wait("G && G.phase==='ready'", 10, "準備畫面")
     await T.js("document.getElementById('btnReady').click()")
@@ -303,11 +304,11 @@ async def t_quitfloat(T):
 async def t_keys(T):
     await T.js("(()=>{const b=document.getElementById('btnEnter');if(b&&b.offsetParent)b.click()})()")
     await _poll(T, "!!document.querySelector('.sstep.on')", 5)
-    for _ in range(4):
+    for _ in range(5):
         await T.js("document.getElementById('btnNext').click()"); await asyncio.sleep(0.45)
-    check("規則頁有「鍵盤快捷鍵」入口", await T.js("!!document.getElementById('btnKeys')"))
-    await T.js("document.getElementById('btnKeys').click()"); await asyncio.sleep(0.35)
-    check("快捷鍵面板打開", await T.js("document.getElementById('keysSheet').classList.contains('on')"))
+    check("快捷鍵係獨立第 6 步", await T.js("document.querySelector('.sstep.on').dataset.step === '5'"))
+    check("第 6 步有四行鍵位", await T.js("document.querySelectorAll('#keyRows .key-row').length === 4"))
+    check("步驟圓點有 6 粒", await T.js("document.querySelectorAll('#stepDots i').length === 6"))
     await T.js("document.querySelector('.key-chip[data-k=\"ok\"]').click()"); await asyncio.sleep(0.2)
     await T.js("document.dispatchEvent(new KeyboardEvent('keydown',{key:'k',code:'KeyK',bubbles:true}))")
     await asyncio.sleep(0.25)
@@ -322,8 +323,7 @@ async def t_keys(T):
     ok_lbl   = (await T.js("document.querySelector('.key-chip[data-k=\"ok\"]').textContent")) or ""
     check("撞鍵會交換（犯規＝K、正確＝←）", foul_lbl.strip()=="K" and ok_lbl.strip()=="←", f"{foul_lbl}/{ok_lbl}")
 
-    await T.js("document.getElementById('keysDone').click()"); await asyncio.sleep(0.3)
-    check("規則頁摘要同步", "K" in (await T.js("document.getElementById('keysSum').textContent")))
+    check("改完仍然留在第 6 步", await T.js("document.querySelector('.sstep.on').dataset.step === '5'"))
 
     await T.js("document.getElementById('btnNext').click()")
     await T.wait("G && G.phase==='ready'", 10, "準備")
@@ -341,12 +341,15 @@ async def t_keys(T):
     await asyncio.sleep(0.55)
     check("舊鍵 → 唔會再判定", (await T.js("G.judged||0")) == before2)
 
-    check("HUD 晶片顯示新鍵", "K" in (await T.js("document.querySelector('.key-foul').style.getPropertyValue('--kfoul')")))
+    check("HUD 唔再顯示方向符號",
+          await T.js("getComputedStyle(document.querySelector('.key-foul'),'::before').content === 'none'"))
+    check("HUD tooltip 仍然顯示自訂鍵",
+          "K" in (await T.js("document.querySelector('.key-foul').getAttribute('title')")))
 
     # 重新載入：設定要跟住
     await T.cmd("Page.reload"); await asyncio.sleep(2.0)
     await T.wait("!!document.getElementById('btnEnter')", 15, "重載首頁")
-    check("重載後仍然係自訂鍵", "K" in (await T.js("document.querySelector('.key-foul').style.getPropertyValue('--kfoul')")))
+    check("重載後仍然係自訂鍵", "KeyK" in (await T.js("localStorage.getItem('beasttv.keys')||''")))
 
 async def main(url):
     print("\n[1] 暫停／繼續時鐘")

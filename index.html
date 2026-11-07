@@ -422,23 +422,29 @@
     text-align:center; text-wrap:balance; word-break:break-word; max-width:100%;
     font-size:clamp(64px,21vh,200px); animation:wordIn var(--dur) var(--ease)}
   @keyframes wordIn{from{opacity:0; transform:scale(.96)} to{opacity:1; transform:scale(1)}}
-  .question.fx-ok{animation:fxOk .32s var(--ease)}
+  /* 正確 = 放大淡出；犯規 = 震動；跳過 = 向下墜 */
   .question.fx-skip{animation:fxSkip .28s var(--ease)}
-  .question.fx-bad{animation:fxBad .46s var(--ease)}
   .question.fx-down .card-word{animation:wordOutDown .2s var(--ease) forwards}
-  .question.fx-left .card-word{animation:wordOutLeft .2s var(--ease) forwards}
-  .question.fx-right .card-word{animation:wordOutRight .2s var(--ease) forwards}
+  .question.fx-right .card-word{animation:wordOutZoom .26s var(--ease) forwards}
+  .question.fx-left{animation:fxShake .34s var(--ease)}
+  .question.fx-left .card-word{animation:wordOutFade .18s var(--ease) forwards}
+  .question.fx-bad{animation:fxShakeHard .4s var(--ease)}
   @keyframes wordOutDown{to{transform:translateY(52px); opacity:0}}
-  @keyframes wordOutLeft{to{transform:translateX(-64px); opacity:0}}
-  @keyframes wordOutRight{to{transform:translateX(64px); opacity:0}}
-  @keyframes fxOk{0%{background:transparent} 40%{background:var(--flash-ok)} 100%{background:transparent}}
+  @keyframes wordOutZoom{from{opacity:1; transform:scale(1)} to{opacity:0; transform:scale(1.14)}}
+  @keyframes wordOutFade{to{opacity:0}}
   @keyframes fxSkip{0%,100%{transform:translateX(0)} 25%{transform:translateX(-8px)} 75%{transform:translateX(8px)}}
-  @keyframes fxBad{
-    0%{background:transparent; transform:translateX(0)}
-    18%{background:var(--flash-bad); transform:translateX(-9px)}
-    46%{background:var(--flash-bad); transform:translateX(9px)}
-    72%{background:color-mix(in oklab, var(--flash-bad) 55%, transparent); transform:translateX(-4px)}
-    100%{background:transparent; transform:translateX(0)}
+  @keyframes fxShake{
+    0%,100%{transform:translateX(0)}
+    18%{transform:translateX(-7px)}
+    42%{transform:translateX(6px)}
+    66%{transform:translateX(-3px)}
+  }
+  @keyframes fxShakeHard{
+    0%,100%{transform:translateX(0)}
+    14%{transform:translateX(-11px)}
+    34%{transform:translateX(10px)}
+    56%{transform:translateX(-7px)}
+    78%{transform:translateX(4px)}
   }
   .fx-score{position:absolute; left:50%; top:12%; transform:translateX(-50%);
     font-family:var(--font-display); font-size:clamp(76px,13vh,132px); font-weight:700;
@@ -459,10 +465,6 @@
     width:clamp(104px,22vw,180px); height:clamp(62px,9.2vh,80px); border-radius:var(--r-lg);
     font-size:clamp(18px,2.4vh,21px); font-weight:600;
     transition:transform var(--dur) var(--ease), background-color var(--dur), color var(--dur)}
-  .flash-hud .key::before,
-  .flash-hud .key::after{display:inline-grid; place-items:center; min-width:30px; height:30px;
-    padding:0 8px; border-radius:8px; font-family:var(--font-mono); font-size:16px; line-height:1;
-    background:color-mix(in oklab, currentColor 14%, transparent); opacity:.9}
   /* 撤回 = 控制鍵，同 × / 回報 / 計時環 同一排、同一 44px 高度，唔混入判定列 */
   .undo-btn{display:inline-flex; align-items:center; justify-content:center; gap:6px; height:44px; padding:0 15px; white-space:nowrap;
     min-width:88px;
@@ -484,10 +486,7 @@
     .undo-btn .glyph{font-size:13px}
     .top-right{gap:8px}
   }
-  /* 鍵位由 JS 寫入（可自訂）；冇設定時才用預設箭嘴 */
-  .flash-hud .key-foul::before{content:var(--kfoul,"←")}
-  .flash-hud .key-pass::before{content:var(--kpass,"↓")}
-  .flash-hud .key-ok::after{content:var(--kok,"→")}
+  /* 判定鍵唔再顯示方向符號：鍵位可自訂，方向已無意義（使用者指示 2026-11-06） */
   .flash-hud .key-foul{justify-self:start; background:var(--fill); color:var(--ink)}
   .flash-hud .key-foul:active{background:var(--fill-2)}
   .flash-hud .key-pass{justify-self:center; background:var(--fill); color:var(--ink)}
@@ -496,13 +495,10 @@
   .flash-hud.bad-pass .key-pass{background:color-mix(in oklab, var(--red) 13%, var(--fill)); color:var(--red)}
   .flash-hud.bad-foul .key-foul:active,
   .flash-hud.bad-pass .key-pass:active{background:color-mix(in oklab, var(--red) 22%, var(--fill))}
-  .flash-hud.bad-foul .key-foul::before,
-  .flash-hud.bad-pass .key-pass::before{background:color-mix(in oklab, var(--red) 18%, transparent)}
   .flash-hud.no-skip .key-pass{display:none}
   .flash-hud.no-skip{grid-template-columns:1fr 1fr}
   .flash-hud .key-ok{justify-self:end; background:var(--blue-fill); color:var(--on-accent)}
   .flash-hud .key-ok:active{background:var(--blue-fill-press)}
-  .flash-hud .key-ok::after{background:color-mix(in oklab, var(--on-accent) 24%, transparent)}
 
 
   /* ---------- ready ---------- */
@@ -1035,7 +1031,7 @@
       <button class="icon-btn" id="btnStepBack" aria-label="上一步" title="上一步（Esc）">
         <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M14.5 5 7.5 12l7 7"/></svg>
       </button>
-      <div class="dots" id="stepDots" aria-hidden="true"><i></i><i></i><i></i><i></i><i></i></div>
+      <div class="dots" id="stepDots" aria-hidden="true"><i></i><i></i><i></i><i></i><i></i><i></i></div>
       <span aria-hidden="true"></span>
     </div>
 
@@ -1104,11 +1100,13 @@
             <button class="switch" id="swFoulPen" role="switch" aria-checked="false" aria-label="犯規扣分"><i></i></button>
           </div>
 
-          <div class="rule" id="ruleKeys">
-            <div class="rule-txt"><b>鍵盤快捷鍵</b><span id="keysSum">犯規 ←　跳過 ↓　正確 →　撤回 ↑</span></div>
-            <button class="key-edit" id="btnKeys" type="button" aria-label="更改鍵盤快捷鍵">更改</button>
-          </div>
+      </section>
 
+      <section class="sstep" data-step="5">
+        <h2 class="sstep-title">鍵盤快捷鍵</h2>
+        <p class="sstep-hint">按一下右邊的鍵，再按鍵盤上的新鍵。Esc 取消。</p>
+        <div class="key-rows" id="keyRows"></div>
+        <button class="key-edit" id="keysReset" type="button">還原預設</button>
       </section>
 
     </div>
@@ -1224,18 +1222,6 @@
     <div class="sheet-actions">
       <button class="sheet-btn" id="exitCancel">取消</button>
       <button class="sheet-btn danger" id="exitConfirm">退出</button>
-    </div>
-  </div>
-</div>
-
-<div class="sheet-wrap center" id="keysSheet" role="dialog" aria-modal="true" aria-labelledby="keysTitle">
-  <div class="sheet-card">
-    <div class="sheet-title" id="keysTitle">鍵盤快捷鍵</div>
-    <div class="key-rows" id="keyRows"></div>
-    <p class="sheet-note" id="keysNote">按一下右邊的鍵，再按鍵盤上的新鍵。Esc 取消。</p>
-    <div class="sheet-actions">
-      <button class="sheet-btn" id="keysReset" type="button">還原預設</button>
-      <button class="sheet-btn primary" id="keysDone" type="button">完成</button>
     </div>
   </div>
 </div>
@@ -1627,7 +1613,7 @@ async function pullText(){
 function fxOk(){
   const q = document.querySelector(".question");
   q.classList.remove("fx-ok","fx-skip","fx-bad","fx-down","fx-left","fx-right"); void q.offsetWidth;
-  q.classList.add("fx-ok","fx-right");
+  q.classList.add("fx-right");                 // 放大淡出（CSS: wordOutZoom）
 }
 
 /* +1 / −1 分數浮字 */
@@ -1642,7 +1628,7 @@ function fxScore(delta){
 function fxFoul(bad){
   const q = document.querySelector(".question");
   q.classList.remove("fx-ok","fx-skip","fx-bad","fx-down","fx-left","fx-right"); void q.offsetWidth;
-  q.classList.add("fx-left");
+  q.classList.add("fx-left");                  // 震動（CSS: fxShake）
   if(bad) q.classList.add("fx-bad");
 }
 function fxSkipDown(){
@@ -1653,7 +1639,7 @@ function fxSkipDown(){
 
 /* ================= 主頁 / 設定流程 ================= */
 const SETUP = { i:0 };
-const LAST_STEP = 4;
+const LAST_STEP = 5;
 
 function renderHome(){
   // 入口頁：一行現況
@@ -2938,13 +2924,6 @@ function applyKeys(){
   ACT_BY_CODE = {};
   for(const k of KEY_ORDER) ACT_BY_CODE[KKEYS[k]] = k;
 
-  const set = (sel, prop, code) => {
-    const el = $(sel); if(el) el.style.setProperty(prop, '"' + keyLabel(code) + '"');
-  };
-  set(".key-foul", "--kfoul", KKEYS.foul);
-  set(".key-pass", "--kpass", KKEYS.skip);
-  set(".key-ok",  "--kok",   KKEYS.ok);
-
   const t = (sel, txt) => { const el = $(sel); if(el) el.setAttribute("title", txt); };
   t(".key-foul", `${T("犯規")} (${keyLabel(KKEYS.foul)})`);
   t(".key-pass", `${T("跳過")} (${keyLabel(KKEYS.skip)})`);
@@ -2952,11 +2931,10 @@ function applyKeys(){
   const u = $("#btnUndo");
   if(u) u.setAttribute("title", `${T("撤回上一個判定")} (${keyLabel(KKEYS.undo)})`);
 
-  const sum = $("#keysSum");
-  if(sum) sum.textContent = KEY_ORDER.map(k => `${T(KEY_WHAT[k])} ${keyLabel(KKEYS[k])}`).join("　");
+  if(KEY_LISTEN === null) renderKeyRows();       // 第 6 步的鍵位列表同步（改鍵中唔重畫）
 }
 
-/* 面板 */
+/* 第 6 步：鍵盤快捷鍵（直接列在步驟內，唔用面板） */
 let KEY_LISTEN = null;
 function renderKeyRows(){
   const box = $("#keyRows"); if(!box) return;
@@ -2968,22 +2946,14 @@ function renderKeyRows(){
       >${KEY_LISTEN === k ? esc(T("按鍵…")) : esc(keyLabel(KKEYS[k]))}</button>
     </div>`).join("");
 }
-function openKeys(){ KEY_LISTEN = null; renderKeyRows(); $("#keysSheet").classList.add("on"); }
-function closeKeys(){ KEY_LISTEN = null; $("#keysSheet").classList.remove("on"); }
-
-if($("#btnKeys")) $("#btnKeys").onclick = openKeys;
-if($("#keysDone")) $("#keysDone").onclick = closeKeys;
 if($("#keysReset")) $("#keysReset").onclick = ()=>{
   for(const k of KEY_ORDER) KKEYS[k] = KEY_DEF[k];
   KEY_LISTEN = null; saveKeys(); renderKeyRows(); applyKeys();
 };
-if($("#keysSheet")){
-  $("#keysSheet").addEventListener("click", e=>{ if(e.target.id === "keysSheet") closeKeys(); });
-  $("#keyRows").addEventListener("click", e=>{
-    const b = e.target.closest(".key-chip"); if(!b) return;
-    KEY_LISTEN = b.dataset.k; renderKeyRows();
-  });
-}
+if($("#keyRows")) $("#keyRows").addEventListener("click", e=>{
+  const b = e.target.closest(".key-chip"); if(!b) return;
+  KEY_LISTEN = b.dataset.k; renderKeyRows();
+});
 /* 監聽新鍵：capture 階段，唔會被遊戲嘅判定 handler 搶走 */
 document.addEventListener("keydown", e=>{
   if(!KEY_LISTEN) return;
@@ -3006,7 +2976,6 @@ document.addEventListener("keydown", e=>{
   if(!$("#v-play").classList.contains("active")) return;
   if(["INPUT","TEXTAREA"].includes(document.activeElement.tagName)) return;
   if(!G) return;
-  if($("#keysSheet") && $("#keysSheet").classList.contains("on")) return;   // 改鍵中，唔好判定
   const a = ACT_BY_CODE[codeOf(e)];
   if(a === "ok"){
     e.preventDefault();
@@ -3024,7 +2993,6 @@ document.addEventListener("keydown", e=>{
     undoJudge();
   }else if(e.key === "Escape"){
     e.preventDefault();
-    if($("#keysSheet") && $("#keysSheet").classList.contains("on")){ closeKeys(); return; }
     if($("#exitSheet").classList.contains("on")){ closeExit(); return; }
     if(gateOn()) return;                                     // 落閘／結算過場：唔接受暫停或退出
     if(G.phase === "ready" || G.phase === "countdown"){ exitTap(); return; }
@@ -3065,6 +3033,7 @@ window.addEventListener("focus", ()=>{
 });
 
 applyKeys();          // 鍵位提示：開機就按已存設定寫入
+renderKeyRows();      // 第 6 步的鍵位列表
 
 /* 身份：登入後自動用自己題庫 */
 function renderIdentity(){
