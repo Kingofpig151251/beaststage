@@ -30,5 +30,5 @@ _hb.html
 # 一次性情境 demo（不屬 app）
 _demo*.html
 # 音效試聽（本機工具，唔入 repo）
-_sfx_audition.html
+_sfx_audition*.html
 _sfx_candidates/
